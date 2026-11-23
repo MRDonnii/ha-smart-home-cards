@@ -588,6 +588,13 @@
     "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
   },
   {
+    "slug": "ha-gas-savings-card",
+    "name": "HA Gas Savings Card",
+    "filename": "ha-gas-savings-card.js",
+    "category": "Energy",
+    "repository": "https://github.com/MRDonnii/ha-smart-home-cards"
+  },
+  {
     "slug": "huawei-solar-card",
     "name": "Huawei Solar Card",
     "filename": "huawei-solar-card.js",

@@ -68,3 +68,16 @@ assert.ok(!series["2026-04"].heatFull && series["2026-06"].heatFull); // opstart
 assert.deepEqual(cmpH.same.months, ["2026-06"]);
 assert.equal(cmpH.acontoMonths[0], "2026-06");
 console.log("heating ok");
+
+// Evidas egne regninger erstatter skønnet for de måneder, de dækker (Claude AI 2026-11-23)
+{
+  const gm2 = hs.gasMonths([
+    { start: "2025-04-01", end: "2025-06-30", amount: 900, m3: 300, supplier: "Norlys", note: "" },
+    { start: "2025-04-01", end: "2025-06-30", amount: 2634.40, m3: null, supplier: "Evida", note: "Evida 98000083997" },
+    { start: "2025-07-01", end: "2025-07-31", amount: 100, m3: 30, supplier: "Norlys", note: "" },
+  ]);
+  const q = ["2025-04", "2025-05", "2025-06"].reduce((s, k) => s + gm2[k].evida, 0);
+  assert.ok(Math.abs(q - 2634.40) < 0.01 && gm2["2025-05"].evidaEst === 0);
+  assert.ok(gm2["2025-07"].evidaEst > 0);   // ingen Evida-regning i juli → skøn
+  console.log("evida real bills tests passed");
+}

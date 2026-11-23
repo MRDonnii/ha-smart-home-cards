@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.294 */
+/* MRDonnii Smart Home Cards v0.5.295 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -1206,7 +1206,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
 
 // src/cards/ha-pool-card/ha-pool-card.js
 (() => {
-  const VERSION61 = "0.4.6";
+  const VERSION62 = "0.4.6";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const savePoolTab = (key2) => {
@@ -1624,12 +1624,12 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-card")) customElements.define("ha-pool-card", HAPoolCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-card", name: "HA Pool Card", description: "Pooldrift, historik og vinterblokering", preview: true });
-  console.info(`HA POOL CARD v${VERSION61}`);
+  console.info(`HA POOL CARD v${VERSION62}`);
 })();
 
 // src/cards/ha-pool-settings-card/ha-pool-settings-card.js
 (() => {
-  const VERSION61 = "0.3.5";
+  const VERSION62 = "0.3.5";
   const POOL_TAB_KEY = "ha-pool-card:last-tab";
   const savePoolTab = (key2) => {
     try {
@@ -1862,7 +1862,7 @@ console.info(`%c HA BAMBU LAB DASHBOARD CARD %c v${VERSION2} `, "color:white;bac
   if (!customElements.get("ha-pool-settings-card")) customElements.define("ha-pool-settings-card", HAPoolSettingsCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-pool-settings-card", name: "HA Pool Settings Card", description: "Poolindstillinger og vinterblokering", preview: true });
-  console.info(`HA POOL SETTINGS CARD v${VERSION61}`);
+  console.info(`HA POOL SETTINGS CARD v${VERSION62}`);
 })();
 
 // src/cards/shared/keep-scroll.js
@@ -7806,34 +7806,34 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     const car = this._hass?.states?.[this._loc()]?.attributes || {};
     const unit = String(reply?.currency || "DKK") === "DKK" ? "kr" : reply?.currency;
     const money = (value) => Number(value).toFixed(2).replace(".", ",");
-    const esc18 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc19 = (value) => String(value ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const SOURCE = { place: "din pris for stedet", zone: "zonens pris", station: "operat\xF8rens egen pris nu", operator: "operat\xF8rens pris", default: "standardpris" };
     for (const station of (reply?.stations || []).slice(0, TTD_MAX_CHARGERS)) {
       const color = station.kind === "supercharger" ? "#e31937" : station.kind === "place" || station.kind === "zone" ? "#8b5cf6" : station.fast ? "#f97316" : "#16a34a";
       const known = station.price != null && station.price_source && station.price_source !== "default";
       const label = !known ? "?" : Number(station.price) === 0 ? "Gratis" : money(station.price);
-      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc18(label)}</div>`;
+      const pill = `<div style="display:flex;align-items:center;gap:3px;width:max-content;padding:2px 7px 2px 3px;border-radius:999px;background:${color};color:#fff;font:700 11px/1.2 system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.45);border:1.5px solid #fff;white-space:nowrap;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66C12.97 17.55 11 21 11 21z"/></svg>${esc19(label)}</div>`;
       const far = Number.isFinite(car.latitude) && Number.isFinite(car.longitude) ? ttdDistanceKm(car.latitude, car.longitude, station.latitude, station.longitude) : null;
       const power2 = Number.isFinite(station.max_kw) ? `${Math.round(station.max_kw)} kW ${station.fast ? "lynlader" : "normallader"}` : null;
       const fallback = Number(reply?.default_price) > 0 ? `Lader du her, bruges din standardpris ${money(reply.default_price)} ${unit}/kWh, til du retter den.` : "Lader du her, sp\xF8rger telefonen om prisen.";
-      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc18(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
+      const prices = !known ? `<b style="font-size:16px">Pris ukendt</b><div style="opacity:.75;margin-top:2px">${fallback.trim()} Ret pris \u2192 "Husk for stedet" s\xE6tter den her.</div>` : `<b style="font-size:16px">${Number(station.price) === 0 ? "Gratis" : `${money(station.price)} ${unit}/kWh`}</b> <span style="opacity:.7">\xB7 ${esc19(SOURCE[station.price_source] || "")}</span>` + (station.price_normal != null && station.price_fast != null ? `<div style="opacity:.75;margin-top:2px">${station.price_source === "station" ? "AC" : "Normal"} ${money(station.price_normal)} \xB7 ${station.price_source === "station" ? "DC" : "lyn"} ${money(station.price_fast)} ${unit}/kWh</div>` : "") + (station.price_source === "station" ? [
         Array.isArray(station.day_range) ? `I dag ${money(station.day_range[0])}\u2013${money(station.day_range[1])} ${unit}/kWh` : null,
         Number(station.start_fee) > 0 ? `Startgebyr ${money(station.start_fee)} ${unit}` : null,
         ...(station.minute_fees || []).map(([perMinute, from]) => `${money(perMinute)} ${unit}/min${from > 0 ? ` efter ${from} min` : ""}`)
-      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc18(line)}</div>`).join("") : "");
+      ].filter(Boolean).map((line) => `<div style="opacity:.75;margin-top:2px">${esc19(line)}</div>`).join("") : "");
       const plugCount = /* @__PURE__ */ new Map();
       for (const c2 of (station.connectors || []).filter((x) => x.type || x.kw)) {
-        const key2 = `${esc18(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
+        const key2 = `${esc19(c2.type || "Stik")}${c2.kw ? ` ${Math.round(c2.kw)} kW` : ""}`;
         plugCount.set(key2, (plugCount.get(key2) || 0) + (Number(c2.count) || 1));
       }
       const plugs = [...plugCount].map(([key2, count2]) => `${count2 > 1 ? `${count2} \xD7 ` : ""}${key2}`);
       const popup = `<div style="font:13px/1.35 system-ui,sans-serif;min-width:210px;max-width:260px;color:var(--primary-text-color,#111)">${[
-        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc18(station.name || station.operator || "Ladested")}</div>`,
+        `<div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc19(station.name || station.operator || "Ladested")}</div>`,
         `<div style="margin-bottom:6px">${prices}</div>`,
-        [station.operator && !String(station.name || "").includes(station.operator) ? esc18(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power2, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
+        [station.operator && !String(station.name || "").includes(station.operator) ? esc19(station.operator) : station.operator ? null : "Operat\xF8r ukendt", power2, Number.isFinite(station.points) ? `${station.points} pladser` : null].filter(Boolean).join(" \xB7 "),
         plugs.length ? `<div style="opacity:.75;margin-top:2px">${plugs.slice(0, 4).join(", ")}</div>` : "",
-        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc18(station.usage_cost)}</div>` : "",
-        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc18(station.feed)} (EU's AFIR-data)</div>` : "",
+        station.usage_cost ? `<div style="opacity:.7;margin-top:2px">Opgivet pris: ${esc19(station.usage_cost)}</div>` : "",
+        station.feed ? `<div style="opacity:.55;margin-top:2px;font-size:11.5px">Data: ${esc19(station.feed)} (EU's AFIR-data)</div>` : "",
         `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">${far != null ? `<span style="opacity:.7">${far < 1 ? `${Math.round(far * 1e3)} m` : `${far.toFixed(1).replace(".", ",")} km`} fra bilen</span>` : "<span></span>"}<a href="https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}" target="_blank" rel="noopener" style="padding:5px 12px;border-radius:999px;background:${color};color:#fff;font-weight:700;text-decoration:none">Rute</a></div>`
       ].filter(Boolean).join("")}</div>`;
       let marker;
@@ -19182,7 +19182,7 @@ Error generating stack: ` + l.message + `
     return e && (e === "input" && (t.type === "text" || t.type === "search" || t.type === "tel" || t.type === "url" || t.type === "password") || e === "textarea" || t.contentEditable === "true");
   }
   var Ry = ka && "documentMode" in document && 11 >= document.documentMode, Nn = null, gu = null, ji = null, bu = false;
-  function ym(t, e, a) {
+  function ym2(t, e, a) {
     var l = a.window === a ? a.document : a.nodeType === 9 ? a : a.ownerDocument;
     bu || Nn == null || Nn !== pu(l) || (l = Nn, "selectionStart" in l && _f(l) ? l = { start: l.selectionStart, end: l.selectionEnd } : (l = (l.ownerDocument && l.ownerDocument.defaultView || window).getSelection(), l = { anchorNode: l.anchorNode, anchorOffset: l.anchorOffset, focusNode: l.focusNode, focusOffset: l.focusOffset }), ji && ao(ji, l) || (ji = l, l = rc(gu, "onSelect"), 0 < l.length && (e = new hc("onSelect", "select", null, e, a), t.push({ event: e, listeners: l }), e.target = Nn)));
   }
@@ -23672,13 +23672,13 @@ Error generating stack: ` + l.message + `
           case "contextmenu":
           case "mouseup":
           case "dragend":
-            bu = false, ym(v, a, b);
+            bu = false, ym2(v, a, b);
             break;
           case "selectionchange":
             if (Ry) break;
           case "keydown":
           case "keyup":
-            ym(v, a, b);
+            ym2(v, a, b);
         }
         var E3;
         if (wf) t: {
@@ -27608,7 +27608,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
 
 // src/cards/ha-heat-center-header-card/ha-heat-center-header-card.js
 (() => {
-  const VERSION61 = "0.3.5";
+  const VERSION62 = "0.3.5";
   const STORAGE_KEY = "ha-heat-center-header-card:tab";
   const TAB_TTL_MS = 5 * 60 * 1e3;
   const TABS4 = [
@@ -27733,7 +27733,7 @@ window.customCards.some((t) => t.type === "ha-dantherm-live-card") || window.cus
   if (!customElements.get("ha-heat-center-header-card")) customElements.define("ha-heat-center-header-card", HAHeatCenterHeaderCard);
   window.customCards = window.customCards || [];
   window.customCards.push({ type: "ha-heat-center-header-card", name: "HA Heat Center Header Card", description: "Varme Center header og faner", preview: true });
-  console.info(`HA HEAT CENTER HEADER CARD v${VERSION61}`);
+  console.info(`HA HEAT CENTER HEADER CARD v${VERSION62}`);
 })();
 
 // src/cards/ha-heat-economy-card/ha-heat-economy-card.js
@@ -35732,15 +35732,15 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const isId2 = (id) => typeof id === "string" && id.includes(".");
     this._roomIds = rooms.map((room) => [room.climate, room.temperature, room.humidity, room.window, room.comfort, room.co2, room.ac?.climate, room.mould, room.sun, ...room.outdoor ? [room.weather, room.observed, room.rain_today, room.degree_days, "sun.sun"] : []].filter(isId2));
     this._summaryIds = [this._config.total_demand, this._config.data_problem, this._config.flow_advice, this._config.flow_advice_adjust, ...rooms.flatMap((room) => [room.mould, room.sun])].filter(isId2);
-    const esc18 = (v) => this._escape(v);
+    const esc19 = (v) => this._escape(v);
     const spark = (range = true) => `<div class="spark-wrap"><div class="spark-box"><svg class="spark" viewBox="0 0 ${SPARK_W2} ${SPARK_H2}" preserveAspectRatio="none" aria-hidden="true"><path class="area" d=""></path><line class="target" x1="0" x2="${SPARK_W2}" y1="-9" y2="-9"></line><path class="line" d=""></path></svg><i class="spark-dot"></i></div>${range ? `<div class="spark-range"><span>${this._config.history_hours || 24} t</span><span data-f="range">${DASH3}</span></div>` : ""}</div>`;
     const gauge = (key2, icon6, label) => `<div class="g na" data-m="${key2}"><ha-icon icon="${icon6}"></ha-icon><span>${label}</span><strong>${DASH3}</strong><i></i></div>`;
     const zoneMarkup = ({ room, index }) => `
       <div class="zone a-neutral" role="button" tabindex="0" data-room="${index}">
-        <i class="sheen"></i><ha-icon class="mark" icon="${esc18(room.icon || "mdi:radiator")}"></ha-icon>
+        <i class="sheen"></i><ha-icon class="mark" icon="${esc19(room.icon || "mdi:radiator")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc18(room.icon || "mdi:radiator")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc18(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc19(room.icon || "mdi:radiator")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc19(room.name)}</strong><span class="z-status"><b></b><em data-f="status">${DASH3}</em></span></span>
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge sun" data-b="sun" title="Solen varmer rummet \u2013 m\xE5let er s\xE6nket midlertidigt"><ha-icon icon="mdi:weather-sunny"></ha-icon></span>
@@ -35764,10 +35764,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const outdoorMarkup = ({ room, index }) => `
       <div class="zone outdoor" role="button" tabindex="0" data-room="${index}">
-        <ha-icon class="mark" icon="${esc18(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
+        <ha-icon class="mark" icon="${esc19(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon>
         <div class="z-head">
-          <span class="z-icon"><ha-icon icon="${esc18(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
-          <span class="z-title"><strong>${esc18(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
+          <span class="z-icon"><ha-icon icon="${esc19(room.icon || "mdi:weather-partly-cloudy")}"></ha-icon></span>
+          <span class="z-title"><strong>${esc19(room.name || "Udend\xF8rs")}</strong><span class="z-status"><b></b><em>Ude nu</em></span></span>
           <span class="wx-head" data-f="wxhead"></span>
         </div>
         <div class="z-body">
@@ -35783,19 +35783,19 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       </div>`;
     const tileMarkup = ({ room, index }) => `
       <div class="tile a-neutral" role="button" tabindex="0" data-room="${index}">
-        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc18(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc18(room.name)}</strong><b title="Status"></b></div>
+        <div class="t-top"><span class="t-ic"><ha-icon icon="${esc19(room.icon || "mdi:home-thermometer-outline")}"></ha-icon></span><strong>${esc19(room.name)}</strong><b title="Status"></b></div>
         <div class="t-row"><div class="t-temp"><span data-f="temp">${DASH3}</span><small>\xB0C</small></div><div class="t-meta" data-f="meta">${DASH3}</div></div>
         <div class="cf" data-f="cf"><div class="cf-bar"><i class="cf-band"></i><i class="cf-dot"></i></div><span class="cf-range"></span><div class="cf-chips"></div></div>
         ${spark(false)}
       </div>`;
-    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc18(room.name)}" hidden></i>`).join("");
+    const dots = indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="spread-dot" data-dot="${index}" title="${esc19(room.name)}" hidden></i>`).join("");
     const legend = [["var(--rc-cool)", "Under m\xE5l"], ["var(--rc-ok)", "P\xE5 m\xE5l"], ["var(--rc-warm)", "Over m\xE5l"], ["var(--rc-hot)", "Varmer"], ["var(--rc-open)", "\xC5ben"]].map(([c2, l]) => `<span><i style="--c:${c2}"></i>${l}</span>`).join("");
     this.shadowRoot.innerHTML = `
       <style>${STYLE5}${AC_UNIT_VISUAL_STYLE2}${PREMIUM_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""}">
         <div class="shell">
           <header class="head">
-            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc18(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
+            <div><div class="eyebrow"><i class="live"></i>Rumklima \xB7 live</div><h2>${esc19(this._config.title)}</h2><p class="sub">${zones.length} termostatzoner \xB7 ${sensors.length} m\xE5lepunkter</p></div>
             <div class="head-side"><div class="flow" data-s="flow"><ha-icon icon="mdi:heat-wave"></ha-icon><div><span>Varmekreds</span><strong data-s="flowText">${DASH3}</strong></div><i class="flow-line"></i></div>
             <div class="flow curve" data-s="curve" ${isEnt(this._config.flow_advice) ? "" : "hidden"}><ha-icon icon="mdi:thermometer-auto"></ha-icon><div><span>Anbefalet freml\xF8b</span><strong data-s="curveText">${DASH3}</strong></div></div></div>
           </header>
@@ -36059,11 +36059,11 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // Premium measuring points: is the climate comfortable for this kind of room (the bedroom by sleeping temperature,
   // the bathroom warmer and wetter), with the comfort band on a 14–28° bar and humidity/CO₂ marked when they are off.
   _renderComfortTile(room, refs, model) {
-    const esc18 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
+    const esc19 = (v) => this._escape(v), co2 = model.air?.co2, c2 = roomComfort(room, model.current, model.humidity, co2);
     const accent = { ok: "ok", cool: "cold", cold: "cold", humid: "cold", warm: "warm", dry: "warm", hot: "warn", air: "warn" }[c2.tone] || "neutral";
     refs.host.className = `tile a-${Number.isFinite(model.current) ? accent : "neutral"} cf-${c2.tone}`;
     this._setText(refs.temp, this._format(model.current));
-    const meta = `<span class="cf-pill"><i></i>${esc18(c2.label)}</span><small>${esc18(c2.detail)}</small>`;
+    const meta = `<span class="cf-pill"><i></i>${esc19(c2.label)}</span><small>${esc19(c2.detail)}</small>`;
     if (refs.meta && refs.meta._h !== meta) {
       refs.meta._h = meta;
       refs.meta.innerHTML = meta;
@@ -36084,7 +36084,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       if (model.humidity !== void 0) chips.push([model.humidity < hlo || model.humidity > hhi ? "bad" : "", "mdi:water-percent", `${this._format(model.humidity, 0)} %`]);
       if (room.co2) chips.push([co2 !== void 0 && co2 >= 1e3 ? "bad" : "", "mdi:molecule-co2", co2 === void 0 ? DASH3 : `${this._format(co2, 0)} ppm`]);
       if (model.feels !== void 0) chips.push(["", "mdi:thermometer", `f\xF8les ${this._format(model.feels)}\xB0`]);
-      const html = chips.map(([cls, icon6, text2]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon6}"></ha-icon>${esc18(text2)}</span>`).join("");
+      const html = chips.map(([cls, icon6, text2]) => `<span class="cf-chip ${cls}"><ha-icon icon="${icon6}"></ha-icon>${esc19(text2)}</span>`).join("");
       const box = cf.querySelector(".cf-chips");
       if (box._h !== html) {
         box._h = html;
@@ -36111,7 +36111,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   }
   // ---------- premium Udendørs: the weather through the day ----------
   _renderWeather(room, refs, model, points) {
-    const host = refs.host, esc18 = (v) => this._escape(v), st = (id) => this._entity(id), fmt8 = (v, digits = 1) => this._format(v, digits);
+    const host = refs.host, esc19 = (v) => this._escape(v), st = (id) => this._entity(id), fmt9 = (v, digits = 1) => this._format(v, digits);
     const f = (name) => host.querySelector(`[data-f="${name}"]`), p25 = (n) => String(n).padStart(2, "0"), clock2 = (t) => `${p25(t.getHours())}:${p25(t.getMinutes())}`;
     const lat = Number(this._hass.config?.latitude), lon = Number(this._hass.config?.longitude), now = /* @__PURE__ */ new Date();
     const days = /* @__PURE__ */ new Map();
@@ -36140,25 +36140,25 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const observed = st(room.observed)?.state;
     this._setText(f("wxlabel"), observed || info.label);
-    const range = (x) => x && x.templow !== void 0 ? `${fmt8(x.templow)}\xB0\u2013${fmt8(x.temperature)}\xB0` : "";
+    const range = (x) => x && x.templow !== void 0 ? `${fmt9(x.templow)}\xB0\u2013${fmt9(x.temperature)}\xB0` : "";
     const lows = points.map((p) => p.min ?? p.v), highs = points.map((p) => p.max ?? p.v);
-    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt8(Math.min(...lows))}\xB0\u2013${fmt8(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
+    this._setText(f("wxsub"), [d0 ? `I dag ${range(d0)}` : points.length > 1 ? `D\xF8gnet ${fmt9(Math.min(...lows))}\xB0\u2013${fmt9(Math.max(...highs))}\xB0` : "", d1 ? `i morgen ${range(d1)}` : ""].filter(Boolean).join(" \xB7 ") || "Ude nu");
     const chips = [];
-    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt8(model.feels)}\xB0`]);
-    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt8(model.humidity, 0)} %` : "Ude nu");
+    if (model.feels !== void 0) chips.push(["mdi:thermometer", "var(--rc-cool)", `F\xF8les ${fmt9(model.feels)}\xB0`]);
+    this._setText(host.querySelector(".z-status em"), model.humidity !== void 0 ? `Ude \xB7 fugt ${fmt9(model.humidity, 0)} %` : "Ude nu");
     const unit = String(a.wind_speed_unit || "km/h"), ms = (v) => {
       const n = this._number(v);
       return n === void 0 ? void 0 : unit === "m/s" ? n : unit === "mph" ? n * 0.44704 : unit === "kn" ? n * 0.51444 : n / 3.6;
     };
     const wind = ms(a.wind_speed), gust = ms(a.wind_gust_speed), bearing = this._number(a.wind_bearing);
-    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt8(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt8(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
+    if (wind !== void 0) chips.push(["mdi:arrow-up", "#7dd3fc", `Vind ${fmt9(wind)} m/s${bearing !== void 0 ? ` ${compass(bearing)}` : ""}`, gust !== void 0 ? `st\xF8d ${fmt9(gust, 0)}` : "", bearing !== void 0 ? bearing + 180 : void 0]);
     const rain2 = this._number(st(room.rain_today)?.state), rainFc = this._number(d0?.precipitation);
-    if (rain2 !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt8(rain2 ?? rainFc)} mm`, rain2 !== void 0 && rainFc !== void 0 ? `prognose ${fmt8(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt8(d0.precipitation_probability, 0)} %` : ""]);
+    if (rain2 !== void 0 || rainFc !== void 0) chips.push(["mdi:weather-rainy", "#60a5fa", `Regn ${fmt9(rain2 ?? rainFc)} mm`, rain2 !== void 0 && rainFc !== void 0 ? `prognose ${fmt9(rainFc)}` : d0?.precipitation_probability !== void 0 ? `${fmt9(d0.precipitation_probability, 0)} %` : ""]);
     const dd = this._number(st(room.degree_days)?.state);
-    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt8(dd)}`]);
+    if (dd !== void 0) chips.push(["mdi:home-thermometer-outline", "var(--rc-hot)", `Graddage ${fmt9(dd)}`]);
     const uv2 = this._number(a.uv_index);
-    if (uv2 !== void 0 && uv2 >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt8(uv2, 0)}`]);
-    const chipHtml = chips.map(([icon6, color, text2, sub2, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub2 ? ` title="${esc18(sub2)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon6}"></ha-icon></span>` : `<ha-icon icon="${icon6}"></ha-icon>`}${esc18(text2)}</span>`).join("");
+    if (uv2 !== void 0 && uv2 >= 3) chips.push(["mdi:sun-wireless-outline", "#fbbf24", `UV ${fmt9(uv2, 0)}`]);
+    const chipHtml = chips.map(([icon6, color, text2, sub2, rot]) => `<span class="wx-chip" style="--cc:${color}"${sub2 ? ` title="${esc19(sub2)}"` : ""}>${rot !== void 0 ? `<span class="arrow" style="transform:rotate(${Math.round(rot)}deg)"><ha-icon icon="${icon6}"></ha-icon></span>` : `<ha-icon icon="${icon6}"></ha-icon>`}${esc19(text2)}</span>`).join("");
     const chipsEl = f("wxhead");
     if (chipsEl && chipsEl._h !== chipHtml) {
       chipsEl._h = chipHtml;
@@ -36166,8 +36166,8 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     const hoursHtml2 = hourly.map((x, i) => {
       const t = new Date(x.datetime), hi2 = wxInfo(x.condition, night(t)), pr = Math.max(0, Math.min(100, this._number(x.precipitation_probability) ?? 0)), mm = this._number(x.precipitation) ?? 0;
-      const title = `${p25(t.getHours())}:00 \xB7 ${hi2.label} \xB7 ${fmt8(x.temperature)}\xB0 \xB7 ${fmt8(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt8(mm)} mm` : ""}`;
-      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi2.color}" title="${esc18(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi2.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
+      const title = `${p25(t.getHours())}:00 \xB7 ${hi2.label} \xB7 ${fmt9(x.temperature)}\xB0 \xB7 ${fmt9(pr, 0)} % regn${mm >= 0.1 ? ` \xB7 ${fmt9(mm)} mm` : ""}`;
+      return `<div class="hr${i === 0 ? " now" : ""}" style="--hc:${hi2.color}" title="${esc19(title)}"><span>${i === 0 ? "Nu" : p25(t.getHours())}</span><ha-icon icon="${hi2.icon}"></ha-icon><b>${Math.round(this._number(x.temperature) ?? 0)}\xB0</b><i style="--p:${pr}%"></i></div>`;
     }).join("");
     const hoursEl = f("hours");
     if (hoursEl && hoursEl._h !== hoursHtml2) {
@@ -36531,12 +36531,12 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
   // Info lines that only appear when there is something to tell: mould risk from 70 % and rooms lowered for sun.
   _renderInfo(sm) {
     if (!sm?.info) return;
-    const rooms = this._config.rooms || [], esc18 = (v) => this._escape(v);
+    const rooms = this._config.rooms || [], esc19 = (v) => this._escape(v);
     const risky = rooms.map((room) => [room.name, this._mould(room)]).filter(([, v]) => v !== void 0 && v >= 70).sort((a, b) => b[1] - a[1]);
     const sunny = rooms.filter((room) => this._sunActive(room)).map((room) => room.name);
     const lines = [];
-    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved v\xE6ggen: ${risky.map(([n, v]) => `${esc18(n)} ${this._format(v, 0)} %`).join(", ")} \u2013 luft ud eller hold rummet varmere</span></div>`);
-    if (sunny.length) lines.push(`<div class="sun"><ha-icon icon="mdi:weather-sunny"></ha-icon><span>Solen varmer ${esc18(sunny.join(" og "))} \u2013 m\xE5let er s\xE6nket midlertidigt</span></div>`);
+    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved v\xE6ggen: ${risky.map(([n, v]) => `${esc19(n)} ${this._format(v, 0)} %`).join(", ")} \u2013 luft ud eller hold rummet varmere</span></div>`);
+    if (sunny.length) lines.push(`<div class="sun"><ha-icon icon="mdi:weather-sunny"></ha-icon><span>Solen varmer ${esc19(sunny.join(" og "))} \u2013 m\xE5let er s\xE6nket midlertidigt</span></div>`);
     const html = lines.join("");
     if (sm.info._h !== html) {
       sm.info._h = html;
@@ -37493,7 +37493,7 @@ function computeInsights(hass, cfg = {}, hourly = []) {
   }
   return out.sort((a, b) => a.prio - b.prio);
 }
-function hoursHtml(hass, hourly = [], esc18 = (v) => v) {
+function hoursHtml(hass, hourly = [], esc19 = (v) => v) {
   const now = /* @__PURE__ */ new Date(), lat = Number(hass?.config?.latitude), lon = Number(hass?.config?.longitude);
   const next = hourly.filter((h) => new Date(h.datetime).getTime() > now.getTime() - 59 * 6e4).slice(0, 6);
   const sunCache = /* @__PURE__ */ new Map();
@@ -37505,7 +37505,7 @@ function hoursHtml(hass, hourly = [], esc18 = (v) => v) {
   };
   return next.map((h, i) => {
     const t = new Date(h.datetime), w = wxInfo(h.condition, night(t)), pr = Math.max(0, Math.min(100, Number(h.precipitation_probability) || 0));
-    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc18(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
+    return `<span class="h6${i === 0 ? " now" : ""}" title="${esc19(`${p2(t.getHours())}:00 \xB7 ${w.label} \xB7 ${Math.round(Number(h.temperature))}\xB0 \xB7 ${pr} % regn`)}"><small>${i === 0 ? "Nu" : p2(t.getHours())}</small><ha-icon icon="${w.icon}" style="color:${w.color}"></ha-icon><b>${Math.round(Number(h.temperature))}\xB0</b><i style="--p:${pr}%"></i></span>`;
   }).join("");
 }
 var INSIGHT_CSS = `
@@ -40654,7 +40654,7 @@ var HaHomeStatusCard = class extends HTMLElement {
       }
       this._decorationType = item2.type;
     }
-    const esc18 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+    const esc19 = (v) => String(v ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
     const marquee = item2.type !== "security";
     const setText = (selector, html) => {
       const el = this.shadowRoot.querySelector(selector);
@@ -40666,14 +40666,14 @@ var HaHomeStatusCard = class extends HTMLElement {
       el.classList.remove("marquee");
       el.innerHTML = html;
     };
-    setText(".value", esc18(item2.value));
+    setText(".value", esc19(item2.value));
     const meter = this.shadowRoot.querySelector(".meter");
     const segmentStates = item2.segmentStates || Array.from({ length: item2.segments || 5 }, (_, i) => i + 1 <= item2.meter ? "on" : "");
     if (meter.children.length !== segmentStates.length) meter.innerHTML = meterHtml;
     else segmentStates.forEach((state2, index) => {
       meter.children[index].className = `seg ${segClass(state2)}`;
     });
-    setText(".detail", esc18(item2.detail || " "));
+    setText(".detail", esc19(item2.detail || " "));
     this.shadowRoot.querySelector(".detail").classList.toggle("heat", !!item2.detailHeat);
     if (item2.type === "heating" || item2.type === "ventilation") {
       const l = this.shadowRoot.querySelector(".label");
@@ -40690,8 +40690,8 @@ var HaHomeStatusCard = class extends HTMLElement {
       const q = item2.secV2;
       const open = q.windows + q.doors;
       const det = q.triggered ? "Alarmen er udl\xF8st" : q.hasError ? "En l\xE5s svarer ikke" : q.awayOpen ? `${open} ${open > 1 ? "\xE5bne" : "\xE5ben"} \xB7 ingen hjemme` : `${q.locked} af ${q.total} l\xE5st${open ? ` \xB7 ${open} ${open > 1 ? "\xE5bne" : "\xE5ben"}` : ""}`;
-      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc18(title)}">${inner}</span>`;
-      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic2, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic2}"></ha-icon><b>${esc18(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
+      const pill = (cls, c2, inner, title) => `<span class="sp ${cls}" style="--c:${c2}" title="${esc19(title)}">${inner}</span>`;
+      const rows = q.alarms.slice(0, this.config.show_secondary_alarm ? 2 : 1).map(([img, ic2, col, name, brand]) => pill("alarm", col, `<img src="${img}" alt=""><ha-icon icon="${ic2}"></ha-icon><b>${esc19(name)}</b>`, `${brand}: ${name}`)).join("") + pill(q.windows ? "on" : "shut", q.windowColor, `<ha-icon icon="${q.windows ? "mdi:window-open-variant" : "mdi:window-closed-variant"}"></ha-icon><b>${q.windows}</b>`, q.windows ? `${q.windows} vinduer \xE5bne` : "Alle vinduer lukket") + pill(q.doors ? "on" : "shut", q.doorColor, `<ha-icon icon="${q.doors ? "mdi:door-open" : "mdi:door-closed"}"></ha-icon><b>${q.doors}</b>`, q.doors ? `${q.doors} d\xF8re \xE5bne` : "Alle d\xF8re lukket");
       const d = this.shadowRoot.querySelector(".detail");
       d._marqueeHtml = void 0;
       d.classList.remove("marquee");
@@ -42504,8 +42504,8 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const bActive = battery === null ? 0 : Math.max(1, Math.ceil(battery / 20));
     const dist = this._km(p), travel = Number(this._s(p.travel_time)?.state), tripMain = home ? "Hjemme" : Number.isFinite(travel) ? `${Math.round(travel)} min` : "Hjemtur", tripLabel = home ? "Ankommet" : Number.isFinite(dist) ? `${dist < 1 ? Math.round(dist * 1e3) + " m" : dist.toFixed(1) + " km"}` : "Afstand ukendt";
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const esc18 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
-    return `<button class="person" data-path="${esc18(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc18(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc18(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc18(status)}</strong><small>${esc18(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
+    const esc19 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    return `<button class="person" data-path="${esc19(p.navigation_path || "")}" style="--person-color:${color}"><span class="portrait" style="${pic ? `background-image:url('${esc19(pic.replaceAll("'", "%27"))}')` : ""}"></span><span class="main"><b>${esc19(p.name || person?.attributes?.friendly_name || "Person")}</b><strong style="color:${color}">${esc19(status)}</strong><small>${esc19(place)}</small></span><span class="mini battery"><b>${battery === null ? "--" : Math.round(battery) + "%"}</b>${this._segments(bActive, bColor, `color-mix(in srgb,${bColor} 45%,transparent)`)}<small>${charging ? "Lader" : "Batteri"}</small></span><span class="mini trip"><b>${tripMain}</b>${this._segments(home ? 5 : Number.isFinite(dist) ? Math.max(1, 5 - Math.floor(dist / 5)) : 0, color, glow)}<small>${tripLabel}</small></span></button>`;
   }
   // v2 (Claude AI, 2026-10-13; user: "byg noget helt nyt … med samme mulighed for at skifte tilbage"): a round portrait
   // in a presence-coloured ring, the name with a status chip, the place or the trip home, and a battery pill.
@@ -42513,7 +42513,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
     return isNewLook(this._hass, this._config);
   }
   _personV2(p) {
-    const esc18 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc19 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const person = this._s(p.entity);
     const tracker = this._s(p.tracker) || person;
     const state2 = tracker?.state || person?.state || "unknown";
@@ -42531,15 +42531,15 @@ var HAPersonOverviewCard = class extends HTMLElement {
     const travel = Number(this._s(p.travel_time)?.state);
     const trip = home ? "" : [Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : "", Number.isFinite(dist) ? dist < 1 ? `${Math.round(dist * 1e3)} m` : `${dist.toFixed(1).replace(".", ",")} km` : ""].filter(Boolean).join(" \xB7 ");
     const pic = p.image || person?.attributes?.entity_picture || "";
-    const initial = esc18((p.name || "?").trim()[0] || "?");
+    const initial = esc19((p.name || "?").trim()[0] || "?");
     const ring = this._config.battery_style === "ring";
     const C2 = 2 * Math.PI * 15;
     const bat = battery === null ? "" : ring ? `<span class="bring${charging ? " chg" : ""}" title="Batteri ${Math.round(battery)} %${charging ? " \xB7 lader" : ""}"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="tr" cx="18" cy="18" r="15"></circle><circle class="pr" cx="18" cy="18" r="15" stroke-dasharray="${(battery / 100 * C2).toFixed(1)} ${C2.toFixed(1)}"></circle></svg><b>${Math.round(battery)}<small>%</small></b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>` : `<span class="bat${charging ? " chg" : ""}"><span class="bb"><i style="width:${battery}%"></i></span><b>${Math.round(battery)}%</b>${charging ? '<ha-icon icon="mdi:lightning-bolt"></ha-icon>' : ""}</span>`;
-    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc18(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
+    return `<button class="pv2 ${home ? "home" : away ? "away" : "zone"}${ring && bat ? " has-ring" : ""}" data-path="${esc19(p.navigation_path || "")}" style="--pc:${color};--bc:${bColor}">
       <span class="av${battery !== null && battery < 20 && !charging ? " low" : ""}"${pic ? ` style="background-image:url('${pic.replaceAll("'", "%27")}')"` : ""}>${pic ? "" : initial}</span>
-      <span class="tx"><b><span class="mq"><span>${esc18(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
-        <span class="st"><i></i><span class="mq"><span>${esc18(status)}</span></span></span>
-        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc18(trip || place)}</span></span></small></span>
+      <span class="tx"><b><span class="mq"><span>${esc19(p.name || person?.attributes?.friendly_name || "Person")}</span></span></b>
+        <span class="st"><i></i><span class="mq"><span>${esc19(status)}</span></span></span>
+        <small>${trip ? `<ha-icon icon="mdi:car-arrow-left"></ha-icon>` : ""}<span class="mq"><span>${esc19(trip || place)}</span></span></small></span>
       ${bat}
     </button>`;
   }
@@ -42554,7 +42554,7 @@ var HAPersonOverviewCard = class extends HTMLElement {
   // Phones (user, 2026-10-13: "Person kort skal laves helt om på mobilen"): one low line grouped by status – who is home as
   // overlapping portraits, who is out with their trip home or zone. Each portrait opens the person's page.
   _personLine() {
-    const esc18 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+    const esc19 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
     const info = this._config.persons.map((p) => {
       const person = this._s(p.entity);
       const tracker = this._s(p.tracker) || person;
@@ -42568,14 +42568,14 @@ var HAPersonOverviewCard = class extends HTMLElement {
       const spot = away ? this._place(p) : "";
       const where = home ? "" : away ? [spot, Number.isFinite(travel) ? `${Math.round(travel)} min hjem` : ""].filter(Boolean).join(" \xB7 ") || "Ude" : this._valid(state2) ? state2 : "Ukendt";
       const pic = p.image || person?.attributes?.entity_picture || "";
-      const av2 = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc18((p.name || "?")[0])}</span>`;
+      const av2 = `<span class="lav${low ? " low" : ""}" style="--pc:${color}${pic ? `;background-image:url('${pic.replaceAll("'", "%27")}')` : ""}">${pic ? "" : esc19((p.name || "?")[0])}</span>`;
       return { p, home, where, av: av2, color, name: p.name || person?.attributes?.friendly_name || "Person" };
     });
     const homes = info.filter((x) => x.home);
     const outs = info.filter((x) => !x.home);
-    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc18(x.p.navigation_path || "")}" title="${esc18(x.name)}" style="--pc:${x.color}">${inner}</button>`;
+    const btn = (x, inner, cls = "") => `<button class="lp ${cls}" data-path="${esc19(x.p.navigation_path || "")}" title="${esc19(x.name)}" style="--pc:${x.color}">${inner}</button>`;
     return `<div class="cline"><div class="lg home"><span class="ll"><i></i>Hjemme <b>${homes.length}</b></span><span class="lavs">${homes.map((x) => btn(x, x.av)).join("") || '<span class="none">Ingen</span>'}</span></div>
-      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc18(x.name)}</b><small>${esc18(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
+      <div class="lg out">${outs.length ? outs.map((x) => btn(x, `${x.av}<span class="lt"><b>${esc19(x.name)}</b><small>${esc19(x.where)}</small></span>`, "wide")).join("") : '<span class="all">Alle er hjemme</span>'}</div></div>`;
   }
   _gridHtml() {
     if (this._combined()) return `<div class="combo">${this._config.persons.map((p) => this._personMini(p)).join("")}</div>${this._personLine()}`;
@@ -42806,19 +42806,19 @@ function heatModel(card) {
   const duration2 = card._number(h.duration) ?? (Number(/af ca\. (\d+)/.exec(st.state)?.[1]) || 21);
   const day2 = Number(a.dag);
   const inHeat = Number.isFinite(day2) && day2 >= 1 && day2 <= duration2;
-  const fmt8 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
+  const fmt9 = (d) => d.toLocaleDateString(card._hass?.locale?.language || "da", { day: "numeric", month: "short", year: d.getFullYear() !== (/* @__PURE__ */ new Date()).getFullYear() ? "numeric" : void 0 });
   const date2 = (v, shift = 0) => {
     if (!v) return "";
     const d = /* @__PURE__ */ new Date(`${String(v).slice(0, 10)}T12:00:00`);
     if (Number.isNaN(d.getTime())) return "";
     d.setDate(d.getDate() + shift);
-    return fmt8(d);
+    return fmt9(d);
   };
   const inDays = (n) => {
     const d = /* @__PURE__ */ new Date();
     d.setHours(12, 0, 0, 0);
     d.setDate(d.getDate() + n);
-    return fmt8(d);
+    return fmt9(d);
   };
   const phase = (d) => d <= 8 ? "bleed" : d <= 14 ? "fertile" : "late";
   const phaseText = { bleed: "Bl\xF8dning", fertile: "Mest frugtbar", late: "Sidste del" };
@@ -42846,7 +42846,7 @@ function heatModel(card) {
     soon: inHeat || !Number.isFinite(Number(a.dage_til_naeste)) || a.dage_til_naeste == null || a.dage_til_naeste > 14 || a.dage_til_naeste < -30 ? "" : a.dage_til_naeste > 1 ? `L\xF8betid om ca. ${a.dage_til_naeste} dage` : a.dage_til_naeste === 1 ? "L\xF8betid ca. i morgen" : "L\xF8betid ventes nu"
   };
 }
-function heatHtml(card, H3, esc18) {
+function heatHtml(card, H3, esc19) {
   if (!H3) return "";
   const cells = Array.from({ length: H3.duration }, (_, i) => {
     const d = i + 1;
@@ -42860,19 +42860,19 @@ function heatHtml(card, H3, esc18) {
   const days = (n) => n === 0 ? "i dag" : n === 1 ? "i morgen" : `om ${n} dage`;
   return `<section class="pp-panel pp-heat${H3.inHeat ? " active" : ""}" style="--d:3">
     <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon></span><div><h3>L\xF8betid</h3>
-      <p>${H3.inHeat ? `<b>${esc18(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
+      <p>${H3.inHeat ? `<b>${esc19(H3.phaseText[H3.phase])}</b> \xB7 dag ${H3.day} af ca. ${H3.duration} \xB7 hold hanner v\xE6k` : "Ikke i l\xF8betid lige nu"}</p></div>${ring}</header>
     ${H3.inHeat ? `<div class="pp-ribbon">${cells}${marker}</div>
     <div class="pp-legend"><span class="bleed"><i></i>Bl\xF8dning (dag 1\u20138)</span><span class="fertile"><i></i>Mest frugtbar (9\u201314)</span><span class="late"><i></i>Sidste del</span></div>` : ""}
     <div class="pp-facts">
-      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc18(H3.start)}</b></div>` : ""}
-      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc18(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
-      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc18(H3.nextPhase.name)}</b><em>fra ${esc18(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
-      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc18(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
-      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc18(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
+      ${H3.start ? `<div><small>${H3.inHeat ? "Startede" : "Sidst startet"}</small><b>${esc19(H3.start)}</b></div>` : ""}
+      ${H3.inHeat && H3.end ? `<div><small>Slutter ca.</small><b>${esc19(H3.end)}</b><em>${H3.left} ${H3.left === 1 ? "dag" : "dage"} tilbage</em></div>` : ""}
+      ${H3.nextPhase ? `<div><small>N\xE6ste fase</small><b>${esc19(H3.nextPhase.name)}</b><em>fra ${esc19(H3.nextPhase.date)} \xB7 ${days(H3.nextPhase.in)}</em></div>` : ""}
+      ${!H3.inHeat && H3.watch && H3.daysToNext > 14 ? `<div><small>Hold \xF8je fra</small><b>${esc19(H3.watch)}</b><em>${days(H3.daysToNext - 14)}</em></div>` : ""}
+      ${H3.next ? `<div><small>${H3.inHeat ? "N\xE6ste l\xF8betid ca." : "N\xE6ste ca."}</small><b>${esc19(H3.next)}</b>${Number.isFinite(H3.daysToNext) && H3.daysToNext >= 0 ? `<em>${days(H3.daysToNext)}</em>` : ""}</div>` : ""}
     </div>
-    ${card._heatForm ? heatFormHtml(card, H3, esc18) : `<div class="pp-actions">
+    ${card._heatForm ? heatFormHtml(card, H3, esc19) : `<div class="pp-actions">
       ${H3.script ? H3.inHeat ? `<button class="pp-btn ghost" data-heatform><ha-icon icon="mdi:calendar-edit"></ha-icon>Ret startdato</button>` : `<button class="pp-btn heat" data-heatform><ha-icon icon="mdi:calendar-start"></ha-icon>Hun er g\xE5et i l\xF8betid</button>` : ""}
-      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc18(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
+      ${H3.calendar ? `<button class="pp-btn ghost" data-info="${esc19(H3.calendar)}"><ha-icon icon="mdi:calendar-heart"></ha-icon>Kalender</button>` : ""}
     </div>`}
     <p class="pp-note">Et sk\xF8n for en Labrador: ca. 3 uger hver ca. 6. m\xE5ned. Det bliver mere pr\xE6cist med hendes egne datoer.</p>
   </section>`;
@@ -42884,21 +42884,21 @@ var daysAgo = (n) => {
   d.setDate(d.getDate() - n);
   return isoDay2(d);
 };
-function heatFormHtml(card, H3, esc18) {
+function heatFormHtml(card, H3, esc19) {
   const f = card._heatForm;
   const today = daysAgo(0);
   const quick = [[0, "I dag"], [1, "I g\xE5r"], [2, "I forg\xE5rs"]].map(([n, t]) => `<button class="pp-quick${f.value === daysAgo(n) ? " on" : ""}" data-hday="${n}">${t}</button>`).join("");
   const note = H3.inHeat ? "Den nuv\xE6rende l\xF8betid i kalenderen bliver erstattet af den nye dato, og sk\xF8nnet for den n\xE6ste bliver regnet om." : "Den sidste l\xF8betid bliver i kalenderen som historik. Den nye bliver lagt ind, og sk\xF8nnet for den n\xE6ste bliver regnet om.";
   return `<div class="pp-heatform">
     <h4>${H3.inHeat ? "Hvorn\xE5r startede l\xF8betiden?" : "Hvorn\xE5r gik hun i l\xF8betid?"}</h4>
-    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc18(f.value)}" max="${today}"></div>
-    <p>${note}</p>${f.error ? `<p class="err">${esc18(f.error)}</p>` : ""}
+    <div class="pp-quicks">${quick}<input type="date" data-hdate value="${esc19(f.value)}" max="${today}"></div>
+    <p>${note}</p>${f.error ? `<p class="err">${esc19(f.error)}</p>` : ""}
     <div class="pp-actions"><button class="pp-btn heat" data-hsave${f.busy ? " disabled" : ""}><ha-icon icon="mdi:check"></ha-icon>${f.busy ? "Gemmer \u2026" : "Gem"}</button>
       <button class="pp-btn ghost" data-hcancel><ha-icon icon="mdi:close"></ha-icon>Annull\xE9r</button></div></div>`;
 }
 function premiumHtml(card) {
   const c2 = card._config;
-  const esc18 = (v) => card._escape(v);
+  const esc19 = (v) => card._escape(v);
   const meals = c2.meals || [];
   const info = meals.map((meal, i) => {
     const skipped = card._on(meal.skip);
@@ -42928,19 +42928,19 @@ function premiumHtml(card) {
   const arcs = info.map((m, i) => `<circle class="pp-arc ${m.tone}" cx="60" cy="60" r="52" style="stroke:${MEAL_COLORS[m.tone]};stroke-dasharray:${seg.toFixed(2)} ${(C2 - seg).toFixed(2)};stroke-dashoffset:${(-(i * (seg + gap) + gap / 2)).toFixed(2)};--i:${i}"/>`).join("");
   const chips = [
     `<span class="pp-chip food"><ha-icon icon="mdi:food-drumstick"></ha-icon>${done} af ${planned.length} m\xE5ltider</span>`,
-    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc18(next.meal.name)} ${esc18(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
+    next ? `<span class="pp-chip next"><ha-icon icon="mdi:clock-outline"></ha-icon>${esc19(next.meal.name)} ${esc19(next.meal.time)} \xB7 <b data-countdown="${next.i}">${premiumCountdown(next.meal)}</b></span>` : `<span class="pp-chip good"><ha-icon icon="mdi:check-circle"></ha-icon>Dagens m\xE5ltider er givet</span>`,
     c2.water ? `<span class="pp-chip ${water ? "water" : "danger"}"><ha-icon icon="${water ? "mdi:water" : "mdi:water-off"}"></ha-icon>${water ? "Vand i sk\xE5len" : "Mangler vand"}</span>` : "",
     H3?.inHeat ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip"></ha-icon>L\xF8betid dag ${H3.day}/${H3.duration}</span>` : H3?.soon ? `<span class="pp-chip heat"><ha-icon icon="mdi:flower-tulip-outline"></ha-icon>${H3.soon}</span>` : ""
   ].filter(Boolean).join("");
-  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct3(m.t)}%" data-info="${esc18(m.meal.status || "")}" title="${esc18(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc18(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
+  const nodes = info.filter((m) => m.t != null).map((m) => `<button class="pp-node ${m.tone}" style="left:${pct3(m.t)}%" data-info="${esc19(m.meal.status || "")}" title="${esc19(`${m.meal.name} ${m.meal.time}`)}"><ha-icon icon="${m.tone === "done" ? "mdi:check" : m.tone === "missed" ? "mdi:close" : m.tone === "skipped" ? "mdi:debug-step-over" : esc19(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></button>`).join("");
   const label = { done: "Givet", pending: "Afventer", missed: "Misset", skipped: "Springes over", disabled: "Sl\xE5et fra" };
   const mealCards = info.map((m) => `<article class="pp-meal ${m.tone}" style="--i:${m.i}">
-      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc18(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
-        <div><h4>${esc18(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc18(m.meal.status || "")}">${esc18(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
-        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc18(m.meal.enabled)}" aria-label="${esc18(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
+      <div class="pp-meal-top"><span class="pp-micon"><ha-icon icon="${esc19(m.meal.icon || "mdi:bowl-mix")}"></ha-icon></span>
+        <div><h4>${esc19(m.meal.name || `M\xE5ltid ${m.i + 1}`)}</h4><button class="pp-status" data-info="${esc19(m.meal.status || "")}">${esc19(m.meal.time || "\u2014")}<i></i>${label[m.tone]}</button></div>
+        ${m.meal.enabled ? `<button class="pp-tog${m.enabled ? " on" : ""}" data-toggle="${esc19(m.meal.enabled)}" aria-label="${esc19(m.meal.name)} til/fra"><i></i></button>` : ""}</div>
       <div class="pp-meal-actions">
-        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc18(m.meal.feed_action)}" data-name="${esc18(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
-        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc18(m.meal.skip)}" data-name="${esc18(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
+        ${m.meal.feed_action ? `<button class="pp-btn" data-feed="${esc19(m.meal.feed_action)}" data-name="${esc19(m.meal.name)}"><ha-icon icon="mdi:food-drumstick-outline"></ha-icon>Giv nu</button>` : ""}
+        ${m.meal.skip ? `<button class="pp-btn ghost" data-skip="${esc19(m.meal.skip)}" data-name="${esc19(m.meal.name)}" data-skipped="${m.skipped}"><ha-icon icon="${m.skipped ? "mdi:undo-variant" : "mdi:skip-next"}"></ha-icon>${m.skipped ? "Fortryd" : "Spring over"}</button>` : ""}
       </div></article>`).join("");
   const hours = [6, 9, 12, 15, 18, 21].map((h) => `<span style="left:${pct3(h * 60)}%">${String(h).padStart(2, "0")}</span>`).join("");
   return `<ha-card class="pp ${card._config.animation === false ? "still" : ""}${card._ppIntro ? "" : " intro"}">
@@ -42948,13 +42948,13 @@ function premiumHtml(card) {
     <div class="pp-aurora"></div>
     <div class="pp-paws">${[0, 1, 2, 3, 4, 5].map((i) => `<span style="--p:${i}">${pawSvg}</span>`).join("")}</div>
     <div class="pp-avatar"><svg class="pp-ring" viewBox="0 0 120 120"><circle class="pp-ring-bg" cx="60" cy="60" r="52"/>${arcs}</svg>
-      <div class="pp-face"><ha-icon icon="${esc18(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
-    <div class="pp-id"><span class="pp-eyebrow">${esc18(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc18(c2.pet_name || "K\xE6ledyr")}</h2>
-      <p class="pp-mood ${mood[1]}"><i></i>${esc18(mood[0])}</p><div class="pp-chips">${chips}</div></div>
+      <div class="pp-face"><ha-icon icon="${esc19(c2.icon || "mdi:dog-side")}"></ha-icon></div><span class="pp-count">${done}/${planned.length}</span></div>
+    <div class="pp-id"><span class="pp-eyebrow">${esc19(c2.title || "K\xE6ledyrspleje")}</span><h2>${esc19(c2.pet_name || "K\xE6ledyr")}</h2>
+      <p class="pp-mood ${mood[1]}"><i></i>${esc19(mood[0])}</p><div class="pp-chips">${chips}</div></div>
   </section>
   <div class="pp-grid">
     <section class="pp-panel pp-day" style="--d:1">
-      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc18(next.meal.name.toLowerCase())} kl. ${esc18(next.meal.time)}` : ""}</p></div>
+      <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:calendar-clock"></ha-icon></span><div><h3>Dagens m\xE5ltider</h3><p>${done} af ${planned.length} givet${next ? ` \xB7 n\xE6ste ${esc19(next.meal.name.toLowerCase())} kl. ${esc19(next.meal.time)}` : ""}</p></div>
         ${c2.feeder_mode ? `<button class="pp-mode ${mode === "schedule" ? "on" : ""}" data-mode><ha-icon icon="${mode === "schedule" ? "mdi:calendar-check" : "mdi:hand-back-right"}"></ha-icon>${mode === "schedule" ? "Plan" : "Manuel"}</button>` : ""}</header>
       <div class="pp-timeline"><div class="pp-track"><span class="pp-progress" style="width:${pct3(now)}%"></span><span class="pp-now" style="left:${pct3(now)}%"><i></i></span>${nodes}</div><div class="pp-hours">${hours}</div></div>
       <div class="pp-meals">${mealCards}</div>
@@ -42962,7 +42962,7 @@ function premiumHtml(card) {
     <section class="pp-panel pp-supply${c2.water ? "" : " food"}" style="--d:2">
       <header class="pp-head"><span class="pp-hicon"><ha-icon icon="mdi:silo-outline"></ha-icon></span><div><h3>${c2.water ? "Foder og vand" : "Foder"}</h3><p>${error ? "Foderautomaten melder fejl" : `${card._format(percent2)} % i beholderen`}</p></div></header>
       <div class="pp-supply-row">
-        <button class="pp-silo ${level}" data-info="${esc18(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
+        <button class="pp-silo ${level}" data-info="${esc19(c2.container_percent || c2.container_grams || "")}" aria-label="Foderbeholder ${card._format(percent2)} %">
           <span class="pp-silo-fill" style="height:${percent2}%"><span class="pp-wave"></span></span><span class="pp-silo-glass"></span><b>${card._format(percent2)}<small>%</small></b></button>
         <div class="pp-stats">
           <div><small>I beholderen</small><b>${Number.isFinite(grams) ? `${card._format(grams)} g` : "\u2014"}</b></div>
@@ -42970,12 +42970,12 @@ function premiumHtml(card) {
           <div><small>Pr. dag</small><b>${Number.isFinite(daily) ? `${card._format(daily)} g` : "\u2014"}</b></div>
           ${c2.refill_action ? `<button class="pp-btn ghost" data-refill><ha-icon icon="mdi:refresh"></ha-icon>Fyldt op</button>` : ""}
         </div>
-        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc18(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
+        ${c2.water ? `<button class="pp-bowl ${water ? "ok" : "empty"}" data-info="${esc19(c2.water)}" aria-label="${water ? "Vand i sk\xE5len" : "Mangler vand"}">
           <span class="pp-bowl-water"><i></i><i></i></span>
           <b>${water ? "Vand" : "Tom"}</b>${c2.water_battery ? `<small>${card._format(card._number(c2.water_battery))} % batteri</small>` : ""}</button>` : ""}
       </div>
     </section>
-    ${heatHtml(card, H3, esc18)}
+    ${heatHtml(card, H3, esc19)}
   </div>
 </ha-card>`;
 }
@@ -64906,13 +64906,13 @@ var pad22 = (n) => String(n).padStart(2, "0");
 var numberFormats = /* @__PURE__ */ new Map();
 function fmtNumber(value, digits) {
   if (!Number.isFinite(value)) return "\u2014";
-  let fmt8 = numberFormats.get(digits);
-  if (!fmt8) {
-    fmt8 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats.set(digits, fmt8);
+  let fmt9 = numberFormats.get(digits);
+  if (!fmt9) {
+    fmt9 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats.set(digits, fmt9);
   }
   const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return fmt8.format(rounded === 0 ? 0 : rounded);
+  return fmt9.format(rounded === 0 ? 0 : rounded);
 }
 var fmtPrice = (v) => fmtNumber(v, 2);
 var fmtPower = (v) => fmtNumber(v, 1);
@@ -72922,19 +72922,29 @@ function heatMonths({ change = {}, pre = 0, start, statsStart, tariffs, m2 = 0, 
 }
 function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, rates = EVIDA_RATES } = {}) {
   const out = {};
-  for (const b of gasBills || []) {
+  const get = (k) => out[k] || (out[k] = { bill: 0, evida: 0, evidaEst: 0, m3: 0, kwh: 0 });
+  const isEvida = (b) => /evida/i.test(b.supplier || "");
+  const covered = /* @__PURE__ */ new Set();
+  for (const b of (gasBills || []).filter(isEvida)) {
+    for (const [k, r] of Object.entries(monthlyFromBills([{ ...b, m3: null }]))) {
+      get(k).evida += r.amount;
+      covered.add(k);
+    }
+  }
+  for (const b of (gasBills || []).filter((x) => !isEvida(x))) {
     const hasEvida = /heraf Evida/.test(b.note || "");
     const part = monthlyFromBills([b]);
     for (const [k, r] of Object.entries(part)) {
-      const o = out[k] || (out[k] = { bill: 0, evida: 0, m3: 0, kwh: 0 });
+      const o = get(k);
       o.bill += r.amount;
       if (r.m3 != null) {
         o.m3 += r.m3;
         o.kwh += r.m3 * kwhPerM3 * efficiency;
       }
-      if (!hasEvida && r.m3 != null) {
+      if (!hasEvida && !covered.has(k) && r.m3 != null) {
         const [v, f] = evidaCost(r.m3, r.days, evidaAt(`${k}-01`, rates));
         o.evida += v + f;
+        o.evidaEst += v + f;
       }
     }
   }
@@ -72951,6 +72961,7 @@ function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = /* @__P
     months[k] = {
       gasBill: g?.bill || 0,
       gasEvida: g?.evida || 0,
+      gasEvidaEst: g?.evidaEst || 0,
       gasKwh: g?.kwh || 0,
       gasM3: g?.m3 || 0,
       heatMeasured: h?.measured || 0,
@@ -73018,7 +73029,7 @@ function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Dat
 
 // src/cards/ha-elforbrug-kr-card/ha-elforbrug-kr-card.js
 var CARD_TAG3 = "ha-elforbrug-kr-card";
-var VERSION58 = "1.2.0";
+var VERSION58 = "1.2.1";
 var MONTHS4 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG2 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var PALETTE = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
@@ -73474,8 +73485,8 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     this._ref("years").innerHTML = "";
     this._ref("years").hidden = true;
     this._drawChart();
-    this._ref("legend").innerHTML = `<span><i style="background:var(--c-gas)"></i>Naturgas (regning)</span><span><i class="h" style="--ec-accent:var(--c-gas)"></i>Evida + afgifter (beregnet)</span><span><i class="h" style="--ec-accent:var(--c-fv)"></i>Fjernvarme m\xE5lt</span><span><i class="e" style="--ec-accent:var(--c-fv)"></i>Fjernvarme sk\xF8nnet</span><span><i style="background:none;border:2px solid var(--ec-text);height:2px;border-radius:0"></i>A conto</span>`;
-    this._ref("note").textContent = `Alle bel\xF8b er inkl. moms og alle afgifter og till\xE6g. Naturgas: Norlys-regningerne (gaspris, transmission, abonnement) + den del, Evida fakturerer selv fra maj 2023 \u2013 distribution, fast grundpris/kapacitet/m\xE5ler, n\xF8dforsyningstarif og statens energi-, CO2- og NOx-afgift \u2013 beregnet ud fra officielle satser for hver periode, indtil Evidas egne regninger er lagt ind (kilder: Skattestyrelsen, Juridisk vejledning E.A.4.4.7.1, E.A.4.5.6 og E.A.7.20.6; Evida "Historiske tariffer" Evida Nord og tarifblad 01.01.2025; administrationsbidrag 2023\u201324 fra husets egen Evida-regning). Varmen = m\xB3 \xD7 ${fmt6(opts.kwhPerM3)} kWh \xD7 ${fmt6(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms + abonnement, m\xB2-bidrag og konverteringstill\xE6g pr. dag (2027-taksten fra 1. februar 2027; konverteringstill\xE6gget antaget u\xE6ndret). Dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion \u2013 HA har ingen udetemperatur fra f\xF8r 30.05.2026.`;
+    this._ref("legend").innerHTML = `<span><i style="background:var(--c-gas)"></i>Naturgas (regning)</span><span><i class="h" style="--ec-accent:var(--c-gas)"></i>Evida + afgifter</span><span><i class="h" style="--ec-accent:var(--c-fv)"></i>Fjernvarme m\xE5lt</span><span><i class="e" style="--ec-accent:var(--c-fv)"></i>Fjernvarme sk\xF8nnet</span><span><i style="background:none;border:2px solid var(--ec-text);height:2px;border-radius:0"></i>A conto</span>`;
+    this._ref("note").textContent = `Alle bel\xF8b er inkl. moms og alle afgifter og till\xE6g. Naturgas: Norlys-regningerne (gaspris, transmission, abonnement) + den del, Evida fakturerer selv fra maj 2023 \u2013 distribution, fast grundpris/kapacitet/m\xE5ler, n\xF8dforsyningstarif og statens energi-, CO2- og NOx-afgift \u2013 fra Evidas egne regninger; kun hvor en Evida-regning mangler, beregnet ud fra officielle satser for perioden (kilder: Skattestyrelsen, Juridisk vejledning E.A.4.4.7.1, E.A.4.5.6 og E.A.7.20.6; Evida "Historiske tariffer" Evida Nord og tarifblad 01.01.2025; administrationsbidrag 2023\u201324 fra husets egen Evida-regning). Varmen = m\xB3 \xD7 ${fmt6(opts.kwhPerM3)} kWh \xD7 ${fmt6(opts.efficiency * 100)} % kedelvirkningsgrad (antagelse). Fjernvarme: HA's varmem\xE5ler \xD7 Verdos takst inkl. moms + abonnement, m\xB2-bidrag og konverteringstill\xE6g pr. dag (2027-taksten fra 1. februar 2027; konverteringstill\xE6gget antaget u\xE6ndret). Dagene f\xF8r HA's statistik er sk\xF8nnet ud fra m\xE5lerstanden. Ingen graddagekorrektion \u2013 HA har ingen udetemperatur fra f\xF8r 30.05.2026.`;
   }
   _drawHeat(host) {
     const months = this._heat.months;
@@ -73496,8 +73507,8 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       for (const k of keys) {
         const y2 = k.slice(0, 4);
         const c2 = months[k];
-        const o = by[y2] || (by[y2] = { k: y2, gasBill: 0, gasEvida: 0, heatMeasured: 0, heatEstimate: 0, aconto: 0, partial: false });
-        for (const f of ["gasBill", "gasEvida", "heatMeasured", "heatEstimate", "aconto"]) o[f] += c2[f];
+        const o = by[y2] || (by[y2] = { k: y2, gasBill: 0, gasEvida: 0, gasEvidaEst: 0, heatMeasured: 0, heatEstimate: 0, aconto: 0, partial: false });
+        for (const f of ["gasBill", "gasEvida", "gasEvidaEst", "heatMeasured", "heatEstimate", "aconto"]) o[f] += c2[f];
         o.partial ||= c2.partial;
       }
       groups = Object.values(by);
@@ -73544,7 +73555,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       const g = groups[i];
       const title = month ? `${MONTHS_LONG2[Number(g.k.slice(5)) - 1]} ${g.k.slice(0, 4)}` : `${g.k}${g.partial ? " (indtil nu)" : ""}`;
       const row = (c2, n, v) => v > 0.5 ? `<div class="row" style="--yc:${c2}"><i></i><span class="nm">${n}</span><span class="v num">${fmt6(v)} kr</span></div>` : "";
-      tip.innerHTML = `<h4>${esc14(title)}</h4>${row("var(--c-gas)", "Naturgas (Norlys)", g.gasBill)}${row("var(--c-gas)", "Evida + afgifter (beregnet)", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
+      tip.innerHTML = `<h4>${esc14(title)}</h4>${row("var(--c-gas)", "Naturgas (Norlys)", g.gasBill)}${row("var(--c-gas)", g.gasEvidaEst > 1 ? "Evida + afgifter (delvis beregnet)" : "Evida + afgifter", g.gasEvida)}${row("var(--c-fv)", "Fjernvarme m\xE5lt", g.heatMeasured)}${row("var(--c-fv)", "Fjernvarme sk\xF8nnet", g.heatEstimate)}${row("var(--ec-text)", "A conto", g.aconto)}`;
       tip.hidden = false;
       const cx = pad6.l + gw * i + gw / 2, tw = tip.offsetWidth || 180;
       tip.style.left = `${Math.max(0, Math.min(host.clientWidth - tw, cx - tw / 2))}px`;
@@ -73586,8 +73597,304 @@ if (!window.customCards.some((c2) => c2.type === CARD_TAG3)) {
   window.customCards.push({ type: CARD_TAG3, name: "Elforbrug i kr", description: `Elforbruget i kroner m\xE5ned for m\xE5ned og \xE5r for \xE5r, fra regningerne og HA's m\xE5ling (v${VERSION58}).`, preview: false });
 }
 
-// src/cards/huawei-solar-card/styles.js
+// src/cards/ha-gas-savings-card/ha-gas-savings-card.js
+var VERSION59 = "1.0.0";
+var MONTHS5 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var fmt7 = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "\u2014";
+var esc15 = (v) => String(v ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+var ym = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+var daysIn2 = (k) => new Date(+k.slice(0, 4), +k.slice(5), 0).getDate();
+function monthCompare({ kwh: kwh2, month, gasPrice, cfg, days, heatPrice, now = /* @__PURE__ */ new Date() }) {
+  const share = days / daysIn2(month);
+  const m3 = kwh2 / (cfg.kwh_per_m3 * cfg.efficiency);
+  const gasFixed = (cfg.gas_fixed_year + cfg.service_year) / 12 * share;
+  const gas = m3 * gasPrice + gasFixed;
+  const heat = kwh2 * heatPrice + cfg.heat_fixed_month * share;
+  return { month, kwh: kwh2, m3, gasPrice, gas, heat, saved: gas - heat, partial: month === ym(now) };
+}
+function priceFor(month, months, fallback) {
+  const v = Number(months?.[month]);
+  return Number.isFinite(v) && v > 0 ? v : fallback;
+}
+var HAGasSavingsCard = class extends HTMLElement {
+  static getStubConfig() {
+    return { heat_energy: "sensor.heat_meter_energy_total", heat_price: 0.6, gas_price: "sensor.gas_price_total" };
+  }
+  setConfig(c2) {
+    if (!c2?.heat_energy) throw new Error("Kortet kr\xE6ver heat_energy (varmem\xE5lerens kWh med langtidsstatistik)");
+    this._config = { title: "Gas eller fjernvarme", kwh_per_m3: 11, efficiency: 0.9, gas_fixed_year: 0, service_year: 0, heat_fixed_month: 0, investment: 0, ...c2 };
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    this._rows = null;
+    this._at = 0;
+    this._render();
+  }
+  set hass(h) {
+    const first = !this._hass;
+    this._hass = h;
+    const c2 = this._config, sig = [c2.gas_price, c2.gas_price_months, c2.heat_price].map((id) => typeof id === "string" ? h.states[id]?.state : id).join("|");
+    if (!this._at || Date.now() - this._at > 9e5) this._load();
+    else if (sig !== this._sig || first) {
+      this._sig = sig;
+      this._render();
+    }
+  }
+  connectedCallback() {
+    if (!this._ro && window.ResizeObserver) {
+      this._ro = new ResizeObserver(() => {
+        const w = this._wide();
+        if (w !== this._wasWide) {
+          this._wasWide = w;
+          this._render();
+        }
+      });
+      this._ro.observe(this);
+    }
+  }
+  disconnectedCallback() {
+    this._ro?.disconnect();
+    this._ro = null;
+  }
+  // Computerudgaven: flere grafer og udregninger, når kortet er bredt (eller layout: wide).
+  _wide() {
+    const l = this._config?.layout;
+    return l === "wide" || l !== "compact" && (this.clientWidth || 0) >= 1e3;
+  }
+  _wideHtml({ rows, forecast, c: c2, gasNow, heatPrice, saved, yearKwh, months }) {
+    const W2 = 600, H3 = 170, P2 = 30, WW = 1200;
+    let acc = 0;
+    const past = rows.map((r) => ({ k: r.month, v: acc += r.saved }));
+    let fut = [];
+    if (forecast.length) {
+      let a = acc;
+      const yr = forecast.reduce((s, r) => s + r.saved, 0) || 0;
+      for (let i = 0; i < 120 && (c2.investment ? a < c2.investment : i < 24); i++) {
+        a += forecast[i % 12].saved;
+        fut.push({ i, v: a });
+        if (yr <= 0) break;
+      }
+    }
+    const n = past.length + fut.length, maxV = Math.max(c2.investment || 0, ...past.map((p) => p.v), ...fut.map((p) => p.v), 1);
+    const X2 = (i) => P2 + i / Math.max(1, n - 1) * (WW - P2 * 2), Y = (v) => H3 - 22 - Math.max(0, v) / maxV * (H3 - 40);
+    const lineP = past.map((p, i) => `${X2(i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(" ");
+    const lineF = [past.length ? `${X2(past.length - 1).toFixed(1)},${Y(acc).toFixed(1)}` : ""].concat(fut.map((p, i) => `${X2(past.length + i).toFixed(1)},${Y(p.v).toFixed(1)}`)).filter(Boolean).join(" ");
+    const payIdx = c2.investment ? fut.findIndex((p) => p.v >= c2.investment) : -1;
+    const payDate = payIdx >= 0 ? new Date((/* @__PURE__ */ new Date()).getFullYear(), (/* @__PURE__ */ new Date()).getMonth() + 1 + payIdx, 1) : null;
+    const ks = Object.keys(months).sort();
+    const gk = ks.map((k) => Number(months[k]) / (c2.kwh_per_m3 * c2.efficiency));
+    const fvK = rows.filter((r) => r.kwh > 300).map((r) => ({ k: r.month, v: r.heat / r.kwh }));
+    const pmax = Math.max(...gk, ...fvK.map((x) => x.v), 0.5) * 1.1;
+    const pX = (i, len) => P2 + i / Math.max(1, len - 1) * (W2 - P2 * 2), pY = (v) => H3 - 22 - v / pmax * (H3 - 40);
+    const gVar = gasNow / (c2.kwh_per_m3 * c2.efficiency), gFix = yearKwh > 0 ? (c2.gas_fixed_year + c2.service_year) / yearKwh : 0;
+    const hVar = heatPrice, hFix = yearKwh > 0 ? c2.heat_fixed_month * 12 / yearKwh : 0;
+    const kmax = Math.max(gVar + gFix, hVar + hFix);
+    const sens = [10, 12, 14, 16, 18].map((p) => {
+      const y = yearKwh > 0 ? yearKwh / (c2.kwh_per_m3 * c2.efficiency) * p + c2.gas_fixed_year + c2.service_year - (yearKwh * heatPrice + c2.heat_fixed_month * 12) : NaN;
+      return { p, y, yrs: y > 0 && c2.investment ? Math.max(0, c2.investment - saved) / y : NaN };
+    });
+    const smax = Math.max(...sens.map((x) => Math.abs(x.y) || 0), 1);
+    const kwhMax = Math.max(...rows.map((r) => r.kwh), ...forecast.map((r) => r.kwh), 1);
+    const MN = (k) => MONTHS5[+k.slice(5) - 1];
+    return `<div class="wide">
+  <section class="panel w2"><div class="head"><span class="hicon"><ha-icon icon="mdi:chart-timeline-variant"></ha-icon></span><div><h3>Akkumuleret besparelse</h3><p>M\xE5lt siden skiftet${fut.length ? " og prognose med dagens priser" : ""}${payDate ? ` \xB7 betalt hjem ca. ${MONTHS5[payDate.getMonth()]} ${payDate.getFullYear()}` : ""}</p></div></div>
+    <svg class="chart" viewBox="0 0 ${WW} ${H3}" preserveAspectRatio="none">
+      ${c2.investment ? `<line class="goal" x1="${P2}" x2="${WW - P2}" y1="${Y(c2.investment)}" y2="${Y(c2.investment)}"/><text class="lbl" x="${WW - P2}" y="${Y(c2.investment) - 5}" text-anchor="end">${fmt7(c2.investment)} kr</text>` : ""}
+      ${lineF ? `<polyline class="fut" points="${lineF}"/>` : ""}
+      <polyline class="acc" points="${lineP}"/>
+      ${past.map((p, i) => `<circle cx="${X2(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="3.5"/>`).join("")}
+      ${past.length ? `<text class="lbl" x="${X2(0).toFixed(1)}" y="${H3 - 6}" text-anchor="start">${MN(past[0].k)} ${past[0].k.slice(0, 4)}</text><text class="lbl" x="${X2(past.length - 1).toFixed(1)}" y="${H3 - 6}" text-anchor="middle">nu \xB7 ${fmt7(acc)} kr</text>` : ""}
+      ${payDate ? `<text class="lbl ok" x="${X2(past.length + payIdx).toFixed(1)}" y="${H3 - 6}" text-anchor="end">betalt hjem ${MONTHS5[payDate.getMonth()]} ${payDate.getFullYear()}</text>` : ""}
+    </svg></section>
+  <section class="panel"><div class="head"><span class="hicon"><ha-icon icon="mdi:fire"></ha-icon></span><div><h3>Pris pr. kWh varme</h3><p>Gas (m\xE5ned for m\xE5ned) mod fjernvarme inkl. faste afgifter</p></div></div>
+    <svg class="chart" viewBox="0 0 ${W2} ${H3}" preserveAspectRatio="none">
+      <polyline class="gl" points="${gk.map((v, i) => `${pX(i, gk.length).toFixed(1)},${pY(v).toFixed(1)}`).join(" ")}"/>
+      <polyline class="hl" points="${fvK.map((x, i) => `${pX(i, fvK.length).toFixed(1)},${pY(x.v).toFixed(1)}`).join(" ")}"/>
+      ${gk.map((v, i) => `<text class="lbl" x="${pX(i, gk.length).toFixed(1)}" y="${pY(v) - 7}" text-anchor="middle">${fmt7(v, 2)}</text>`).join("")}
+      ${ks.map((k, i) => `<text class="lbl" x="${pX(i, ks.length).toFixed(1)}" y="${H3 - 6}" text-anchor="middle">${MN(k)}</text>`).join("")}
+    </svg><div class="legend"><span><i class="g"></i>Gas kr/kWh varme</span><span><i class="h"></i>Fjernvarme kr/kWh (inkl. faste)</span></div></section>
+  <section class="panel"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:scale-balance"></ha-icon></span><div><h3>Hvad koster 1 kWh varme?</h3><p>Over et normalt \xE5r (${fmt7(yearKwh)} kWh) \xB7 dagens priser</p></div></div>
+    ${[["Gas", gVar, gFix, "g"], ["Fjernvarme", hVar, hFix, "h"]].map(([n2, v, f, cl]) => `<div class="kw"><span>${n2}</span><div class="kbar"><i class="${cl}" style="width:${(v / kmax * 100).toFixed(1)}%"></i><i class="${cl} fx" style="width:${(f / kmax * 100).toFixed(1)}%"></i></div><b>${fmt7(v + f, 2)} kr</b></div><small class="ksub">${fmt7(v, 2)} variabel + ${fmt7(f, 2)} faste bel\xF8b pr. kWh</small>`).join("")}
+  </section>
+  <section class="panel"><div class="head"><span class="hicon green"><ha-icon icon="mdi:tune-variant"></ha-icon></span><div><h3>Hvis gasprisen var \u2026</h3><p>Besparelse pr. \xE5r og tid til anl\xE6gget er betalt hjem</p></div></div>
+    ${sens.map((x) => `<div class="sv ${Math.abs(x.p - gasNow) < 1 ? "cur" : ""}"><span>${x.p} kr/m\xB3</span><div class="sbar"><i class="${x.y >= 0 ? "pos" : "neg"}" style="width:${(Math.abs(x.y) / smax * 100).toFixed(1)}%"></i></div><b class="${x.y >= 0 ? "pos" : "neg"}">${x.y >= 0 ? "+" : ""}${fmt7(x.y)} kr</b><em>${Number.isFinite(x.yrs) ? `${fmt7(x.yrs, 1)} \xE5r` : "\u2013"}</em></div>`).join("")}
+  </section>
+  <section class="panel w2"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h3>Varmeforbrug pr. m\xE5ned</h3><p>M\xE5lt p\xE5 fjernvarmen (fuld) og normal\xE5r brugt i prognosen (lys)</p></div></div>
+    <div class="kwh">${(forecast.length ? forecast : rows).map((r) => {
+      const m = r.month.slice(5);
+      const meas = rows.find((x) => x.month.slice(5) === m && !x.partial);
+      return `<div class="kc"><div class="kp"><i class="n" style="height:${(r.kwh / kwhMax * 100).toFixed(1)}%"></i>${meas ? `<i class="m" style="height:${(meas.kwh / kwhMax * 100).toFixed(1)}%"></i>` : ""}</div><span>${MONTHS5[+m - 1]}</span></div>`;
+    }).join("")}</div>
+  </section>
+</div>`;
+  }
+  getCardSize() {
+    return 9;
+  }
+  getGridOptions() {
+    return { rows: "auto", columns: 12, min_columns: 6 };
+  }
+  _num(v) {
+    if (typeof v === "number") return v;
+    const s = this._hass?.states?.[v];
+    const n = parseFloat(String(s?.state ?? v).replace(",", "."));
+    return Number.isFinite(n) ? n : NaN;
+  }
+  async _load() {
+    this._at = Date.now();
+    const c2 = this._config;
+    const start = c2.switch_date ? /* @__PURE__ */ new Date(`${c2.switch_date}T00:00:00`) : new Date(Date.now() - 365 * 864e5);
+    try {
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: new Date(start.getFullYear(), start.getMonth(), 1).toISOString(), statistic_ids: [c2.heat_energy], period: "day", types: ["change"] });
+      const byMonth = {};
+      for (const r of res[c2.heat_energy] || []) {
+        const d = new Date(r.start);
+        if (d < start) continue;
+        const k = ym(d);
+        const o = byMonth[k] || (byMonth[k] = { kwh: 0, days: 0 });
+        const v = r.change || 0;
+        if (v > 0 && v < (c2.max_kwh_day || 400)) o.kwh += v;
+        o.days += 1;
+      }
+      this._rows = byMonth;
+      this._err = "";
+    } catch (e) {
+      this._err = String(e?.message || e);
+    }
+    this._render();
+  }
+  _render() {
+    if (this.shadowRoot && this._config) keepScroll(this, () => {
+      this.shadowRoot.innerHTML = `<style>${STYLE13}</style>${this._html()}`;
+    });
+  }
+  _html() {
+    const c2 = this._config;
+    if (!this._rows) return `<div class="gs"><section class="panel"><p class="muted">${this._err ? `Kunne ikke hente varmem\xE5lerens statistik: ${esc15(this._err)}` : "Indl\xE6ser\u2026"}</p></section></div>`;
+    let months = {};
+    try {
+      months = c2.gas_price_months ? JSON.parse(this._hass.states[c2.gas_price_months]?.state || "{}") : {};
+    } catch {
+      months = {};
+    }
+    const gasNow = this._num(c2.gas_price);
+    const known = Object.values(months).map(Number).filter((v) => v > 0);
+    const gasAvg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : gasNow;
+    const heatPrice = this._num(c2.heat_price);
+    const rows = Object.keys(this._rows).sort().filter((k) => this._rows[k].kwh > 0).map((k) => monthCompare({ kwh: this._rows[k].kwh, month: k, days: this._rows[k].days, gasPrice: priceFor(k, months, gasNow || gasAvg), heatPrice, cfg: c2 }));
+    const sum = (f) => rows.reduce((s, r) => s + r[f], 0);
+    const saved = sum("saved"), gasTot = sum("gas"), heatTot = sum("heat");
+    const cur = rows.find((r) => r.partial);
+    const full = rows.filter((r) => !r.partial);
+    const prof = Array.isArray(c2.heat_profile) && c2.heat_profile.length === 12 ? c2.heat_profile.map(Number) : null;
+    const yearKwh = c2.year_kwh || (prof ? prof.reduce((a, b) => a + b, 0) : full.length >= 12 ? full.slice(-12).reduce((s, r) => s + r.kwh, 0) : NaN);
+    const now = /* @__PURE__ */ new Date();
+    const forecast = prof ? Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1), k = ym(d);
+      return monthCompare({ kwh: prof[d.getMonth()], month: k, days: daysIn2(k), gasPrice: gasNow || gasAvg, heatPrice, cfg: c2, now: /* @__PURE__ */ new Date(0) });
+    }) : [];
+    const fSaved = forecast.reduce((s, r) => s + r.saved, 0);
+    const fMax = Math.max(1, ...forecast.map((r) => Math.max(r.gas, r.heat)));
+    const trend = (() => {
+      const ks = Object.keys(months).sort();
+      if (ks.length < 2) return NaN;
+      const a = Number(months[ks[ks.length - 2]]), b = Number(months[ks[ks.length - 1]]);
+      return a > 0 ? (b - a) / a * 100 : NaN;
+    })();
+    const yearSaved = Number.isFinite(yearKwh) ? yearKwh / (c2.kwh_per_m3 * c2.efficiency) * (gasNow || gasAvg) + c2.gas_fixed_year + c2.service_year - (yearKwh * heatPrice + c2.heat_fixed_month * 12) : NaN;
+    const pct7 = c2.investment > 0 ? Math.max(0, Math.min(100, saved / c2.investment * 100)) : 0;
+    const yearsLeft = c2.investment > 0 && yearSaved > 0 ? Math.max(0, c2.investment - saved) / yearSaved : NaN;
+    const gasKwhHeat = (gasNow || gasAvg) / (c2.kwh_per_m3 * c2.efficiency);
+    const max = Math.max(1, ...rows.map((r) => Math.max(r.gas, r.heat)));
+    const R = 62, C2 = 2 * Math.PI * R;
+    return `<div class="gs">
+  <section class="hero">
+    <div class="aurora"></div>
+    <div class="ring"><svg viewBox="0 0 150 150"><circle class="bg" cx="75" cy="75" r="${R}"/><circle class="arc" cx="75" cy="75" r="${R}" stroke-dasharray="${(C2 * pct7 / 100).toFixed(1)} ${C2.toFixed(1)}"/></svg>
+      <div class="ring-in"><b>${fmt7(pct7)}%</b><span>betalt hjem</span>${c2.investment ? `<small>af ${fmt7(c2.investment)} kr</small>` : ""}</div></div>
+    <div class="id">
+      <div class="eyebrow">${esc15(c2.title)}</div>
+      <h2>${fmt7(saved)} kr sparet</h2>
+      <div class="mood ${saved >= 0 ? "" : "bad"}"><i></i>${saved >= 0 ? "billigere end gas med samme varmeforbrug" : "dyrere end gas med samme varmeforbrug"} siden ${esc15(c2.switch_date || "")}</div>
+      <div class="chips">
+        <span class="chip gas"><ha-icon icon="mdi:fire"></ha-icon>Gas nu ${fmt7(gasNow || gasAvg, 2)} kr/m\xB3 \xB7 ${fmt7(gasKwhHeat, 2)} kr/kWh varme${Number.isFinite(trend) ? ` \xB7 ${trend >= 0 ? "\u25B2" : "\u25BC"} ${fmt7(Math.abs(trend), 1)} % p\xE5 en m\xE5ned` : ""}</span>
+        <span class="chip heat"><ha-icon icon="mdi:radiator"></ha-icon>Fjernvarme ${fmt7(heatPrice, 2)} kr/kWh + ${fmt7(c2.heat_fixed_month)} kr/md</span>
+        ${cur ? `<span class="chip"><ha-icon icon="mdi:calendar-today"></ha-icon>${MONTHS5[+cur.month.slice(5) - 1]}: ${cur.saved >= 0 ? "+" : ""}${fmt7(cur.saved)} kr indtil nu</span>` : ""}
+        ${Number.isFinite(yearSaved) ? `<span class="chip good"><ha-icon icon="mdi:calendar-check"></ha-icon>\u2248 ${fmt7(yearSaved)} kr/\xE5r</span>` : ""}
+        ${Number.isFinite(yearsLeft) ? `<span class="chip"><ha-icon icon="mdi:timer-sand"></ha-icon>${yearsLeft <= 0 ? "Betalt hjem" : `\u2248 ${fmt7(yearsLeft, 1)} \xE5r tilbage`}</span>` : ""}
+      </div>
+    </div>
+  </section>
+  <div class="grid">
+    <section class="panel stat"><span>Gas ville have kostet</span><b class="g">${fmt7(gasTot)} kr</b><small>${fmt7(sum("m3"))} m\xB3 gas \xB7 inkl. net, afgifter, abonnement${c2.service_year ? " og service" : ""}</small></section>
+    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h">${fmt7(heatTot)} kr</b><small>${fmt7(sum("kwh"))} kWh \xB7 inkl. faste afgifter</small></section>
+    <section class="panel stat"><span>Forskel</span><b class="${saved >= 0 ? "s" : "r"}">${saved >= 0 ? "+" : "\u2212"}${fmt7(Math.abs(saved))} kr</b><small>${gasTot > 0 ? `${fmt7(saved / gasTot * 100)} % ${saved >= 0 ? "billigere" : "dyrere"}` : ""}</small></section>
+  </div>
+  ${forecast.length ? `<section class="panel fc">
+    <div class="head"><span class="hicon blue"><ha-icon icon="mdi:crystal-ball"></ha-icon></span><div><h3>Prognose de n\xE6ste 12 m\xE5neder</h3><p>Normalt varmeforbrug pr. m\xE5ned \xB7 gas til dagens pris ${fmt7(gasNow || gasAvg, 2)} kr/m\xB3 \xB7 fjernvarme til nuv\xE6rende takst</p></div><b class="fsum ${fSaved >= 0 ? "pos" : "neg"}">${fSaved >= 0 ? "+" : ""}${fmt7(fSaved)} kr</b></div>
+    <div class="fbars">${forecast.map((r) => `<div class="fcol" title="${MONTHS5[+r.month.slice(5) - 1]}: gas ${fmt7(r.gas)} kr \xB7 fjernvarme ${fmt7(r.heat)} kr"><div class="fpair"><i class="g" style="height:${(r.gas / fMax * 100).toFixed(1)}%"></i><i class="h" style="height:${(r.heat / fMax * 100).toFixed(1)}%"></i></div><em class="${r.saved >= 0 ? "pos" : "neg"}">${r.saved >= 0 ? "+" : ""}${fmt7(r.saved / 1e3, 1)}k</em><span>${MONTHS5[+r.month.slice(5) - 1]}</span></div>`).join("")}</div>
+    <p class="foot">Gasprisen er ukendt fremover, s\xE5 prognosen bruger dagens pris. Stiger gassen videre hen over vinteren, bliver besparelsen st\xF8rre \u2013 falder den, mindre. ${Number.isFinite(yearsLeft) && c2.investment ? `Med dette niveau er anl\xE6gget betalt hjem om ca. ${fmt7(yearsLeft, 1)} \xE5r.` : ""}</p>
+  </section>` : ""}
+  <section class="panel">
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>M\xE5ned for m\xE5ned</h3><p>Samme varme: gas til den m\xE5neds pris mod det, fjernvarmen kostede</p></div></div>
+    <div class="months">${rows.slice().reverse().map((r) => `<div class="mrow">
+      <span class="m">${MONTHS5[+r.month.slice(5) - 1]} ${r.month.slice(2, 4)}${r.partial ? "<em>nu</em>" : ""}</span>
+      <div class="bars"><div class="bar g"><i style="width:${(r.gas / max * 100).toFixed(1)}%"></i><b>${fmt7(r.gas)} kr</b><small>${fmt7(r.gasPrice, 2)} kr/m\xB3</small></div>
+      <div class="bar h"><i style="width:${(r.heat / max * 100).toFixed(1)}%"></i><b>${fmt7(r.heat)} kr</b><small>${fmt7(r.kwh)} kWh</small></div></div>
+      <span class="s ${r.saved >= 0 ? "pos" : "neg"}">${r.saved >= 0 ? "+" : ""}${fmt7(r.saved)}</span></div>`).join("")}</div>
+    <div class="legend"><span><i class="g"></i>Hvis vi var p\xE5 gas</span><span><i class="h"></i>Fjernvarme</span></div>
+    <p class="foot">Gas: kWh \xF7 (${fmt7(c2.kwh_per_m3)} kWh/m\xB3 \xD7 ${fmt7(c2.efficiency * 100)} % kedel) \xD7 m\xE5nedens samlede gaspris${known.length ? "" : " (dagens pris)"} + ${fmt7((c2.gas_fixed_year + c2.service_year) / 12)} kr/md faste bel\xF8b. M\xE5neder uden gemt gaspris bruger ${known.length ? "gennemsnittet" : "dagens pris"}.</p>
+  </section>
+${this._wide() ? this._wideHtml({ rows, forecast, c: c2, gasNow: gasNow || gasAvg, heatPrice, saved, yearKwh, months }) : ""}
+</div>`;
+  }
+};
 var STYLE13 = `
+:host{display:block}
+.gs{--g:#ff8a3d;--h:#4cc9ff;--ok:var(--dashboard-success,#4fe0a6);--bad:var(--dashboard-danger,#ff667a);--s:var(--surface,var(--ha-card-background,var(--card-background-color,#141c27)));--l:color-mix(in srgb,var(--primary-text-color) 9%,transparent);display:grid;gap:14px;color:var(--primary-text-color)}
+.hero,.panel{position:relative;border-radius:24px;background:var(--s);border:1px solid var(--l);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid var(--ok);box-shadow:var(--dashboard-shadow-strong,0 12px 32px rgba(0,0,0,.22));animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.hero{isolation:isolate;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:center;padding:22px 24px;background:linear-gradient(135deg,color-mix(in srgb,var(--s) 90%,#000),var(--s))}
+.aurora{position:absolute;inset:-40%;z-index:-1;background:radial-gradient(38% 34% at 18% 35%,color-mix(in srgb,var(--ok) 22%,transparent),transparent 70%),radial-gradient(34% 30% at 78% 28%,color-mix(in srgb,var(--g) 20%,transparent),transparent 70%),radial-gradient(36% 36% at 60% 90%,color-mix(in srgb,var(--h) 16%,transparent),transparent 70%);filter:blur(10px);animation:au 24s ease-in-out infinite alternate}
+@keyframes au{50%{transform:translate(4%,-3%) rotate(8deg)}100%{transform:translate(-3%,4%) rotate(-6deg)}}
+.ring{position:relative;width:150px;height:150px}.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .bg{fill:none;stroke:color-mix(in srgb,var(--primary-text-color) 8%,transparent);stroke-width:11}
+.ring .arc{fill:none;stroke:var(--ok);stroke-width:11;stroke-linecap:round;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--ok) 70%,transparent))}
+.ring-in{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.05}.ring-in b{font-size:32px;font-weight:850}.ring-in span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--secondary-text-color)}.ring-in small{margin-top:5px;font-size:12px;font-weight:800;color:var(--ok)}
+.eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}
+.id h2{margin:2px 0 6px;font-size:36px;line-height:1.05;font-weight:850;letter-spacing:-.02em;background:linear-gradient(100deg,var(--primary-text-color) 30%,var(--ok));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mood{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px;font-weight:750;color:color-mix(in srgb,var(--ok) 70%,var(--primary-text-color))}.mood i{width:9px;height:9px;border-radius:50%;background:var(--ok)}.mood.bad{color:var(--bad)}.mood.bad i{background:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--primary-text-color) 6%,transparent);border:1px solid var(--l)}.chip ha-icon{--mdc-icon-size:16px;color:var(--secondary-text-color)}.chip.gas ha-icon{color:var(--g)}.chip.heat ha-icon{color:var(--h)}.chip.good ha-icon{color:var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.panel{padding:18px}.stat{display:flex;flex-direction:column;gap:4px;border-left-color:var(--l)}.stat span{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--secondary-text-color)}.stat b{font-size:28px;font-weight:850;letter-spacing:-.02em}.stat b.g{color:var(--g)}.stat b.h{color:var(--h)}.stat b.s{color:var(--ok)}.stat b.r{color:var(--bad)}.stat small{font-size:12px;color:var(--secondary-text-color)}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:12px}.head h3{margin:0;font-size:16px;font-weight:800}.head p{margin:2px 0 0;font-size:12.5px;color:var(--secondary-text-color)}
+.hicon.blue{background:color-mix(in srgb,var(--h) 15%,transparent);color:var(--h)}.head>div{flex:1;min-width:0}.fsum{font-size:22px;font-weight:850}.fsum.pos{color:var(--ok)}.fsum.neg{color:var(--bad)}
+.fbars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end}.fcol{display:flex;flex-direction:column;align-items:center;gap:4px}.fpair{display:flex;gap:2px;align-items:flex-end;height:110px;width:100%;justify-content:center}.fpair i{display:block;width:42%;border-radius:5px 5px 2px 2px;animation:up .9s cubic-bezier(.2,.8,.2,1) both}@keyframes up{from{height:0}}.fpair i.g{background:linear-gradient(180deg,var(--g),color-mix(in srgb,var(--g) 40%,transparent))}.fpair i.h{background:linear-gradient(180deg,var(--h),color-mix(in srgb,var(--h) 40%,transparent))}.fcol em{font-style:normal;font-size:10.5px;font-weight:850}.fcol em.pos{color:var(--ok)}.fcol em.neg{color:var(--bad)}.fcol span{font-size:10.5px;color:var(--secondary-text-color);font-weight:700}
+.hicon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.months{display:grid;gap:10px}
+.mrow{display:grid;grid-template-columns:70px minmax(0,1fr) 80px;gap:12px;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--l)}.mrow:last-child{border-bottom:0}
+.mrow .m{font-weight:850;font-size:14px;display:flex;flex-direction:column}.mrow .m em{font-style:normal;font-size:9.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--h)}
+.bars{display:grid;gap:4px}.bar{position:relative;height:24px;border-radius:8px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);overflow:hidden;display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:8px;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}@keyframes grow{from{width:0}}
+.bar.g i{background:linear-gradient(90deg,color-mix(in srgb,var(--g) 30%,transparent),color-mix(in srgb,var(--g) 75%,transparent))}.bar.h i{background:linear-gradient(90deg,color-mix(in srgb,var(--h) 30%,transparent),color-mix(in srgb,var(--h) 75%,transparent))}
+.bar b,.bar small{position:relative}.bar b{padding-left:9px;font-size:12.5px;font-weight:850}.bar small{font-size:11px;font-weight:700;color:var(--secondary-text-color)}
+.mrow .s{text-align:right;font-weight:850;font-size:15px}.mrow .s.pos{color:var(--ok)}.mrow .s.neg{color:var(--bad)}
+.legend{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--secondary-text-color)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}.legend .g{background:var(--g)}.legend .h{background:var(--h)}
+.foot{margin:10px 2px 0;font-size:11.5px;line-height:1.5;color:var(--secondary-text-color)}.muted{margin:0;color:var(--secondary-text-color)}
+.wide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.wide .w2{grid-column:1/-1}
+.chart{width:100%;height:190px;display:block}.chart .acc{fill:none;stroke:var(--ok);stroke-width:3;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ok) 60%,transparent))}.chart .fut{fill:none;stroke:var(--ok);stroke-width:2;stroke-dasharray:6 6;opacity:.55;vector-effect:non-scaling-stroke}.chart circle{fill:var(--ok)}.chart .goal{stroke:var(--g);stroke-width:1.5;stroke-dasharray:4 6;vector-effect:non-scaling-stroke;opacity:.7}.chart .gl{fill:none;stroke:var(--g);stroke-width:3;vector-effect:non-scaling-stroke}.chart .hl{fill:none;stroke:var(--h);stroke-width:3;vector-effect:non-scaling-stroke}.chart .lbl{font-size:11px;fill:var(--secondary-text-color);font-weight:700}.chart .lbl.ok{fill:var(--ok)}
+.kw{display:grid;grid-template-columns:90px minmax(0,1fr) 70px;gap:10px;align-items:center;margin-top:10px}.kw span{font-weight:800}.kw b{text-align:right;font-size:16px}.kbar{display:flex;height:22px;border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent)}.kbar i{height:100%}.kbar i.g{background:var(--g)}.kbar i.h{background:var(--h)}.kbar i.fx{opacity:.45}.ksub{display:block;margin:3px 0 0 100px;font-size:11px;color:var(--secondary-text-color)}
+.sv{display:grid;grid-template-columns:80px minmax(0,1fr) 90px 54px;gap:10px;align-items:center;padding:6px 8px;border-radius:10px}.sv.cur{background:color-mix(in srgb,var(--g) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 40%,transparent)}.sv span{font-weight:800}.sbar{height:18px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}.sbar i{display:block;height:100%}.sbar i.pos{background:color-mix(in srgb,var(--ok) 70%,transparent)}.sbar i.neg{background:color-mix(in srgb,var(--bad) 70%,transparent)}.sv b{text-align:right}.sv b.pos{color:var(--ok)}.sv b.neg{color:var(--bad)}.sv em{font-style:normal;text-align:right;color:var(--secondary-text-color);font-size:12px}
+.kwh{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end}.kc{display:flex;flex-direction:column;align-items:center;gap:4px}.kp{position:relative;height:120px;width:70%}.kp i{position:absolute;left:0;right:0;bottom:0;border-radius:6px 6px 2px 2px}.kp i.n{background:color-mix(in srgb,var(--h) 30%,transparent)}.kp i.m{left:22%;right:22%;background:var(--h)}.kc span{font-size:11px;color:var(--secondary-text-color);font-weight:700}
+.hicon.green{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+@media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+`;
+if (!customElements.get("ha-gas-savings-card")) customElements.define("ha-gas-savings-card", HAGasSavingsCard);
+window.customCards = window.customCards || [];
+window.customCards.push({ type: "ha-gas-savings-card", name: "HA Gas Savings Card", description: "Hvad fjernvarmen sparer i forhold til gas med samme varmeforbrug", preview: false });
+console.info(`%c HA-GAS-SAVINGS-CARD %c ${VERSION59} `, "color:#111;background:#4fe0a6;font-weight:700", "color:#4fe0a6;background:#111");
+
+// src/cards/huawei-solar-card/styles.js
+var STYLE14 = `
 :host{--sun:#e9b85c;--home:#86c8ea;--bat:#6fd6a6;--grid:#a99cf0;--exp:#ee9b6c;--ev:#e690bb;--bad:#ef6b7b;
   --ink:var(--primary-text-color,#eceff5);--mut:color-mix(in srgb,var(--ink) 52%,transparent);--faint:color-mix(in srgb,var(--ink) 30%,transparent);
   --paper:var(--ha-card-background,var(--card-background-color,#12161f));--line:color-mix(in srgb,var(--ink) 8%,transparent);
@@ -73823,7 +74130,7 @@ var LABEL = {
 };
 var lbl = (v) => LABEL[v] || String(v ?? "\u2013").replaceAll("_", " ");
 var NS = "http://www.w3.org/2000/svg";
-var esc15 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc16 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var fmtW = (w) => {
   w = Math.abs(w || 0);
   return w >= 1e3 ? (w / 1e3).toFixed(2).replace(".", ",") + " kW" : Math.round(w) + " W";
@@ -74267,7 +74574,7 @@ var HuaweiSolarPopup = class extends HTMLElement {
       price: ["Elpris", "var(--sun)", "tag"],
       ev: ["Elbil\u2011lader", "var(--ev)", "ev"]
     }[this.kind] || ["Detaljer", "var(--sun)", "panel"];
-    this._root.innerHTML = `<style>${STYLE13}${POP_STYLE}</style><div class="bg"></div>
+    this._root.innerHTML = `<style>${STYLE14}${POP_STYLE}</style><div class="bg"></div>
       <div class="dlg" style="--c:${META[1]}" role="dialog" aria-label="${META[0]}">
         <div class="head"><div class="ib">${ic(META[2], 20)}</div><h2>${META[0]}</h2><button class="x" aria-label="Luk">\xD7</button></div>
         <div class="body" id="body"></div>
@@ -74321,18 +74628,18 @@ var HuaweiSolarPopup = class extends HTMLElement {
         break;
       case "inverter": {
         const alarm = c2.st("alarms");
-        h = `<div class="grid2">${cell("Status", esc15(c2.st("invStatus")), "var(--bat)")}${cell("Aktiv effekt", fmtW(d.inv))}${cell("Virkningsgrad", fmtN(c2.n("eff"), 1) + " %")}${cell("Alarmer", alarm === "None" ? "Ingen \u2713" : esc15(alarm), alarm === "None" ? "var(--bat)" : "var(--bad)")}
-          ${cell("Produceret i dag", fmtN(c2.n("invDay"), 2) + " kWh")}${cell("PV\u2011forbindelse", esc15(c2.st("pvConn")))}${cell("Startet i dag", c2.s("start") ? new Date(c2.st("start")).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }) : "\u2013")}${cell("Total produceret", kwh(c2.n("pvTot")) + " kWh")}</div>
-          <div class="note">${esc15(c2.st("invState"))}</div>
+        h = `<div class="grid2">${cell("Status", esc16(c2.st("invStatus")), "var(--bat)")}${cell("Aktiv effekt", fmtW(d.inv))}${cell("Virkningsgrad", fmtN(c2.n("eff"), 1) + " %")}${cell("Alarmer", alarm === "None" ? "Ingen \u2713" : esc16(alarm), alarm === "None" ? "var(--bat)" : "var(--bad)")}
+          ${cell("Produceret i dag", fmtN(c2.n("invDay"), 2) + " kWh")}${cell("PV\u2011forbindelse", esc16(c2.st("pvConn")))}${cell("Startet i dag", c2.s("start") ? new Date(c2.st("start")).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" }) : "\u2013")}${cell("Total produceret", kwh(c2.n("pvTot")) + " kWh")}</div>
+          <div class="note">${esc16(c2.st("invState"))}</div>
           <div class="sec">Styring</div>
           ${this._num("derate", "Effektbegr\xE6nsning", `Maks. AC\u2011effekt fra inverteren. ${groupDigits(P2.max_power)} W = ingen begr\xE6nsning.`, "var(--sun)", 0, P2.max_power, 100)}
           ${this._sw("invSwitch", "Inverter t\xE6ndt", "Slukker du, stopper al solcelleproduktion indtil den t\xE6ndes igen.", "var(--sun)")}`;
         break;
       }
       case "battery":
-        h = `<div class="grid2">${cell("Ladestand", Math.round(d.soc) + " %", "var(--bat)")}${cell("Effekt", (d.bat > 25 ? "+" : d.bat < -25 ? "\u2212" : "") + fmtW(d.bat))}${cell("Status", esc15(c2.st("batStatus") === "Running" ? "K\xF8rer" : c2.st("batStatus")))}${cell("Driftsform", lbl(c2.st("mode")))}
+        h = `<div class="grid2">${cell("Ladestand", Math.round(d.soc) + " %", "var(--bat)")}${cell("Effekt", (d.bat > 25 ? "+" : d.bat < -25 ? "\u2212" : "") + fmtW(d.bat))}${cell("Status", esc16(c2.st("batStatus") === "Running" ? "K\xF8rer" : c2.st("batStatus")))}${cell("Driftsform", lbl(c2.st("mode")))}
           ${cell("Ladet i dag", fmtN(c2.n("chDay"), 1) + " kWh")}${cell("Afladet i dag", fmtN(c2.n("disDay"), 1) + " kWh")}${cell("Ladet i alt", kwh(c2.n("batTotCh")) + " kWh")}${cell("Afladet i alt", kwh(c2.n("batTotDis")) + " kWh")}
-          ${cell("Bussp\xE6nding", fmtN(c2.n("busV"), 0) + " V")}${cell("Tvangsopladning", c2.st("forc") === "Stopped" ? "Stoppet" : esc15(c2.st("forc")))}${cell("Min. / maks. SOC", fmtN(c2.n("eod"), 0) + " / " + fmtN(c2.n("eoc"), 0) + " %")}${cell("Opladning fra net", c2.st("gridCh") === "on" ? "Til" : "Fra")}</div>
+          ${cell("Bussp\xE6nding", fmtN(c2.n("busV"), 0) + " V")}${cell("Tvangsopladning", c2.st("forc") === "Stopped" ? "Stoppet" : esc16(c2.st("forc")))}${cell("Min. / maks. SOC", fmtN(c2.n("eod"), 0) + " / " + fmtN(c2.n("eoc"), 0) + " %")}${cell("Opladning fra net", c2.st("gridCh") === "on" ? "Til" : "Fra")}</div>
           <div class="sec">Sidste 24 timer</div>${leg}${chart("ph")}
           <button class="btn pri" id="toCtl" style="background:var(--bat);justify-self:start">\xC5bn styring</button>`;
         break;
@@ -74360,7 +74667,7 @@ var HuaweiSolarPopup = class extends HTMLElement {
         break;
       }
       case "ev":
-        h = `<div class="grid2">${cell("Status", d.evOn ? "Lader" : "Standby", d.evOn ? "var(--ev)" : "")}${cell("Temperatur", fmtN(c2.n("evTemp"), 1) + " \xB0C")}${cell("Ladet i alt", kwh(d.evTot) + " kWh", "var(--ev)")}${P2.charger_model ? cell("Model", esc15(P2.charger_model)) : ""}</div>
+        h = `<div class="grid2">${cell("Status", d.evOn ? "Lader" : "Standby", d.evOn ? "var(--ev)" : "")}${cell("Temperatur", fmtN(c2.n("evTemp"), 1) + " \xB0C")}${cell("Ladet i alt", kwh(d.evTot) + " kWh", "var(--ev)")}${P2.charger_model ? cell("Model", esc16(P2.charger_model)) : ""}</div>
           <div class="note"><b>Styring:</b> Huawei\u2011integrationen i Home Assistant kan i dag kun <i>afl\xE6se</i> laderen (energi og temperatur). Start/stop, ladestr\xF8m og sol\u2011ladning styres i FusionSolar\u2011appen.<br><br>
           Status \u201CLader\u201D vurderes ud fra, at den samlede ladede energi stiger.</div>`;
         break;
@@ -74607,10 +74914,10 @@ var Scene3D = {
           ${sign("pv", "solar", "var(--sun)", "panel", "Solceller")}${sign("home", "home", "var(--home)", "home", "Huset")}
           ${sign("bat", "battery", "var(--bat)", "battery", "Batteri")}${sign("grid", "grid", "var(--grid)", "grid", "Elnet")}${sign("ev", "ev", "var(--ev)", "ev", "Elbil")}
         </div>
-        <div class="hud"><div style="min-width:0"><div class="eb">${esc15(this._plant.name)} \xB7 live</div><div class="ttl" id="summary3">&nbsp;</div></div>
+        <div class="hud"><div style="min-width:0"><div class="eb">${esc16(this._plant.name)} \xB7 live</div><div class="ttl" id="summary3">&nbsp;</div></div>
           <div class="rt"><span class="wx" id="wx3"></span><span class="pill" id="live3"><span class="d"></span>Live</span></div></div>
         <div class="info">${it("x1", "i3pv", "I dag")}${it("x2", "i3use", "Forbrug")}${it("x3", "i3aut", "Selvforsynet")}${it("x4", "i3price", "Elpris")}${it("x5", "i3save", "Sparet")}</div>
-        <div class="foot"><span>${esc15(this._site.attribution)}</span><div class="btns3"><button id="b3top">Ovenfra</button><button id="b3tour">Rundtur</button></div></div>
+        <div class="foot"><span>${esc16(this._site.attribution)}</span><div class="btns3"><button id="b3top">Ovenfra</button><button id="b3tour">Rundtur</button></div></div>
       </div>
     </div>`;
   },
@@ -75697,7 +76004,7 @@ var HuaweiSolarCard = class extends HTMLElement {
       this._3d.ro.disconnect();
       this._3d = null;
     }
-    this._root.innerHTML = `<style>${STYLE13}${is3d ? STYLE3D : ""}</style><div class="wrap">${is3d ? this._sceneHTML() : ""}${main ? this._mainHTML() : ""}${side ? this._sideHTML() : ""}</div>`;
+    this._root.innerHTML = `<style>${STYLE14}${is3d ? STYLE3D : ""}</style><div class="wrap">${is3d ? this._sceneHTML() : ""}${main ? this._mainHTML() : ""}${side ? this._sideHTML() : ""}</div>`;
     this._flows = null;
     this._tw = {};
     this._pk = null;
@@ -75815,19 +76122,19 @@ var HuaweiSolarCard = class extends HTMLElement {
       </div>
     </div>`;
   }
-  tween(id, val, fmt8) {
+  tween(id, val, fmt9) {
     const el = this.$(id);
     if (!el) return;
     const from = this._tw[id] ?? 0;
     this._tw[id] = val;
     const t0 = performance.now();
     if (Math.abs(from - val) < 1e-6) {
-      el.textContent = fmt8(val);
+      el.textContent = fmt9(val);
       return;
     }
     const step = (t) => {
       const p = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - p, 4);
-      el.textContent = fmt8(from + (val - from) * e);
+      el.textContent = fmt9(from + (val - from) * e);
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -75850,7 +76157,7 @@ var HuaweiSolarCard = class extends HTMLElement {
   pill(id, text2, col) {
     const el = this.$(id);
     if (!el) return;
-    const t = `<span class="d"></span>${esc15(text2)}`;
+    const t = `<span class="d"></span>${esc16(text2)}`;
     if (el._h !== t) {
       el.innerHTML = t;
       el._h = t;
@@ -76025,7 +76332,7 @@ var HuaweiSolarCard = class extends HTMLElement {
     sb.classList.toggle("dis", bat < -25);
     sb.classList.toggle("idle", Math.abs(bat) < 25);
     this.html("batMeta", `<b>${bat > 25 ? "+" : bat < -25 ? "\u2212" : ""}${fmtW(bat)}</b>`);
-    this.html("batMeta2", `${esc15(lbl(this.st("mode")))} \xB7 gr\xE6nser ${fmtN(this.n("eod"), 0)}\u2013${fmtN(this.n("eoc"), 0)} % \xB7 ladet ${fmtN(this.n("chDay"), 1)} / afladet ${fmtN(this.n("disDay"), 1)} kWh`);
+    this.html("batMeta2", `${esc16(lbl(this.st("mode")))} \xB7 gr\xE6nser ${fmtN(this.n("eod"), 0)}\u2013${fmtN(this.n("eoc"), 0)} % \xB7 ladet ${fmtN(this.n("chDay"), 1)} / afladet ${fmtN(this.n("disDay"), 1)} kWh`);
     this.pill("batPill", d.offline ? "Offline" : Math.abs(bat) < 25 ? "Hviler" : bat > 0 ? "Lader" : "Aflader", d.offline ? "var(--bad)" : Math.abs(bat) < 25 ? "var(--mut)" : "var(--bat)");
     if (d.hasPrice) {
       this.txt("priceNow", fmtN(priceNow, 2));
@@ -77249,7 +77556,7 @@ var kw = (w) => {
   return a >= 1e3 ? [num5(a / 1e3, 2), "kW"] : [String(Math.round(a)), "W"];
 };
 var kwS = (w) => kw(w).join(" ");
-var esc16 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc17 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 var clamp5 = (v, a, b) => Math.max(a, Math.min(b, v));
 var hm3 = (d) => `${h2(d.getHours())}.${h2(d.getMinutes())}`;
 var IC = {
@@ -77368,7 +77675,7 @@ var ThEnergyCard = class extends HTMLElement {
     const e = this.$(id);
     if (e) e.style.width = clamp5(frac * 100, 0, 100) + "%";
   }
-  count(id, val, fmt8, unit = "") {
+  count(id, val, fmt9, unit = "") {
     const e = this.$(id);
     if (!e) return;
     this._cv = this._cv || {};
@@ -77376,12 +77683,12 @@ var ThEnergyCard = class extends HTMLElement {
     this._cv[id] = val;
     const t0 = performance.now(), u2 = unit ? `<span class="u">${unit}</span>` : "";
     if (Math.abs(from - val) < 1e-9) {
-      e.innerHTML = fmt8(val) + u2;
+      e.innerHTML = fmt9(val) + u2;
       return;
     }
     const step = (t) => {
       const p = Math.min(1, (t - t0) / 1300), k = 1 - Math.pow(1 - p, 4);
-      e.innerHTML = fmt8(from + (val - from) * k) + u2;
+      e.innerHTML = fmt9(from + (val - from) * k) + u2;
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -77465,7 +77772,7 @@ var ThEnergyCard = class extends HTMLElement {
 
       <section class="s hero c8" id="hero">
         <div class="aur" id="aur"><i></i><i></i><i></i></div>
-        <div class="hero-top"><div><div class="k">Energi${this.S.name ? ` \xB7 ${esc16(this.S.name)}` : ""}</div><div class="say" id="say">&nbsp;</div></div><span class="chip live" id="live"><span class="dot"></span>Live</span></div>
+        <div class="hero-top"><div><div class="k">Energi${this.S.name ? ` \xB7 ${esc17(this.S.name)}` : ""}</div><div class="say" id="say">&nbsp;</div></div><span class="chip live" id="live"><span class="dot"></span>Live</span></div>
         <div class="hero-grid">
           <div class="col">${ins("sun", "solar", "var(--gold)", "sun", "Solceller")}${ins("grid", "grid", "var(--vio)", "grid", "Elnet")}</div>
           <div class="ring" id="ring">
@@ -77886,7 +78193,7 @@ var ThEnergyCard = class extends HTMLElement {
     c2.style.setProperty("--c", d.off || d.fault ? "var(--red)" : "var(--emer)");
     this.set("invChip", `<span class="dot"></span>${d.off ? "Offline" : d.fault ? "Fejl" : "K\xF8rer normalt"}`);
     const r = (k, v) => `<div class="row"><span>${k}</span><b>${v}</b></div>`;
-    this.set("ctlRows", r("Inverter", `${esc16(this.st("invStatus"))} \xB7 ${kwS(d.inv)}`) + r("Driftsform", nm(this.st("mode"))) + r("Opladning fra elnet", this.st("gridCh") === "on" ? "Tilladt" : "Sl\xE5et fra") + (this.E.maxFeed ? r("Maks. salg til net", kwS(this.n("maxFeed"))) : "") + r("Alarmer", d.alarm === "None" ? "Ingen" : esc16(d.alarm)));
+    this.set("ctlRows", r("Inverter", `${esc17(this.st("invStatus"))} \xB7 ${kwS(d.inv)}`) + r("Driftsform", nm(this.st("mode"))) + r("Opladning fra elnet", this.st("gridCh") === "on" ? "Tilladt" : "Sl\xE5et fra") + (this.E.maxFeed ? r("Maks. salg til net", kwS(this.n("maxFeed"))) : "") + r("Alarmer", d.alarm === "None" ? "Ingen" : esc17(d.alarm)));
   }
   _totals(d) {
     const t = (k, v, u2) => `<div><small>${k}</small><b>${v}<em>${u2}</em></b></div>`, big = (v) => Math.round(v).toLocaleString("da-DK");
@@ -78026,10 +78333,10 @@ var ThEnergySheet = class extends HTMLElement {
     const c2 = this.c, d = c2.calc(), k = this.kind;
     const S = c2.S, kwh2 = c2.batKwh(), solarSub = [S.panels ? `${S.panels} paneler` : "", S.inverterModel || ""].filter(Boolean).join(" \xB7 ");
     const META = {
-      solar: ["Solceller", "var(--gold)", "sun", esc16(solarSub)],
+      solar: ["Solceller", "var(--gold)", "sun", esc17(solarSub)],
       grid: ["Elnet", "var(--vio)", "grid", "EMMA energistyring"],
       battery: ["Batteri", "var(--emer)", "battery", `${c2.layout.batteries}\xD7 LUNA2000 \xB7 ca. ${num5(kwh2, kwh2 % 1 ? 1 : 0)} kWh`],
-      ev: ["Elbil\u2011lader", "var(--rose)", "car", esc16(S.chargerModel || "")],
+      ev: ["Elbil\u2011lader", "var(--rose)", "car", esc17(S.chargerModel || "")],
       control: ["Styring", "var(--gold)", "gear", "\xC6ndringer sendes f\xF8rst, n\xE5r du trykker Anvend"]
     }[k] || ["Detaljer", "var(--gold)", "gear", ""];
     const cell = (l, v, col) => `<div class="cell"><small>${l}</small><b ${col ? `style="color:${col}"` : ""}>${v}</b></div>`;
@@ -78038,11 +78345,11 @@ var ThEnergySheet = class extends HTMLElement {
       const s1 = c2.n("pv1v") * c2.n("pv1a"), s2 = c2.n("pv2v") * c2.n("pv2a");
       body = `<div class="grid">${cell("Produktion nu", kwS(d.pv), "var(--gold)")}${cell("I dag", num5(d.pvDay, 1) + " kWh")}${cell("Denne time", num5(c2.n("hourY"), 2) + " kWh")}${cell("Peak i dag", kwS(c2.n("peak")))}</div>
       <div class="grp">Strenge</div><div class="grid">${cell("Streng 1", kwS(s1), "var(--gold)")}${cell("Streng 1 sp\xE6nding", `${Math.round(c2.n("pv1v"))} V \xB7 ${num5(c2.n("pv1a"), 2)} A`)}${cell("Streng 2", kwS(s2), "var(--gold)")}${cell("Streng 2 sp\xE6nding", `${Math.round(c2.n("pv2v"))} V \xB7 ${num5(c2.n("pv2a"), 2)} A`)}</div>
-      <div class="grp">Inverter</div><div class="grid">${cell("Status", esc16(c2.st("invStatus")), d.fault ? "var(--red)" : "var(--emer)")}${cell("Virkningsgrad", num5(c2.n("eff"), 1) + " %")}${cell("Alarmer", d.alarm === "None" ? "Ingen" : esc16(d.alarm))}${cell("AC\u2011effekt", kwS(d.inv))}</div>
-      <div class="note">${esc16(c2.st("invState"))}</div>`;
+      <div class="grp">Inverter</div><div class="grid">${cell("Status", esc17(c2.st("invStatus")), d.fault ? "var(--red)" : "var(--emer)")}${cell("Virkningsgrad", num5(c2.n("eff"), 1) + " %")}${cell("Alarmer", d.alarm === "None" ? "Ingen" : esc17(d.alarm))}${cell("AC\u2011effekt", kwS(d.inv))}</div>
+      <div class="note">${esc17(c2.st("invState"))}</div>`;
     } else if (k === "grid") body = `<div class="grid">${cell(d.grid > 0 ? "K\xF8ber nu" : "S\xE6lger nu", kwS(d.grid), d.grid > 0 ? "var(--vio)" : "var(--coral)")}${cell("K\xF8bt i dag", num5(d.imp, 1) + " kWh")}${cell("Solgt i dag", num5(d.exp, 1) + " kWh")}${c2.hasPrice ? cell("Elpris nu", num5(d.priceNow, 2) + " kr") : ""}
       ${cell("K\xF8bt i alt", Math.round(c2.n("impTot")).toLocaleString("da-DK") + " kWh")}${cell("Solgt i alt", Math.round(c2.n("expTot")).toLocaleString("da-DK") + " kWh")}${c2.E.co2 ? cell("CO\u2082 i nettet", Math.round(c2.n("co2")) + " g/kWh") : ""}</div>`;
-    else if (k === "battery") body = `<div class="grid">${cell("Ladestand", Math.round(d.soc) + " %", "var(--emer)")}${cell("Effekt", kwS(d.bat))}${cell("Status", c2.st("batStatus") === "Running" ? "K\xF8rer" : esc16(c2.st("batStatus")))}${cell("Driftsform", nm(c2.st("mode")))}
+    else if (k === "battery") body = `<div class="grid">${cell("Ladestand", Math.round(d.soc) + " %", "var(--emer)")}${cell("Effekt", kwS(d.bat))}${cell("Status", c2.st("batStatus") === "Running" ? "K\xF8rer" : esc17(c2.st("batStatus")))}${cell("Driftsform", nm(c2.st("mode")))}
       ${cell("Ladet i dag", num5(d.ch, 1) + " kWh")}${cell("Afladet i dag", num5(d.dis, 1) + " kWh")}${cell("Ladet i alt", Math.round(c2.n("batTotCh")).toLocaleString("da-DK") + " kWh")}${cell("Afladet i alt", Math.round(c2.n("batTotDis")).toLocaleString("da-DK") + " kWh")}</div>
       <button class="btn gold" id="toCtl">\xC5bn styring</button>`;
     else if (k === "ev") body = `<div class="grid">${cell("Status", d.evOn ? "Lader" : "Standby", d.evOn ? "var(--rose)" : "")}${cell("Temperatur", num5(c2.n("evTemp"), 1) + " \xB0C")}${cell("Ladet i alt", Math.round(d.evTot).toLocaleString("da-DK") + " kWh", "var(--rose)")}${c2.hasPrice ? cell("Elpris nu", num5(d.priceNow, 2) + " kr") : ""}</div>
@@ -78469,13 +78776,13 @@ var EnergyTodayCard = class extends EnergyCard {
 register("fb-energy-today-card", EnergyTodayCard, "Dagens str\xF8m i tal", "Sol, husforbrug, k\xF8b og levering til elnettet med danske forklaringer.");
 
 // src/cards/ha-elforbrug-historik-card/series.js
-var MONTHS5 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+var MONTHS6 = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 var MONTHS_LONG3 = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
 var nf2 = (d = 0) => new Intl.NumberFormat("da-DK", { maximumFractionDigits: d, minimumFractionDigits: d });
-var fmt7 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf2(d).format(n);
+var fmt8 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf2(d).format(n);
 var pct6 = (a, b) => b > 0 && a != null ? (a - b) / b * 100 : null;
 var fmtPct3 = (p) => p == null ? "\u2013" : `${p > 0 ? "+" : p < 0 ? "\u2212" : ""}${nf2(0).format(Math.abs(p))} %`;
-var esc17 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+var esc18 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
 function buildSeries(rows) {
   const years = {};
   let latest = null;
@@ -78540,9 +78847,9 @@ function niceMax3(v) {
 
 // src/cards/ha-elforbrug-historik-card/ha-elforbrug-historik-card.js
 var CARD_TAG4 = "ha-elforbrug-historik-card";
-var VERSION59 = "1.0.0";
+var VERSION60 = "1.0.0";
 var PALETTE2 = ["var(--ec-accent)", "var(--c-heat)", "var(--c-ev)", "var(--c-water)", "var(--c-price)", "var(--ec-muted)"];
-var STYLE14 = `
+var STYLE15 = `
 :host{
   --ec-text:var(--primary-text-color,#e8eef8);
   --ec-muted:var(--secondary-text-color,#8e9cb4);
@@ -78623,7 +78930,7 @@ button:focus-visible{outline:2px solid var(--ec-accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 `;
 var TEMPLATE2 = `
-<style>${STYLE14}</style>
+<style>${STYLE15}</style>
 <section class="shell" part="shell">
   <div class="top">
     <div class="brand">
@@ -78729,7 +79036,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
       this._ref("kpis").innerHTML = "";
       this._ref("years").innerHTML = "";
       this._ref("note").textContent = "";
-      chart.innerHTML = !this.config.entity ? `<div class="state">V\xE6lg en energisensor (<b>entity</b>) i kortets ops\xE6tning.</div>` : `<div class="state">${this._error ? `Kunne ikke hente historikken (${esc17(this._error)}).` : `Ingen statistik endnu for <b>${esc17(this.config.entity)}</b>.`}</div>`;
+      chart.innerHTML = !this.config.entity ? `<div class="state">V\xE6lg en energisensor (<b>entity</b>) i kortets ops\xE6tning.</div>` : `<div class="state">${this._error ? `Kunne ikke hente historikken (${esc18(this._error)}).` : `Ingen statistik endnu for <b>${esc18(this.config.entity)}</b>.`}</div>`;
       return;
     }
     if (!this._sel) this._sel = new Set(years.slice(-3));
@@ -78745,11 +79052,11 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     const m = computeModel(this._series, now);
     const tone3 = (d) => d == null ? "tone-muted" : d > 3 ? "tone-bad" : d < -3 ? "tone-ok" : "tone-muted";
     const items = [];
-    items.push(`<div class="hero-item tone-el"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt7(m.last12)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.last12Delta)}"><span class="d">${fmtPct3(m.last12Delta)}</span> mod 12 mdr f\xF8r</span></div>`);
-    items.push(`<div class="hero-item tone-heat"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt7(m.ytd)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.ytdDelta)}">${m.ytdMonths ? `<span class="d">${fmtPct3(m.ytdDelta)}</span> mod samme ${m.ytdMonths} mdr sidste \xE5r` : "Ingen hele m\xE5neder endnu"}</span></div>`);
-    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Gennemsnit pr. m\xE5ned</span><span class="hi-val num"><b>${fmt7(m.avg12)}</b><small>kWh</small></span><span class="hi-sub">${m.peak ? `H\xF8jest: ${MONTHS_LONG3[m.peak.m]} ${m.peak.y} (${fmt7(m.peak.v)} kWh)` : ""}</span></div>`);
+    items.push(`<div class="hero-item tone-el"><span class="hi-label">Seneste 12 mdr</span><span class="hi-val num"><b>${fmt8(m.last12)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.last12Delta)}"><span class="d">${fmtPct3(m.last12Delta)}</span> mod 12 mdr f\xF8r</span></div>`);
+    items.push(`<div class="hero-item tone-heat"><span class="hi-label">I \xE5r hidtil</span><span class="hi-val num"><b>${fmt8(m.ytd)}</b><small>kWh</small></span><span class="hi-sub ${tone3(m.ytdDelta)}">${m.ytdMonths ? `<span class="d">${fmtPct3(m.ytdDelta)}</span> mod samme ${m.ytdMonths} mdr sidste \xE5r` : "Ingen hele m\xE5neder endnu"}</span></div>`);
+    items.push(`<div class="hero-item tone-ev"><span class="hi-label">Gennemsnit pr. m\xE5ned</span><span class="hi-val num"><b>${fmt8(m.avg12)}</b><small>kWh</small></span><span class="hi-sub">${m.peak ? `H\xF8jest: ${MONTHS_LONG3[m.peak.m]} ${m.peak.y} (${fmt8(m.peak.v)} kWh)` : ""}</span></div>`);
     const f = m.forecast;
-    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Forventet ${f ? MONTHS_LONG3[f.m] : "n\xE6ste m\xE5ned"}</span><span class="hi-val num"><b>${f ? "ca. " + fmt7(Math.round(f.value / 10) * 10) : "\u2013"}</b><small>kWh</small></span><span class="hi-sub">${f ? `${MONTHS5[f.m]} ${f.y - 1}: ${fmt7(f.base)} kWh \xB7 tendens ${fmtPct3((f.ratio - 1) * 100)}` : "For lidt data"}</span></div>`);
+    items.push(`<div class="hero-item tone-warn"><span class="hi-label">Forventet ${f ? MONTHS_LONG3[f.m] : "n\xE6ste m\xE5ned"}</span><span class="hi-val num"><b>${f ? "ca. " + fmt8(Math.round(f.value / 10) * 10) : "\u2013"}</b><small>kWh</small></span><span class="hi-sub">${f ? `${MONTHS6[f.m]} ${f.y - 1}: ${fmt8(f.base)} kWh \xB7 tendens ${fmtPct3((f.ratio - 1) * 100)}` : "For lidt data"}</span></div>`);
     this._ref("kpis").innerHTML = items.join("");
   }
   _color(year) {
@@ -78814,12 +79121,12 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     for (let i = 0; i <= 4; i++) {
       const gv2 = max / 4 * i;
       const gy = y(gv2);
-      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt7(gv2)}</text>`;
+      s += `<line x1="${pad6.l}" x2="${w - pad6.r}" y1="${gy}" y2="${gy}"/><text x="${pad6.l - 8}" y="${gy + 4}" text-anchor="end">${fmt8(gv2)}</text>`;
     }
     s += `</g><g class="axis">`;
     for (let g = 0; g < groups; g++) {
       const cx = pad6.l + gw * g + gw / 2;
-      const label = month ? MONTHS5[g] : `${years[g]}${years[g] === cy ? "*" : ""}`;
+      const label = month ? MONTHS6[g] : `${years[g]}${years[g] === cy ? "*" : ""}`;
       s += `<text x="${cx}" y="${h - 7}" text-anchor="middle">${label}</text>`;
     }
     s += `</g>`;
@@ -78832,7 +79139,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
         const x = x0 + i * bw;
         s += `<rect class="bar" x="${x.toFixed(1)}" y="${y(d.v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" style="fill:${col};color:${col};opacity:${d.partial ? 0.55 : 1}"/>`;
         if (d.partial) s += `<rect x="${x.toFixed(1)}" y="${y(d.v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity=".35"/>`;
-        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt7(d.v)}</text>`;
+        if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt8(d.v)}</text>`;
       });
       s += `<rect class="hit ${this._pinned === g ? "sel" : ""}" data-g="${g}" x="${(pad6.l + gw * g).toFixed(1)}" y="${pad6.t}" width="${gw.toFixed(1)}" height="${ph2}"/>`;
     }
@@ -78860,9 +79167,9 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     }
     const title = month ? MONTHS_LONG3[g] : `${rows[0].y}${rows[0].partial ? ` (til og med ${MONTHS_LONG3[(/* @__PURE__ */ new Date()).getMonth() - 1] || "\u2014"})` : ""}`;
     const prevOf = (d) => month ? this._series.years[d.y - 1]?.[g] : this._series.years[d.y - 1] ? this._series.years[d.y - 1].reduce((s, x) => s + (x ?? 0), 0) : null;
-    tip.innerHTML = `<h4>${esc17(title)}</h4>` + [...rows].reverse().map((d) => {
+    tip.innerHTML = `<h4>${esc18(title)}</h4>` + [...rows].reverse().map((d) => {
       const dd = !d.partial && month ? pct(d.v, prevOf(d)) : null;
-      return `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt7(d.v)} kWh</span><span class="dd num">${dd == null ? "" : fmtPct3(dd)}</span></div>`;
+      return `<div class="row" style="--yc:${this._color(d.y)}"><i></i><span class="nm">${d.y}${d.partial ? "*" : ""}</span><span class="v num">${fmt8(d.v)} kWh</span><span class="dd num">${dd == null ? "" : fmtPct3(dd)}</span></div>`;
     }).join("") + (rows.some((d) => d.partial) ? `<div class="note" style="margin-top:4px">* forel\xF8big</div>` : "");
     tip.hidden = false;
     const cx = pad6.l + gw * g + gw / 2;
@@ -78874,7 +79181,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
 if (!customElements.get(CARD_TAG4)) customElements.define(CARD_TAG4, HaElforbrugHistorikCard);
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c2) => c2.type === CARD_TAG4)) {
-  window.customCards.push({ type: CARD_TAG4, name: "Elforbrug historik", description: `Elforbrug m\xE5ned for m\xE5ned og \xE5r for \xE5r (v${VERSION59}).`, preview: false });
+  window.customCards.push({ type: CARD_TAG4, name: "Elforbrug historik", description: `Elforbrug m\xE5ned for m\xE5ned og \xE5r for \xE5r (v${VERSION60}).`, preview: false });
 }
 
 // src/cards/th-home-card/styles.js
@@ -79331,7 +79638,7 @@ var ThHomeCard = class extends HTMLElement {
     history.pushState(null, "", p);
     window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
   }
-  count(id, val, fmt8, unit) {
+  count(id, val, fmt9, unit) {
     const e = this.$(id);
     if (!e) return;
     this._cv = this._cv || {};
@@ -79339,12 +79646,12 @@ var ThHomeCard = class extends HTMLElement {
     this._cv[id] = val;
     const t0 = performance.now(), u2 = unit ? `<small>${unit}</small>` : "";
     if (Math.abs(from - val) < 1e-9) {
-      e.innerHTML = fmt8(val) + u2;
+      e.innerHTML = fmt9(val) + u2;
       return;
     }
     const st = (t) => {
       const p = Math.min(1, (t - t0) / 1200), k = 1 - Math.pow(1 - p, 4);
-      e.innerHTML = fmt8(from + (val - from) * k) + u2;
+      e.innerHTML = fmt9(from + (val - from) * k) + u2;
       if (p < 1) requestAnimationFrame(st);
     };
     requestAnimationFrame(st);
@@ -80463,9 +80770,9 @@ var ThWeatherPageCard = class extends VBase {
       const x = attr ? parseFloat(a[attr]) : NaN;
       return Number.isFinite(x) ? vn(conv(x), d) : null;
     };
-    const sub2 = (key2, d, fmt8, attr) => {
+    const sub2 = (key2, d, fmt9, attr) => {
       const v = val(key2, d, attr);
-      return v === null ? "" : fmt8(v);
+      return v === null ? "" : fmt9(v);
     };
     const cells = [
       ["Solindstr\xE5ling", "sun", val("solar_radiation", 0), "W/m\xB2", sub2("solar_radiation_hour", 0, (v) => `snit sidste time ${v}`)],
@@ -80699,10 +81006,10 @@ var ThTechCard = class extends VBase {
       return `<div class="tk ${v < 10 ? "low" : ""}"><div class="tb"><i style="height:${Math.max(3, v || 0)}%;background:${col}"></i></div><b>${Number.isFinite(v) ? Math.round(v) + "%" : "\u2013"}</b>${l}</div>`;
     }).join("")}</div></div>`).join(""));
     const last = this.s(c2.ent.backup_last), next = this.s(c2.ent.backup_next);
-    const fmt8 = (s) => s && !["unknown", "unavailable"].includes(s.state) ? new Date(s.state).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "\u2013";
+    const fmt9 = (s) => s && !["unknown", "unavailable"].includes(s.state) ? new Date(s.state).toLocaleString("da-DK", { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "\u2013";
     const ok = last && Date.now() - new Date(last.state) < 2 * 864e5;
-    this.set("bk", `<div class="cell"><div class="k">${vi("check", 14)}Seneste</div><b style="font-size:15px;color:${ok ? "var(--emer)" : "var(--coral)"}">${fmt8(last)}</b><em>${last ? this.ago(last.state) : ""}</em></div>
-      <div class="cell"><div class="k">${vi("backup", 14)}N\xE6ste</div><b style="font-size:15px">${fmt8(next)}</b><em>automatisk</em></div>`);
+    this.set("bk", `<div class="cell"><div class="k">${vi("check", 14)}Seneste</div><b style="font-size:15px;color:${ok ? "var(--emer)" : "var(--coral)"}">${fmt9(last)}</b><em>${last ? this.ago(last.state) : ""}</em></div>
+      <div class="cell"><div class="k">${vi("backup", 14)}N\xE6ste</div><b style="font-size:15px">${fmt9(next)}</b><em>automatisk</em></div>`);
   }
 };
 
@@ -80720,7 +81027,7 @@ for (const [type, , name, description] of CARDS)
 console.info(`%c TH-PAGES %c ${VP_VER} `, "background:#e8c37e;color:#111;font-weight:700", "background:#222;color:#fff");
 
 // src/cards/mr-weather-studio-card/mr-weather-studio-core.js
-var VERSION60 = "1.0.2";
+var VERSION61 = "1.0.2";
 var CONDITIONS = { sunny: ["Solrigt", "weather-sunny"], partlycloudy: ["Let skyet", "weather-partly-cloudy"], cloudy: ["Overskyet", "weather-cloudy"], "clear-night": ["Klar nat", "weather-night"], rainy: ["Regn", "weather-rainy"], pouring: ["Kraftig regn", "weather-pouring"], snowy: ["Sne", "weather-snowy"], "snowy-rainy": ["Slud", "weather-snowy-rainy"], fog: ["T\xE5ge", "weather-fog"], hail: ["Hagl", "weather-hail"], lightning: ["Torden", "weather-lightning"], "lightning-rainy": ["Torden og regn", "weather-lightning-rainy"], windy: ["Bl\xE6sende", "weather-windy"], "windy-variant": ["Bl\xE6sende og skyet", "weather-windy-variant"], exceptional: ["Us\xE6dvanligt vejr", "weather-sunny-alert"] };
 var E = (s) => String(s ?? "").replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
 var N = (value) => typeof value !== "number" && typeof value !== "string" || String(value).trim() === "" || !Number.isFinite(Number(value)) ? null : Number(value);
@@ -81127,7 +81434,7 @@ var MRWeatherStudioCard = class extends HTMLElement {
       if (!id) return `<button class="detail-row" data-more="${E(this._c.weather_entity)}"><span>${label}</span><strong>${this._weatherDetail(suffix)}</strong></button>`;
       const s = this._sensor(suffix), source = s?.attributes?.kilde || s?.attributes?.station_name || "";
       return `<button class="detail-row" data-more="${E(id)}"><span>${label}${source ? `<small>${E(source)}</small>` : ""}</span><strong>${this._displaySensor(suffix)}</strong></button>`;
-    }).join("")}${key2 === "risk" ? '<p class="details-note">De ekstra risikoprognoser kan mangle, n\xE5r DMI begr\xE6nser sit API. \u201CAfventer data\u201D betyder ikke 0 % risiko.</p>' : key2 === "measurements" ? '<p class="details-note">Stationerne kan ligge et stykke fra huset. En stationsm\xE5ling og en lokal prognose kan derfor v\xE6re forskellige.</p>' : ""}</div></details>`).join("") + `<details class="details" data-details="about"><summary>${ICON2("information-outline")} S\xE5dan l\xE6ser du kortet</summary><div class="details-body"><p>Temperaturen lige nu bygger p\xE5 DMI-m\xE5linger, hvor de findes, ellers prognosen. Grafer og timefelter viser prognosen fremad. m/s beskriver vindens hastighed, og mm beskriver m\xE6ngden af regn.</p><p>DMI-varsler er officielle varsler for omr\xE5det. Regnrisikoen i timeprognosen er en sandsynlighed og er ikke det samme som et varsel. Dagstallene g\xE6lder kommunen og kan afvige fra det, der m\xE5les ved huset.</p><p>Data: DMI og MeteoAlarm. HARMONIE-prognose og UV leveres gennem Open-Meteo. Satellit: EUMETSAT. Vindkort: Windy/ECMWF.</p><p>MRDonnii Vejr Studio ${VERSION60}. Tryk p\xE5 m\xE5lingerne for flere oplysninger.</p></div></details>`;
+    }).join("")}${key2 === "risk" ? '<p class="details-note">De ekstra risikoprognoser kan mangle, n\xE5r DMI begr\xE6nser sit API. \u201CAfventer data\u201D betyder ikke 0 % risiko.</p>' : key2 === "measurements" ? '<p class="details-note">Stationerne kan ligge et stykke fra huset. En stationsm\xE5ling og en lokal prognose kan derfor v\xE6re forskellige.</p>' : ""}</div></details>`).join("") + `<details class="details" data-details="about"><summary>${ICON2("information-outline")} S\xE5dan l\xE6ser du kortet</summary><div class="details-body"><p>Temperaturen lige nu bygger p\xE5 DMI-m\xE5linger, hvor de findes, ellers prognosen. Grafer og timefelter viser prognosen fremad. m/s beskriver vindens hastighed, og mm beskriver m\xE6ngden af regn.</p><p>DMI-varsler er officielle varsler for omr\xE5det. Regnrisikoen i timeprognosen er en sandsynlighed og er ikke det samme som et varsel. Dagstallene g\xE6lder kommunen og kan afvige fra det, der m\xE5les ved huset.</p><p>Data: DMI og MeteoAlarm. HARMONIE-prognose og UV leveres gennem Open-Meteo. Satellit: EUMETSAT. Vindkort: Windy/ECMWF.</p><p>MRDonnii Vejr Studio ${VERSION61}. Tryk p\xE5 m\xE5lingerne for flere oplysninger.</p></div></details>`;
   }
   _render() {
     if (!this._c) return;
@@ -81463,9 +81770,9 @@ function onDashboardTick(fn, { interval = 1500 } = {}) {
   return () => subscribers.delete(fn);
 }
 function activatorHtml(title, lines) {
-  const esc18 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
+  const esc19 = (v) => String(v ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
   return `<style>:host{display:block}.note{border:1px dashed var(--divider-color,#888);border-radius:12px;padding:10px 12px;font:13px/1.45 var(--ha-font-family-body,system-ui,sans-serif);color:var(--secondary-text-color,#999)}.note b{color:var(--primary-text-color,#ddd)}</style>
-<div class="note"><b>${esc18(title)}</b>${lines.map((l) => `<br>${esc18(l)}`).join("")}</div>`;
+<div class="note"><b>${esc19(title)}</b>${lines.map((l) => `<br>${esc19(l)}`).join("")}</div>`;
 }
 function activatorCardClass({ title, lines, stub }) {
   return class extends HTMLElement {

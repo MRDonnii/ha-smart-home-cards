@@ -137,14 +137,22 @@ export function heatMonths({ change = {}, pre = 0, start, statsStart, tariffs, m
 /** Gas pr. måned fra regningerne (fordelt efter dage) + Evida-delen beregnet ud fra officielle satser, hvor regningen ikke har den. */
 export function gasMonths(gasBills, { kwhPerM3 = 11, efficiency = 0.9, rates = EVIDA_RATES } = {}) {
   const out = {};
-  for (const b of gasBills || []) {
+  const get = (k) => out[k] || (out[k] = { bill: 0, evida: 0, evidaEst: 0, m3: 0, kwh: 0 });
+  // Evidas egne regninger (leverandør "Evida", Claude AI 2026-11-23): de rigtige beløb bruges, og de måneder,
+  // de dækker, får intet skøn.
+  const isEvida = (b) => /evida/i.test(b.supplier || "");
+  const covered = new Set();
+  for (const b of (gasBills || []).filter(isEvida)) {
+    for (const [k, r] of Object.entries(monthlyFromBills([{ ...b, m3: null }]))) { get(k).evida += r.amount; covered.add(k); }
+  }
+  for (const b of (gasBills || []).filter((x) => !isEvida(x))) {
     const hasEvida = /heraf Evida/.test(b.note || "");
     const part = monthlyFromBills([b]);
     for (const [k, r] of Object.entries(part)) {
-      const o = out[k] || (out[k] = { bill: 0, evida: 0, m3: 0, kwh: 0 });
+      const o = get(k);
       o.bill += r.amount;
       if (r.m3 != null) { o.m3 += r.m3; o.kwh += r.m3 * kwhPerM3 * efficiency; }
-      if (!hasEvida && r.m3 != null) { const [v, f] = evidaCost(r.m3, r.days, evidaAt(`${k}-01`, rates)); o.evida += v + f; }
+      if (!hasEvida && !covered.has(k) && r.m3 != null) { const [v, f] = evidaCost(r.m3, r.days, evidaAt(`${k}-01`, rates)); o.evida += v + f; o.evidaEst += v + f; }
     }
   }
   return out;
@@ -160,7 +168,7 @@ export function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = 
     if (k > nowKey) continue;
     const g = gas[k], h = heat[k], a = aconto[k];
     months[k] = {
-      gasBill: g?.bill || 0, gasEvida: g?.evida || 0, gasKwh: g?.kwh || 0, gasM3: g?.m3 || 0,
+      gasBill: g?.bill || 0, gasEvida: g?.evida || 0, gasEvidaEst: g?.evidaEst || 0, gasKwh: g?.kwh || 0, gasM3: g?.m3 || 0,
       heatMeasured: h?.measured || 0, heatEstimate: h?.estimate || 0, heatKwh: h?.kwh || 0,
       aconto: a?.amount || 0, partial: k === nowKey,
       // Kun hele måneder med fjernvarme sammenlignes (ikke opstartsmåneden)
