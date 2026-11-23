@@ -23,7 +23,7 @@ import "../ha-air-quality-card/ha-air-quality-card.js";
 import "./ha-room-control-card.js";
 import { chartHover, nearestPoint, hoverTime } from "../../shared/chart-hover.js";
 
-const VERSION = "2.6.3";
+const VERSION = "2.7.0";
 const TAG = "ha-radiator-overview-card-v2";
 const DASH = "—";
 const DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -503,9 +503,14 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     return Number.isFinite(parsed) ? parsed : NaN;
   }
 
+  // Kurvens opløsning (Claude AI, 2026-11-23; bruger: "lidt mere opløst"): 5-minutters statistik som standard,
+  // history_period: hour giver de gamle timepunkter.
+  _period() { return this._config?.history_period === "hour" ? "hour" : "5minute"; }
+  _periodMs() { return this._period() === "hour" ? 3600000 : 300000; }
+
   _ensureStats() {
     if (!this._hass?.callWS || this._statsLoading || !this.isConnected || !this._built) return;
-    if (this._statsFetchedAt && Date.now() - this._statsFetchedAt < 55 * 60000) {
+    if (this._statsFetchedAt && Date.now() - this._statsFetchedAt < this._periodMs() - 60000) {
       if (!this._statsTimer) this._scheduleStatsRefresh();
       return;
     }
@@ -515,10 +520,10 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
   _scheduleStatsRefresh() {
     clearTimeout(this._statsTimer);
     if (!this.isConnected) { this._statsTimer = undefined; return; }
-    // Timestatistik skrives lige efter hver hele time; hent kort efter.
-    const now = Date.now();
-    const next = Math.ceil(now / 3600000) * 3600000 + 3 * 60000;
-    this._statsTimer = setTimeout(() => { this._statsTimer = undefined; this._fetchStats(); }, Math.max(next - now, 5 * 60000));
+    // Statistikken skrives lige efter hver periode (5 min eller hel time); hent kort efter.
+    const now = Date.now(), ms = this._periodMs();
+    const next = Math.ceil(now / ms) * ms + (ms > 300000 ? 3 * 60000 : 45000);
+    this._statsTimer = setTimeout(() => { this._statsTimer = undefined; this._fetchStats(); }, Math.max(next - now, ms > 300000 ? 5 * 60000 : 60000));
   }
 
   async _fetchStats() {
@@ -530,11 +535,11 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     const start = new Date(end.getTime() - hours * 3600000);
     const stats = {};
     try {
-      const result = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(), statistic_ids: ids, period: "hour", types: ["mean", "min", "max"] });
+      const result = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(), statistic_ids: ids, period: this._period(), types: ["mean", "min", "max"] });
       for (const id of ids) {
         const rows = Array.isArray(result?.[id]) ? result[id] : [];
         const points = rows
-          .map((row) => ({ t: this._time(row.start) + 1800000, v: this._number(row.mean), min: this._number(row.min), max: this._number(row.max) }))
+          .map((row) => ({ t: this._time(row.start) + this._periodMs() / 2, v: this._number(row.mean), min: this._number(row.min), max: this._number(row.max) }))
           .filter((point) => Number.isFinite(point.t) && point.v !== undefined);
         if (points.length) stats[id] = points;
       }
@@ -567,12 +572,12 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
         const value = this._number(entry.state);
         const time = this._time(entry.last_changed || entry.last_updated);
         if (value === undefined || !Number.isFinite(time)) continue;
-        const hour = Math.floor(time / 3600000);
+        const hour = Math.floor(time / this._periodMs());
         const bucket = buckets.get(hour) || { sum: 0, n: 0, min: value, max: value };
         bucket.sum += value; bucket.n += 1; bucket.min = Math.min(bucket.min, value); bucket.max = Math.max(bucket.max, value);
         buckets.set(hour, bucket);
       }
-      const points = [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([hour, b]) => ({ t: hour * 3600000 + 1800000, v: b.sum / b.n, min: b.min, max: b.max }));
+      const points = [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([hour, b]) => ({ t: hour * this._periodMs() + this._periodMs() / 2, v: b.sum / b.n, min: b.min, max: b.max }));
       if (points.length) out[entityId] = points;
     }
     return out;

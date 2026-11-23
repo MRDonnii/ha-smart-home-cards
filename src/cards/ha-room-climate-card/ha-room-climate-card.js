@@ -20,7 +20,7 @@ import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
 import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
 import { roomComfort, comfortScale } from "../shared/comfort.js";
 
-const VERSION = "1.11.1";
+const VERSION = "1.12.0";
 const isEnt = (id) => typeof id === "string" && id.includes(".");
 const TAG = "ha-room-climate-card";
 const DASH = "—";
