@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.293 */
+/* MRDonnii Smart Home Cards v0.5.294 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -33544,7 +33544,7 @@ if (!customElements.get("ha-room-control-card")) customElements.define("ha-room-
 
 // src/cards/ha-radiator-overview-card-v2/ha-radiator-overview-card-v2.js
 init_chart_hover();
-var VERSION24 = "2.6.3";
+var VERSION24 = "2.7.0";
 var TAG2 = "ha-radiator-overview-card-v2";
 var DASH2 = "\u2014";
 var DIAL = { cx: 60, cy: 60, r: 47, start: 150, sweep: 240 };
@@ -34003,9 +34003,17 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const parsed = Date.parse(value);
     return Number.isFinite(parsed) ? parsed : NaN;
   }
+  // Kurvens opløsning (Claude AI, 2026-11-23; bruger: "lidt mere opløst"): 5-minutters statistik som standard,
+  // history_period: hour giver de gamle timepunkter.
+  _period() {
+    return this._config?.history_period === "hour" ? "hour" : "5minute";
+  }
+  _periodMs() {
+    return this._period() === "hour" ? 36e5 : 3e5;
+  }
   _ensureStats() {
     if (!this._hass?.callWS || this._statsLoading || !this.isConnected || !this._built) return;
-    if (this._statsFetchedAt && Date.now() - this._statsFetchedAt < 55 * 6e4) {
+    if (this._statsFetchedAt && Date.now() - this._statsFetchedAt < this._periodMs() - 6e4) {
       if (!this._statsTimer) this._scheduleStatsRefresh();
       return;
     }
@@ -34017,12 +34025,12 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       this._statsTimer = void 0;
       return;
     }
-    const now = Date.now();
-    const next = Math.ceil(now / 36e5) * 36e5 + 3 * 6e4;
+    const now = Date.now(), ms = this._periodMs();
+    const next = Math.ceil(now / ms) * ms + (ms > 3e5 ? 3 * 6e4 : 45e3);
     this._statsTimer = setTimeout(() => {
       this._statsTimer = void 0;
       this._fetchStats();
-    }, Math.max(next - now, 5 * 6e4));
+    }, Math.max(next - now, ms > 3e5 ? 5 * 6e4 : 6e4));
   }
   async _fetchStats() {
     const ids = this._statIds();
@@ -34033,10 +34041,10 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     const start = new Date(end.getTime() - hours * 36e5);
     const stats = {};
     try {
-      const result = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(), statistic_ids: ids, period: "hour", types: ["mean", "min", "max"] });
+      const result = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(), statistic_ids: ids, period: this._period(), types: ["mean", "min", "max"] });
       for (const id of ids) {
         const rows = Array.isArray(result?.[id]) ? result[id] : [];
-        const points = rows.map((row) => ({ t: this._time(row.start) + 18e5, v: this._number(row.mean), min: this._number(row.min), max: this._number(row.max) })).filter((point) => Number.isFinite(point.t) && point.v !== void 0);
+        const points = rows.map((row) => ({ t: this._time(row.start) + this._periodMs() / 2, v: this._number(row.mean), min: this._number(row.min), max: this._number(row.max) })).filter((point) => Number.isFinite(point.t) && point.v !== void 0);
         if (points.length) stats[id] = points;
       }
       const missing = ids.filter((id) => !stats[id]);
@@ -34070,7 +34078,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
         const value = this._number(entry.state);
         const time = this._time(entry.last_changed || entry.last_updated);
         if (value === void 0 || !Number.isFinite(time)) continue;
-        const hour = Math.floor(time / 36e5);
+        const hour = Math.floor(time / this._periodMs());
         const bucket2 = buckets.get(hour) || { sum: 0, n: 0, min: value, max: value };
         bucket2.sum += value;
         bucket2.n += 1;
@@ -34078,7 +34086,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
         bucket2.max = Math.max(bucket2.max, value);
         buckets.set(hour, bucket2);
       }
-      const points = [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([hour, b]) => ({ t: hour * 36e5 + 18e5, v: b.sum / b.n, min: b.min, max: b.max }));
+      const points = [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([hour, b]) => ({ t: hour * this._periodMs() + this._periodMs() / 2, v: b.sum / b.n, min: b.min, max: b.max }));
       if (points.length) out[entityId2] = points;
     }
     return out;
@@ -35201,7 +35209,7 @@ function roomComfort(room, temp, humidity, co2) {
 var comfortScale = (v, min = 14, max = 28) => Math.max(0, Math.min(1, (v - min) / (max - min)));
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.11.1";
+var VERSION25 = "1.12.0";
 var isEnt = (id) => typeof id === "string" && id.includes(".");
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
