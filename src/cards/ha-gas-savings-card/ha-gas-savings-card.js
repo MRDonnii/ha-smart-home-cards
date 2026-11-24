@@ -6,7 +6,7 @@
 import { keepScroll } from "../shared/keep-scroll.js";
 import { countUp } from "../shared/count-up.js";
 
-const VERSION = "1.3.1";
+const VERSION = "1.4.0";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -102,9 +102,6 @@ class HAGasSavingsCard extends HTMLElement {
     const hVar = heatPrice, hFix = yearKwh > 0 ? (c.heat_fixed_month * 12) / yearKwh : 0;
     const kmax = Math.max(gVar + gFix, hVar + hFix);
     // 4) Følsomhed: årlig besparelse ved forskellige gaspriser
-    const sens = [10, 12, 14, 16, 18].map((p) => { const y = yearKwh > 0 ? (yearKwh / (c.kwh_per_m3 * c.efficiency)) * p + c.gas_fixed_year + c.service_year - (yearKwh * heatPrice + c.heat_fixed_month * 12) : NaN;
-      return { p, y, yrs: y > 0 && c.investment ? Math.max(0, c.investment - saved) / y : NaN }; });
-    const smax = Math.max(...sens.map((x) => Math.abs(x.y) || 0), 1);
     const kwhMax = Math.max(...rows.map((r) => r.kwh), ...(forecast.map((r) => r.kwh)), 1);
     const MN = (k) => MONTHS[+k.slice(5) - 1];
     return `<div class="wide">
@@ -126,9 +123,6 @@ class HAGasSavingsCard extends HTMLElement {
     </svg><div class="legend"><span><i class="g"></i>Gas kr/kWh varme</span><span><i class="h"></i>Fjernvarme kr/kWh (inkl. faste)</span></div></section>
   <section class="panel"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:scale-balance"></ha-icon></span><div><h3>Hvad betaler I for 1 kWh varme?</h3><p>Med dagens priser og et normalt års forbrug (${fmt(yearKwh)} kWh)</p></div></div>
     ${[["Gas", gVar, gFix, "g"], ["Fjernvarme", hVar, hFix, "h"]].map(([n, v, f, cl]) => `<div class="kw"><span>${n}</span><div class="kbar"><i class="${cl}" style="width:${(v / kmax * 100).toFixed(1)}%"></i><i class="${cl} fx" style="width:${(f / kmax * 100).toFixed(1)}%"></i></div><b>${fmt(v + f, 2)} kr</b></div><small class="ksub">${fmt(v, 2)} variabel + ${fmt(f, 2)} faste beløb pr. kWh</small>`).join("")}
-  </section>
-  <section class="panel"><div class="head"><span class="hicon green"><ha-icon icon="mdi:tune-variant"></ha-icon></span><div><h3>Hvis gasprisen var …</h3><p>Hvad I sparer om året – og hvor længe der går, før anlægget er betalt</p></div></div>
-    ${sens.map((x) => `<div class="sv ${Math.abs(x.p - gasNow) < 1 ? "cur" : ""}"><span>${x.p} kr/m³</span><div class="sbar"><i class="${x.y >= 0 ? "pos" : "neg"}" style="width:${(Math.abs(x.y) / smax * 100).toFixed(1)}%"></i></div><b class="${x.y >= 0 ? "pos" : "neg"}">${x.y >= 0 ? "+" : ""}${fmt(x.y)} kr</b><em>${Number.isFinite(x.yrs) ? `${fmt(x.yrs, 1)} år` : "–"}</em></div>`).join("")}
   </section>
   <section class="panel w2"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h3>Varmeforbrug pr. måned</h3><p>Mørk søjle: det I har brugt. Lys søjle: et normalt år</p></div></div>
     <div class="kwh">${(forecast.length ? forecast : rows).map((r) => { const m = r.month.slice(5); const meas = rows.find((x) => x.month.slice(5) === m && !x.partial);
@@ -184,6 +178,28 @@ class HAGasSavingsCard extends HTMLElement {
       <span class="chip good"><ha-icon icon="mdi:arrow-down-bold"></ha-icon>Lavest ${MONTHS[lo.m]} ≈ ${fmt(lo.v, 2)} kr/m³</span>
     </div>
     ${forecast.length ? `<div class="scen">${[[0.8, "Hvis gassen bliver 20 % billigere", "mdi:trending-down"], [1, "Som vi forventer", "mdi:trending-neutral"], [1.2, "Hvis gassen bliver 20 % dyrere", "mdi:trending-up"]].map(([f, l, ic]) => { const v = f === 1 ? base : yr(f); return `<div class="sc2 ${f < 1 ? "dn" : f > 1 ? "upx" : "mid"}"><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${v >= 0 ? "+" : "−"}${fmt(Math.abs(v))} kr</b><small>sparet det næste år</small></div>`; }).join("")}</div>` : ""}
+  </section>`;
+  }
+
+  // Hvis gassen kostede … (Claude AI, 2026-11-24; bruger: "hvis gassen koster 15-16-17-18 eller mindre end nu, hvad det så
+  // gør"): hele kroner fra 3 kr under dagens pris op til mindst 18 kr; for hver: hvad I sparer om året og hvornår anlægget
+  // er betalt. Året er et normalt års varmeforbrug; dagens pris er markeret.
+  _sensHtml(c, gNow, forecast, yearKwh, heatPrice, paid) {
+    if (!Number.isFinite(gNow)) return "";
+    const m3 = forecast.length ? forecast.reduce((s, r) => s + r.m3, 0) : yearKwh > 0 ? yearKwh / (c.kwh_per_m3 * c.efficiency) : NaN;
+    const heat = forecast.length ? forecast.reduce((s, r) => s + r.heat, 0) : yearKwh * heatPrice + c.heat_fixed_month * 12;
+    if (!Number.isFinite(m3)) return "";
+    const fixed = c.gas_fixed_year + c.service_year;
+    const lo = Math.max(1, Math.floor(gNow) - 3), hi = Math.max(18, Math.ceil(gNow) + 2);
+    const prices = []; for (let p = lo; p <= hi; p += 1) prices.push(p);
+    const near = Math.round(gNow);
+    const rows = prices.map((p) => { const y = m3 * p + fixed - heat; const left = Math.max(0, (c.investment || 0) - paid); return { p, y, yrs: c.investment && y > 0 ? left / y : NaN, now: p === near }; });
+    const max = Math.max(...rows.map((r) => Math.abs(r.y)), 1);
+    return `<section class="panel sens">
+    <div class="head"><span class="hicon green"><ha-icon icon="mdi:tune-variant"></ha-icon></span><div><h3>Hvis gassen kostede …</h3><p>Hvad I sparer om året ved forskellige gaspriser – og hvornår anlægget så er betalt</p></div></div>
+    <div class="svh"><span>Gaspris</span><span></span><span>Sparer om året</span><span>Betalt om</span></div>
+    ${rows.map((r, i) => `<div class="sv ${r.now ? "cur" : ""} " style="--i:${i}"><span>${fmt(r.p)} kr/m³${r.now ? "<small>ca. i dag</small>" : ""}</span><div class="sbar"><i class="${r.y >= 0 ? "pos" : "neg"}" style="width:${((Math.abs(r.y) / max) * 100).toFixed(1)}%"></i></div><b class="${r.y >= 0 ? "pos" : "neg"}">${r.y >= 0 ? "" : "−"}${fmt(Math.abs(r.y))} kr</b><em>${Number.isFinite(r.yrs) ? (r.yrs <= 0 ? "betalt" : `${fmt(r.yrs, 1)} år`) : "–"}</em></div>`).join("")}
+    <p class="foot">Hver linje regner med, at gassen koster det samme hele året, og med et normalt års varmeforbrug. I dag koster gassen ${fmt(gNow, 2)} kr/m³. Jo dyrere gassen er, jo mere sparer I på fjernvarmen.</p>
   </section>`;
   }
 
@@ -280,6 +296,7 @@ class HAGasSavingsCard extends HTMLElement {
     <p class="foot">Gasprisen fremover er et bud: gas plejer at være dyrest i januar og billigst om sommeren. Bliver gassen dyrere end ventet, sparer I mere – bliver den billigere, sparer I mindre. ${Number.isFinite(yearsLeft) && c.investment ? `Så er anlægget betalt om ca. ${fmt(yearsLeft, 1)} år.` : ""}</p>
   </section>` : ""}
   ${this._predHtml(c, sIdx, gNow, now, forecast, heatPrice)}
+  ${this._sensHtml(c, gNow, forecast, yearKwh, heatPrice, paid)}
   <section class="panel">
     <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Måned for måned</h3><p>Hvad gas ville have kostet hver måned – mod det, fjernvarmen faktisk kostede</p></div></div>
     <div class="months">${rows.slice().reverse().map((r) => `<div class="mrow">
@@ -332,7 +349,7 @@ const STYLE = `
 .wide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.wide .w2{grid-column:1/-1}
 .chart{width:100%;height:190px;display:block}.chart .acc{fill:none;stroke:var(--ok);stroke-width:3;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ok) 60%,transparent))}.chart .fut{fill:none;stroke:var(--ok);stroke-width:2;stroke-dasharray:6 6;opacity:.55;vector-effect:non-scaling-stroke}.chart circle{fill:var(--ok)}.chart .goal{stroke:var(--g);stroke-width:1.5;stroke-dasharray:4 6;vector-effect:non-scaling-stroke;opacity:.7}.chart .gl{fill:none;stroke:var(--g);stroke-width:3;vector-effect:non-scaling-stroke}.chart .hl{fill:none;stroke:var(--h);stroke-width:3;vector-effect:non-scaling-stroke}.chart .lbl{font-size:11px;fill:var(--secondary-text-color);font-weight:700}.chart .lbl.ok{fill:var(--ok)}
 .kw{display:grid;grid-template-columns:90px minmax(0,1fr) 70px;gap:10px;align-items:center;margin-top:10px}.kw span{font-weight:800}.kw b{text-align:right;font-size:16px}.kbar{display:flex;height:22px;border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent)}.kbar i{height:100%}.kbar i.g{background:var(--g)}.kbar i.h{background:var(--h)}.kbar i.fx{opacity:.45}.ksub{display:block;margin:3px 0 0 100px;font-size:11px;color:var(--secondary-text-color)}
-.sv{display:grid;grid-template-columns:80px minmax(0,1fr) 90px 54px;gap:10px;align-items:center;padding:6px 8px;border-radius:10px}.sv.cur{background:color-mix(in srgb,var(--g) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 40%,transparent)}.sv span{font-weight:800}.sbar{height:18px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}.sbar i{display:block;height:100%}.sbar i.pos{background:color-mix(in srgb,var(--ok) 70%,transparent)}.sbar i.neg{background:color-mix(in srgb,var(--bad) 70%,transparent)}.sv b{text-align:right}.sv b.pos{color:var(--ok)}.sv b.neg{color:var(--bad)}.sv em{font-style:normal;text-align:right;color:var(--secondary-text-color);font-size:12px}
+.sv{display:grid;grid-template-columns:96px minmax(0,1fr) 96px 64px;gap:10px;align-items:center;padding:7px 10px;border-radius:12px;animation:rise .45s both;animation-delay:calc(var(--i) * 40ms)}.sv span small{display:block;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--g)}.svh{display:grid;grid-template-columns:96px minmax(0,1fr) 96px 64px;gap:10px;padding:0 10px 4px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--secondary-text-color)}.svh span:nth-child(3),.svh span:nth-child(4){text-align:right}.sv.cur{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--g) 55%,transparent)}.sv.cur{background:color-mix(in srgb,var(--g) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 40%,transparent)}.sv span{font-weight:800}.sbar{height:18px;border-radius:6px;background:color-mix(in srgb,var(--primary-text-color) 5%,transparent);overflow:hidden}.sbar i{display:block;height:100%}.sbar i.pos{background:color-mix(in srgb,var(--ok) 70%,transparent)}.sbar i.neg{background:color-mix(in srgb,var(--bad) 70%,transparent)}.sv b{text-align:right}.sv b.pos{color:var(--ok)}.sv b.neg{color:var(--bad)}.sv em{font-style:normal;text-align:right;color:var(--secondary-text-color);font-size:12px}
 .kwh{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end}.kc{display:flex;flex-direction:column;align-items:center;gap:4px}.kp{position:relative;height:120px;width:70%}.kp i{position:absolute;left:0;right:0;bottom:0;border-radius:6px 6px 2px 2px}.kp i.n{background:color-mix(in srgb,var(--h) 30%,transparent)}.kp i.m{left:22%;right:22%;background:var(--h)}.kc span{font-size:11px;color:var(--secondary-text-color);font-weight:700}
 .hicon.green{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
 @media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center;padding:20px 16px}.id{min-width:0;max-width:100%}.id h2{font-size:30px}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
@@ -340,7 +357,7 @@ const STYLE = `
 .pnow{flex:0 0 2px;background:color-mix(in srgb,var(--primary-text-color) 35%,transparent);position:relative;margin:0 4px}.pnow span{position:absolute;top:-2px;left:5px;font-size:9.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--secondary-text-color)}
 .pchips{margin-top:12px}.chip.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)}
 .scen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.sc2{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:16px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);box-shadow:inset 0 0 0 1px var(--l)}.sc2 ha-icon{--mdc-icon-size:22px}.sc2 span{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--secondary-text-color)}.sc2 b{font-size:22px;font-weight:850}.sc2 small{font-size:11px;color:var(--secondary-text-color)}.sc2.dn ha-icon{color:var(--ok)}.sc2.upx ha-icon{color:var(--bad)}.sc2.mid{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 45%,transparent);background:color-mix(in srgb,var(--g) 8%,transparent)}.sc2.mid ha-icon{color:var(--g)}
-@media(max-width:720px){.scen{grid-template-columns:1fr}.pbars2{height:110px;gap:2px}.pp span{font-size:8.5px}}
+@media(max-width:720px){.sv,.svh{grid-template-columns:78px minmax(0,1fr) 84px 54px;gap:7px;padding-left:6px;padding-right:6px}.scen{grid-template-columns:1fr}.pbars2{height:110px;gap:2px}.pp span{font-size:8.5px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 `;
 
