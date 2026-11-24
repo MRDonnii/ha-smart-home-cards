@@ -6,7 +6,7 @@
 import { keepScroll } from "../shared/keep-scroll.js";
 import { countUp } from "../shared/count-up.js";
 
-const VERSION = "1.3.0";
+const VERSION = "1.3.1";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -108,7 +108,7 @@ class HAGasSavingsCard extends HTMLElement {
     const kwhMax = Math.max(...rows.map((r) => r.kwh), ...(forecast.map((r) => r.kwh)), 1);
     const MN = (k) => MONTHS[+k.slice(5) - 1];
     return `<div class="wide">
-  <section class="panel w2"><div class="head"><span class="hicon"><ha-icon icon="mdi:chart-timeline-variant"></ha-icon></span><div><h3>Akkumuleret besparelse</h3><p>Målt siden skiftet${fut.length ? " og prognose med dagens priser" : ""}${payDate ? ` · betalt hjem ca. ${MONTHS[payDate.getMonth()]} ${payDate.getFullYear()}` : ""}</p></div></div>
+  <section class="panel w2"><div class="head"><span class="hicon"><ha-icon icon="mdi:chart-timeline-variant"></ha-icon></span><div><h3>Sparet i alt</h3><p>Det I har sparet siden skiftet${fut.length ? " – og det I forventer at spare" : ""}${payDate ? ` · anlægget er betalt ca. ${MONTHS[payDate.getMonth()]} ${payDate.getFullYear()}` : ""}</p></div></div>
     <svg class="chart" viewBox="0 0 ${WW} ${H}" preserveAspectRatio="none">
       ${c.investment ? `<line class="goal" x1="${P}" x2="${WW - P}" y1="${Y(c.investment)}" y2="${Y(c.investment)}"/><text class="lbl" x="${WW - P}" y="${Y(c.investment) - 5}" text-anchor="end">${fmt(c.investment)} kr</text>` : ""}
       ${lineF ? `<polyline class="fut" points="${lineF}"/>` : ""}
@@ -117,20 +117,20 @@ class HAGasSavingsCard extends HTMLElement {
       ${past.length ? `<text class="lbl" x="${X(0).toFixed(1)}" y="${H - 6}" text-anchor="start">${MN(past[0].k)} ${past[0].k.slice(0, 4)}</text><text class="lbl" x="${X(past.length - 1).toFixed(1)}" y="${H - 6}" text-anchor="middle">nu · ${fmt(acc)} kr</text>` : ""}
       ${payDate ? `<text class="lbl ok" x="${X(past.length + payIdx).toFixed(1)}" y="${H - 6}" text-anchor="end">betalt hjem ${MONTHS[payDate.getMonth()]} ${payDate.getFullYear()}</text>` : ""}
     </svg></section>
-  <section class="panel"><div class="head"><span class="hicon"><ha-icon icon="mdi:fire"></ha-icon></span><div><h3>Pris pr. kWh varme</h3><p>Gas (måned for måned) mod fjernvarme inkl. faste afgifter</p></div></div>
+  <section class="panel"><div class="head"><span class="hicon"><ha-icon icon="mdi:fire"></ha-icon></span><div><h3>Hvad en kWh varme koster</h3><p>Gas og fjernvarme måned for måned – alt med</p></div></div>
     <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
       <polyline class="gl" points="${gk.map((v, i) => `${pX(i, gk.length).toFixed(1)},${pY(v).toFixed(1)}`).join(" ")}"/>
       <polyline class="hl" points="${fvK.map((x, i) => `${pX(i, fvK.length).toFixed(1)},${pY(x.v).toFixed(1)}`).join(" ")}"/>
       ${gk.map((v, i) => `<text class="lbl" x="${pX(i, gk.length).toFixed(1)}" y="${pY(v) - 7}" text-anchor="middle">${fmt(v, 2)}</text>`).join("")}
       ${ks.map((k, i) => `<text class="lbl" x="${pX(i, ks.length).toFixed(1)}" y="${H - 6}" text-anchor="middle">${MN(k)}</text>`).join("")}
     </svg><div class="legend"><span><i class="g"></i>Gas kr/kWh varme</span><span><i class="h"></i>Fjernvarme kr/kWh (inkl. faste)</span></div></section>
-  <section class="panel"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:scale-balance"></ha-icon></span><div><h3>Hvad koster 1 kWh varme?</h3><p>Over et normalt år (${fmt(yearKwh)} kWh) · dagens priser</p></div></div>
+  <section class="panel"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:scale-balance"></ha-icon></span><div><h3>Hvad betaler I for 1 kWh varme?</h3><p>Med dagens priser og et normalt års forbrug (${fmt(yearKwh)} kWh)</p></div></div>
     ${[["Gas", gVar, gFix, "g"], ["Fjernvarme", hVar, hFix, "h"]].map(([n, v, f, cl]) => `<div class="kw"><span>${n}</span><div class="kbar"><i class="${cl}" style="width:${(v / kmax * 100).toFixed(1)}%"></i><i class="${cl} fx" style="width:${(f / kmax * 100).toFixed(1)}%"></i></div><b>${fmt(v + f, 2)} kr</b></div><small class="ksub">${fmt(v, 2)} variabel + ${fmt(f, 2)} faste beløb pr. kWh</small>`).join("")}
   </section>
-  <section class="panel"><div class="head"><span class="hicon green"><ha-icon icon="mdi:tune-variant"></ha-icon></span><div><h3>Hvis gasprisen var …</h3><p>Besparelse pr. år og tid til anlægget er betalt hjem</p></div></div>
+  <section class="panel"><div class="head"><span class="hicon green"><ha-icon icon="mdi:tune-variant"></ha-icon></span><div><h3>Hvis gasprisen var …</h3><p>Hvad I sparer om året – og hvor længe der går, før anlægget er betalt</p></div></div>
     ${sens.map((x) => `<div class="sv ${Math.abs(x.p - gasNow) < 1 ? "cur" : ""}"><span>${x.p} kr/m³</span><div class="sbar"><i class="${x.y >= 0 ? "pos" : "neg"}" style="width:${(Math.abs(x.y) / smax * 100).toFixed(1)}%"></i></div><b class="${x.y >= 0 ? "pos" : "neg"}">${x.y >= 0 ? "+" : ""}${fmt(x.y)} kr</b><em>${Number.isFinite(x.yrs) ? `${fmt(x.yrs, 1)} år` : "–"}</em></div>`).join("")}
   </section>
-  <section class="panel w2"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h3>Varmeforbrug pr. måned</h3><p>Målt på fjernvarmen (fuld) og normalår brugt i prognosen (lys)</p></div></div>
+  <section class="panel w2"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:radiator"></ha-icon></span><div><h3>Varmeforbrug pr. måned</h3><p>Mørk søjle: det I har brugt. Lys søjle: et normalt år</p></div></div>
     <div class="kwh">${(forecast.length ? forecast : rows).map((r) => { const m = r.month.slice(5); const meas = rows.find((x) => x.month.slice(5) === m && !x.partial);
       return `<div class="kc"><div class="kp"><i class="n" style="height:${(r.kwh / kwhMax * 100).toFixed(1)}%"></i>${meas ? `<i class="m" style="height:${(meas.kwh / kwhMax * 100).toFixed(1)}%"></i>` : ""}</div><span>${MONTHS[+m - 1]}</span></div>`; }).join("")}</div>
   </section>
@@ -148,14 +148,14 @@ class HAGasSavingsCard extends HTMLElement {
     const all = fYear ? [...yrs, fYear] : yrs; const max = Math.max(1, ...all.map((y) => Math.max(y.gas, y.heat)));
     const avgSaved = yrs.reduce((s, y) => s + y.saved, 0) / yrs.length;
     return `<section class="panel yrs">
-    <div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-multiple"></ha-icon></span><div><h3>År for år</h3><p>Hvad gassen kostede (regninger${c.service_year ? " + service" : ""}) mod fjernvarme til dagens pris for samme varme</p></div><span class="fsum pos">≈ ${fmt(avgSaved)} kr/år</span></div>
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-multiple"></ha-icon></span><div><h3>År for år</h3><p>Hvad gassen kostede de år – og hvad fjernvarme ville have kostet</p></div><span class="fsum pos">ca. ${fmt(avgSaved)} kr om året</span></div>
     <div class="months">${all.map((y, i) => `<div class="mrow${y.fc ? " fcrow" : ""}" style="--i:${i}">
       <span class="m">${esc(y.year)}${y.fc ? "<em>prognose</em>" : ""}</span>
       <div class="bars"><div class="bar g"><i style="width:${((y.gas / max) * 100).toFixed(1)}%"></i><b>${fmt(y.gas)} kr</b><small>${fmt(y.m3)} m³${Number.isFinite(y.avgM3) ? ` · ${fmt(y.avgM3, 2)} kr/m³` : ""}</small></div>
       <div class="bar h"><i style="width:${((y.heat / max) * 100).toFixed(1)}%"></i><b>${fmt(y.heat)} kr</b><small>${fmt(y.heatKwh)} kWh varme</small></div></div>
       <span class="s ${y.saved >= 0 ? "pos" : "neg"}">${y.saved >= 0 ? "+" : ""}${fmt(y.saved)}</span></div>`).join("")}</div>
-    <div class="legend"><span><i class="g"></i>Gas (faktisk)</span><span><i class="h"></i>Fjernvarme for samme varme</span></div>
-    <p class="foot">Varme = gas-kWh × ${fmt(c.efficiency * 100)} % kedel. Fjernvarme: ${fmt(heatPrice, 2)} kr/kWh + ${fmt(c.heat_fixed_month)} kr/md. ${fYear ? "Prognosen bruger normalt forbrug og dagens gaspris." : ""}</p>
+    <div class="legend"><span><i class="g"></i>Gas (regningerne)</span><span><i class="h"></i>Fjernvarme til samme varme</span></div>
+    <p class="foot">Fjernvarmen er regnet med dagens pris og samme varmeforbrug som det år. "Næste år" er et bud ud fra normalt forbrug.</p>
   </section>`;
   }
 
@@ -176,14 +176,14 @@ class HAGasSavingsCard extends HTMLElement {
     const base = forecast.reduce((s, r) => s + r.saved, 0);
     const col = (x, fut2) => `<div class="pp${fut2 ? " fut" : ""} ${x.v > gNow * 1.02 ? "up" : x.v < gNow * 0.98 ? "down" : "eq"}" title="${MONTHS[x.m]} ${x.k.slice(0, 4)}: ${Number.isFinite(x.v) ? `${fmt(x.v, 2)} kr/m³` : "ikke registreret"}${fut2 ? " (prognose)" : ""}"><i style="height:${Number.isFinite(x.v) ? hgt(x.v).toFixed(1) : 0}%"></i><span>${x.m % 3 === 0 ? MONTHS[x.m] : ""}</span></div>`;
     return `<section class="panel pred">
-    <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bell-curve-cumulative"></ha-icon></span><div><h3>Gasprisen – før og fremover</h3><p>Registrerede priser de sidste 12 måneder og en prognose for de næste 12 · nu ${fmt(gNow, 2)} kr/m³</p></div></div>
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bell-curve-cumulative"></ha-icon></span><div><h3>Gasprisen – før og fremover</h3><p>Prisen de sidste 12 måneder og vores bud på de næste 12 · i dag ${fmt(gNow, 2)} kr/m³</p></div></div>
     <div class="pbars2">${past.map((x) => col(x, false)).join("")}<div class="pnow"><span>nu</span></div>${fut.map((x) => col(x, true)).join("")}</div>
     <div class="chips pchips">
       <span class="chip ${next.v >= gNow ? "bad" : "good"}"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon>${MONTHS[next.m]}: ≈ ${fmt(next.v, 2)} kr/m³ ${arrow(next.v)} ${fmt(Math.abs(pct(next.v)), 0)} %</span>
       <span class="chip bad"><ha-icon icon="mdi:arrow-up-bold"></ha-icon>Højest ${MONTHS[hi.m]} ≈ ${fmt(hi.v, 2)} kr/m³</span>
       <span class="chip good"><ha-icon icon="mdi:arrow-down-bold"></ha-icon>Lavest ${MONTHS[lo.m]} ≈ ${fmt(lo.v, 2)} kr/m³</span>
     </div>
-    ${forecast.length ? `<div class="scen">${[[0.8, "Gassen falder 20 %", "mdi:trending-down"], [1, "Som prognosen", "mdi:trending-neutral"], [1.2, "Gassen stiger 20 %", "mdi:trending-up"]].map(([f, l, ic]) => { const v = f === 1 ? base : yr(f); return `<div class="sc2 ${f < 1 ? "dn" : f > 1 ? "upx" : "mid"}"><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${v >= 0 ? "+" : "−"}${fmt(Math.abs(v))} kr</b><small>sparet det næste år</small></div>`; }).join("")}</div>` : ""}
+    ${forecast.length ? `<div class="scen">${[[0.8, "Hvis gassen bliver 20 % billigere", "mdi:trending-down"], [1, "Som vi forventer", "mdi:trending-neutral"], [1.2, "Hvis gassen bliver 20 % dyrere", "mdi:trending-up"]].map(([f, l, ic]) => { const v = f === 1 ? base : yr(f); return `<div class="sc2 ${f < 1 ? "dn" : f > 1 ? "upx" : "mid"}"><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${v >= 0 ? "+" : "−"}${fmt(Math.abs(v))} kr</b><small>sparet det næste år</small></div>`; }).join("")}</div>` : ""}
   </section>`;
   }
 
@@ -258,37 +258,37 @@ class HAGasSavingsCard extends HTMLElement {
     <div class="id">
       <div class="eyebrow">${esc(c.title)}</div>
       <h2><span data-count="${Math.round(saved)}">${fmt(saved)}</span> kr sparet</h2>
-      <div class="mood ${saved >= 0 ? "" : "bad"}"><i></i>${saved >= 0 ? "billigere end gas med samme varmeforbrug" : "dyrere end gas med samme varmeforbrug"} siden ${esc(c.switch_date || "")}</div>
+      <div class="mood ${saved >= 0 ? "" : "bad"}"><i></i>${saved >= 0 ? "billigere end gas" : "dyrere end gas"}${c.switch_date ? ` siden ${new Date(`${c.switch_date}T12:00:00`).toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}` : ""}</div>
       <div class="chips">
-        <span class="chip gas"><ha-icon icon="mdi:fire"></ha-icon>Gas nu ${fmt(gasNow || gasAvg, 2)} kr/m³ · ${fmt(gasKwhHeat, 2)} kr/kWh varme${Number.isFinite(trend) ? ` · ${trend >= 0 ? "▲" : "▼"} ${fmt(Math.abs(trend), 1)} % på en måned` : ""}</span>
-        <span class="chip heat"><ha-icon icon="mdi:radiator"></ha-icon>Fjernvarme ${fmt(heatPrice, 2)} kr/kWh + ${fmt(c.heat_fixed_month)} kr/md</span>
-        ${cur ? `<span class="chip"><ha-icon icon="mdi:calendar-today"></ha-icon>${MONTHS[+cur.month.slice(5) - 1]}: ${cur.saved >= 0 ? "+" : ""}${fmt(cur.saved)} kr indtil nu</span>` : ""}
-        ${Number.isFinite(yearSaved) ? `<span class="chip good"><ha-icon icon="mdi:calendar-check"></ha-icon>≈ ${fmt(yearSaved)} kr/år</span>` : ""}
+        <span class="chip gas"><ha-icon icon="mdi:fire"></ha-icon>Gas i dag ${fmt(gasNow || gasAvg, 2)} kr/m³${Number.isFinite(trend) ? ` · ${trend >= 0 ? "▲" : "▼"} ${fmt(Math.abs(trend), 1)} % siden sidste måned` : ""}</span>
+        <span class="chip heat"><ha-icon icon="mdi:radiator"></ha-icon>Fjernvarme ${fmt(heatPrice, 2)} kr/kWh + ${fmt(c.heat_fixed_month)} kr om måneden</span>
+        ${cur ? `<span class="chip"><ha-icon icon="mdi:calendar-today"></ha-icon>${cur.saved >= 0 ? "Sparet" : "Tabt"} i ${MONTHS[+cur.month.slice(5) - 1]}.: ${fmt(Math.abs(cur.saved))} kr</span>` : ""}
+        ${Number.isFinite(yearSaved) ? `<span class="chip good"><ha-icon icon="mdi:calendar-check"></ha-icon>Sparer ca. ${fmt(yearSaved)} kr om året</span>` : ""}
         ${credit ? `<span class="chip good"><ha-icon icon="mdi:cash-plus"></ha-icon>${esc(c.credit_label || "Solgt gasfyr")} +${fmt(credit)} kr</span>` : ""}
-        ${Number.isFinite(yearsLeft) ? `<span class="chip"><ha-icon icon="mdi:timer-sand"></ha-icon>${yearsLeft <= 0 ? "Betalt hjem" : `≈ ${fmt(yearsLeft, 1)} år tilbage`}</span>` : ""}
+        ${Number.isFinite(yearsLeft) ? `<span class="chip"><ha-icon icon="mdi:timer-sand"></ha-icon>${yearsLeft <= 0 ? "Betalt hjem" : `Betalt om ca. ${fmt(yearsLeft, 1)} år`}</span>` : ""}
       </div>
     </div>
   </section>
   <div class="grid">
-    <section class="panel stat"><span>Gas ville have kostet</span><b class="g" data-count="${Math.round(gasTot)}" data-suf=" kr">${fmt(gasTot)} kr</b><small>${fmt(sum("m3"))} m³ gas · inkl. net, afgifter, abonnement${c.service_year ? " og service" : ""}</small></section>
-    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h" data-count="${Math.round(heatTot)}" data-suf=" kr">${fmt(heatTot)} kr</b><small>${fmt(sum("kwh"))} kWh · inkl. faste afgifter</small></section>
+    <section class="panel stat"><span>Gas ville have kostet</span><b class="g" data-count="${Math.round(gasTot)}" data-suf=" kr">${fmt(gasTot)} kr</b><small>${fmt(sum("m3"))} m³ gas · alt med: afgifter, abonnement${c.service_year ? " og service" : ""}</small></section>
+    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h" data-count="${Math.round(heatTot)}" data-suf=" kr">${fmt(heatTot)} kr</b><small>${fmt(sum("kwh"))} kWh · alt med, også de faste udgifter</small></section>
     <section class="panel stat"><span>Forskel</span><b class="${saved >= 0 ? "s" : "r"}">${saved >= 0 ? "+" : "−"}${fmt(Math.abs(saved))} kr</b><small>${gasTot > 0 ? `${fmt((saved / gasTot) * 100)} % ${saved >= 0 ? "billigere" : "dyrere"}` : ""}</small></section>
   </div>
   ${forecast.length ? `<section class="panel fc">
-    <div class="head"><span class="hicon blue"><ha-icon icon="mdi:crystal-ball"></ha-icon></span><div><h3>Prognose de næste 12 måneder</h3><p>Normalt varmeforbrug pr. måned · gas til forventet pris (gasmarkedets sæsonmønster, tilpasset de registrerede priser) · fjernvarme til nuværende takst</p></div><b class="fsum ${fSaved >= 0 ? "pos" : "neg"}">${fSaved >= 0 ? "+" : ""}${fmt(fSaved)} kr</b></div>
+    <div class="head"><span class="hicon blue"><ha-icon icon="mdi:crystal-ball"></ha-icon></span><div><h3>De næste 12 måneder</h3><p>Hvad gas og fjernvarme forventes at koste hver måned, når I bruger lige så meget varme som normalt</p></div><b class="fsum ${fSaved >= 0 ? "pos" : "neg"}">${fSaved >= 0 ? "+" : ""}${fmt(fSaved)} kr</b></div>
     <div class="fbars">${forecast.map((r) => `<div class="fcol" title="${MONTHS[+r.month.slice(5) - 1]}: gas ${fmt(r.gas)} kr · fjernvarme ${fmt(r.heat)} kr"><div class="fpair"><i class="g" style="height:${((r.gas / fMax) * 100).toFixed(1)}%"></i><i class="h" style="height:${((r.heat / fMax) * 100).toFixed(1)}%"></i></div><em class="${r.saved >= 0 ? "pos" : "neg"}">${r.saved >= 0 ? "+" : ""}${fmt(r.saved / 1000, 1)}k</em><span>${MONTHS[+r.month.slice(5) - 1]}</span></div>`).join("")}</div>
-    <p class="foot">Gasprisen fremover er et skøn: dagens pris fulgt af gasmarkedets sæsonmønster (dyrest i januar, billigst i juni–juli), tilpasset de priser HA har registreret. Stiger gassen mere, bliver besparelsen større – falder den, mindre. ${Number.isFinite(yearsLeft) && c.investment ? `Med dette niveau er anlægget betalt hjem om ca. ${fmt(yearsLeft, 1)} år.` : ""}</p>
+    <p class="foot">Gasprisen fremover er et bud: gas plejer at være dyrest i januar og billigst om sommeren. Bliver gassen dyrere end ventet, sparer I mere – bliver den billigere, sparer I mindre. ${Number.isFinite(yearsLeft) && c.investment ? `Så er anlægget betalt om ca. ${fmt(yearsLeft, 1)} år.` : ""}</p>
   </section>` : ""}
   ${this._predHtml(c, sIdx, gNow, now, forecast, heatPrice)}
   <section class="panel">
-    <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Måned for måned</h3><p>Samme varme: gas til den måneds pris mod det, fjernvarmen kostede</p></div></div>
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Måned for måned</h3><p>Hvad gas ville have kostet hver måned – mod det, fjernvarmen faktisk kostede</p></div></div>
     <div class="months">${rows.slice().reverse().map((r) => `<div class="mrow">
       <span class="m">${MONTHS[+r.month.slice(5) - 1]} ${r.month.slice(2, 4)}${r.partial ? "<em>nu</em>" : ""}</span>
       <div class="bars"><div class="bar g"><i style="width:${((r.gas / max) * 100).toFixed(1)}%"></i><b>${fmt(r.gas)} kr</b><small>${fmt(r.gasPrice, 2)} kr/m³</small></div>
       <div class="bar h"><i style="width:${((r.heat / max) * 100).toFixed(1)}%"></i><b>${fmt(r.heat)} kr</b><small>${fmt(r.kwh)} kWh</small></div></div>
       <span class="s ${r.saved >= 0 ? "pos" : "neg"}">${r.saved >= 0 ? "+" : ""}${fmt(r.saved)}</span></div>`).join("")}</div>
-    <div class="legend"><span><i class="g"></i>Hvis vi var på gas</span><span><i class="h"></i>Fjernvarme</span></div>
-    <p class="foot">Gas: kWh ÷ (${fmt(c.kwh_per_m3)} kWh/m³ × ${fmt(c.efficiency * 100)} % kedel) × månedens samlede gaspris${known.length ? "" : " (dagens pris)"} + ${fmt((c.gas_fixed_year + c.service_year) / 12)} kr/md faste beløb. Måneder uden gemt gaspris bruger ${known.length ? "gennemsnittet" : "dagens pris"}.</p>
+    <div class="legend"><span><i class="g"></i>Hvis vi stadig havde gas</span><span><i class="h"></i>Fjernvarme</span></div>
+    <p class="foot">Gassen er regnet ud fra den varme, I faktisk har brugt, og den måneds gaspris – med alle faste udgifter.</p>
   </section>
 ${this._yearsHtml(c, heatPrice, rows, forecast)}
 ${this._wide() ? this._wideHtml({ rows, forecast, c, gasNow: gasNow || gasAvg, heatPrice, saved, yearKwh, months }) : ""}

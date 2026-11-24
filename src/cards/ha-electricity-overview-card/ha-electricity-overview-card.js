@@ -8,7 +8,7 @@
 import { keepScroll } from "../shared/keep-scroll.js";
 import { countUp } from "../shared/count-up.js";
 
-const VERSION = "1.2.0";
+const VERSION = "1.2.1";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -163,11 +163,11 @@ class HAElectricityOverviewCard extends HTMLElement {
     <div class="id">
       <div class="eyebrow">${esc(c.title)}</div>
       <h2>${lvText}</h2>
-      <div class="mood"><i></i>${fmt(Math.abs(diff))} % ${diff <= 0 ? "under" : "over"} dagens gennemsnit på ${fmt(tAvg, 2)} kr${win ? ` · billigste ${c.window_hours} timer: ${winTxt} (${fmt(win.avg, 2)} kr)` : ""}</div>
+      <div class="mood"><i></i>${fmt(Math.abs(diff))} % ${diff <= 0 ? "billigere" : "dyrere"} end dagens gennemsnit (${fmt(tAvg, 2)} kr)${win ? ` · billigst ${winTxt}` : ""}</div>
       <div class="chips">
         <span class="chip live"><span class="flow"><i></i><i></i><i></i></span><ha-icon icon="mdi:home-lightning-bolt"></ha-icon>Hus <b data-live="house">—</b></span>
         ${c.car_power ? `<span class="chip live car-flow"><ha-icon icon="mdi:car-electric"></ha-icon>Bil <b data-live="car">—</b></span>` : ""}
-        ${Number.isFinite(spot) ? `<span class="chip"><ha-icon icon="mdi:transmission-tower"></ha-icon>Spot ${fmt(spot, 2)} + afgifter ${fmt(pNow - spot, 2)} kr</span>` : ""}
+        ${Number.isFinite(spot) ? `<span class="chip"><ha-icon icon="mdi:transmission-tower"></ha-icon>Strøm ${fmt(spot, 2)} kr + afgifter ${fmt(pNow - spot, 2)} kr</span>` : ""}
         ${Number.isFinite(co2) ? `<span class="chip"><ha-icon icon="mdi:molecule-co2"></ha-icon>${fmt(co2)} g/kWh${Number.isFinite(fossil) ? ` · ${fmt(fossil)} % fossil` : ""}</span>` : ""}
         <span class="chip"><ha-icon icon="mdi:arrow-collapse-vertical"></ha-icon>I dag ${fmt(tMin, 2)}–${fmt(tMax, 2)} kr</span>
         ${tomorrow.length ? `<span class="chip good"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon>I morgen ${fmt(tomMin, 2)}–${fmt(tomMax, 2)} kr</span>` : ""}
@@ -178,15 +178,15 @@ class HAElectricityOverviewCard extends HTMLElement {
   <div class="grid">
     <section class="panel stat"><span>I dag</span><b class="e" data-count="${Math.round(dNow.kr)}" data-suf=" kr">${fmt(dNow.kr)} kr</b><small>${fmt(dNow.kwh, 1)} kWh${dNow.kwh > 0 ? ` · ${fmt(dNow.kr / dNow.kwh, 2)} kr/kWh i snit` : ""}${dNow.car > 0.1 ? ` · bil ${fmt(dNow.car, 1)} kWh` : ""}</small></section>
     <section class="panel stat"><span>Denne måned</span><b class="h" data-count="${Math.round(mNow?.kr || 0)}" data-suf=" kr">${fmt(mNow?.kr)} kr</b><small>${fmt(mNow?.kwh)} kWh${Number.isFinite(proj) ? ` · ≈ ${fmt(proj)} kr for hele ${MONTHS[now.getMonth()]}` : ""}${prev ? ` · ${MONTHS[now.getMonth() - 1 < 0 ? 11 : now.getMonth() - 1]}: ${fmt(prev.kr)} kr` : ""}</small></section>
-    <section class="panel stat"><span>Betalt pr. kWh</span><b class="${mNow && mNow.avg <= tAvg ? "s" : "r"}" data-count="${(mNow?.avg || 0).toFixed(2)}" data-dec="2" data-suf=" kr">${fmt(mNow?.avg, 2)} kr</b><small>snit i ${MONTHS[now.getMonth()]}${mNow?.car > 0 ? ` · bilen ${fmt((mNow.car / mNow.kwh) * 100)} % af forbruget` : ""}</small></section>
+    <section class="panel stat"><span>Betalt pr. kWh</span><b class="${mNow && mNow.avg <= tAvg ? "s" : "r"}" data-count="${(mNow?.avg || 0).toFixed(2)}" data-dec="2" data-suf=" kr">${fmt(mNow?.avg, 2)} kr</b><small>i gennemsnit i ${MONTHS[now.getMonth()]}.${mNow?.car > 0 ? ` · bilen brugte ${fmt((mNow.car / mNow.kwh) * 100)} % af strømmen` : ""}</small></section>
   </div>
   <section class="panel">
-    <div class="head"><span class="hicon amber"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Prisen ${tomorrow.length ? "i dag og i morgen" : "i dag"}</h3><p>Kurvens farve er prisen: grøn = billig, gul = normal, rød = dyr · billigste og dyreste ${c.window_hours} timer markeret</p></div>${win ? `<span class="fsum pos">${winTxt}</span>` : ""}</div>
+    <div class="head"><span class="hicon amber"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Prisen ${tomorrow.length ? "i dag og i morgen" : "i dag"}</h3><p>Grøn er billig, gul er normal, rød er dyr. De billigste og dyreste ${c.window_hours} timer er markeret</p></div>${win ? `<span class="fsum pos">${winTxt}</span>` : ""}</div>
     ${this._priceCurve(today, tomorrow, win, now, tAvg)}
   </section>
   ${this._smartHtml(all, pNow, now)}
   <section class="panel">
-    <div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-month"></ha-icon></span><div><h3>Måned for måned</h3><p>Hele husets el i kr · bilens del til månedens snitpris</p></div></div>
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-month"></ha-icon></span><div><h3>Måned for måned</h3><p>Hvad strømmen har kostet – huset og bilen hver for sig</p></div></div>
     ${this._monthsHtml(months, monthK)}
   </section>
 ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
@@ -265,7 +265,7 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     const apps = (c.appliances || []).map((a) => { const n0 = startNowAvg(all, a.hours || 1, now), b = cheapestWindow(all, a.hours || 1, now); return { ...a, now: a.kwh * n0, best: b ? a.kwh * b.avg : NaN, at: b?.start }; }).filter((a) => Number.isFinite(a.now));
     const amax = Math.max(...apps.map((a) => a.now), 0.01);
     return `<section class="panel smart">
-    <div class="head"><span class="hicon purple"><ha-icon icon="mdi:car-electric"></ha-icon></span><div><h3>Lad ${esc(c.car_name || "bilen")} smart</h3><p>${typical ? `En typisk opladning på ${fmt(need)} kWh` : `Fra ${fmt(soc)} % til ${fmt(lim)} % · ${fmt(need, 1)} kWh`} · ca. ${hrs} t med ${fmt(c.charger_kw)} kW</p></div>
+    <div class="head"><span class="hicon purple"><ha-icon icon="mdi:car-electric"></ha-icon></span><div><h3>Lad ${esc(c.car_name || "bilen")} smart</h3><p>${typical ? `En typisk opladning på ${fmt(need)} kWh` : `Fra ${fmt(soc)} % til ${fmt(lim)} % (${fmt(need, 1)} kWh)`} – tager ca. ${hrs} ${hrs === 1 ? "time" : "timer"}</p></div>
       ${Number.isFinite(save) && save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank"></ha-icon>Spar <b data-count="${Math.round(save)}" data-suf=" kr">${fmt(save)} kr</b></span>` : `<span class="save ok"><ha-icon icon="mdi:check-decagram"></ha-icon>Nu er et godt tidspunkt</span>`}</div>
     <div class="duel">
       <div class="side now"><div class="stack2">${Number.isFinite(carNow) ? coins(carNow, mk) : ""}</div><div class="dt"><span>Starter nu</span><b data-count="${Math.round(carNow || 0)}" data-suf=" kr">${fmt(carNow)} kr</b><small>kl. ${hh(now)}–${hh(new Date(now.getTime() + hrs * 3600000))} · ${fmt(nowAvg, 2)} kr/kWh</small></div></div>
@@ -309,10 +309,10 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     const nh = now.getHours() + now.getMinutes() / 60;
     // 2) Hvad koster 1 kWh nu.
     // Danske navne ud fra sensorens id (Strømligning kalder dem på engelsk); `price_labels` kan give andre.
-    const NAMES = [[/distribution|transport/i, "Netselskabets tarif"], [/nettar/i, "Energinets nettarif"], [/systemtar/i, "Energinets systemtarif"], [/electricity_tax|elafgift/i, "Elafgift"], [/surcharge|tillaeg|tillæg/i, "Leverandørens tillæg"]];
+    const NAMES = [[/distribution|transport/i, "Netselskabet (ledningerne til huset)"], [/nettar/i, "Energinet (elnettet)"], [/systemtar/i, "Energinet (drift af systemet)"], [/electricity_tax|elafgift/i, "Elafgift til staten"], [/surcharge|tillaeg|tillæg/i, "Elselskabets tillæg"]];
     const nameOf = (id) => c.price_labels?.[id] || NAMES.find(([re]) => re.test(id))?.[1] || String(this._hass.states[id]?.attributes?.friendly_name || id).replace(/\s*(incl\.?|inkl\.?)\s*(vat|moms)$/i, "");
     const comps = (c.price_components || []).map((id) => ({ n: nameOf(id), v: this._num(id) })).filter((x) => Number.isFinite(x.v) && x.v > 0);
-    const parts = [...(Number.isFinite(spot) ? [{ n: "Spotpris", v: spot }] : []), ...comps];
+    const parts = [...(Number.isFinite(spot) ? [{ n: "Selve strømmen", v: spot }] : []), ...comps];
     const pSum = parts.reduce((s, x) => s + x.v, 0) || 1; const PAL = ["#ffc53d", "#4cc9ff", "#b388ff", "#4fe0a6", "#ff8a3d", "#ff667a", "#7dd3fc"];
     // 3) Fordeling denne måned.
     const hk = mNow ? mNow.houseKr : 0, ck = mNow ? mNow.carKr : 0, tot = hk + ck || 1; const RR = 54, CC = 2 * Math.PI * RR;
@@ -320,14 +320,14 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     const days = Array.from({ length: 30 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29 + i); const v = this._days[ymd(d)] || { kwh: 0, kr: 0, car: 0 }; return { d, ...v }; });
     const dMax = Math.max(...days.map((x) => x.kr), 1);
     return `<div class="wide">
-  <section class="panel w2"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:chart-timeline-variant"></ha-icon></span><div><h3>Forbrug og pris i dag</h3><p>kWh pr. time (huset blå, bilen lilla) og strømprisen (gul linje)</p></div><span class="fsum">${fmt((this._days[ymd(now)] || {}).kwh, 1)} kWh</span></div>
+  <section class="panel w2"><div class="head"><span class="hicon blue"><ha-icon icon="mdi:chart-timeline-variant"></ha-icon></span><div><h3>Forbrug og pris i dag</h3><p>Hvor meget strøm I har brugt hver time (huset blå, bilen lilla) – og prisen (gul linje)</p></div><span class="fsum">${fmt((this._days[ymd(now)] || {}).kwh, 1)} kWh</span></div>
     <svg class="chart" viewBox="0 0 ${WW} ${H}" preserveAspectRatio="none">
       ${hrs.map((x, i) => { const car = Math.min(x.car, x.kwh); const yH = Yk(x.kwh), yC = Yk(car); return `<rect class="kh" style="--i:${i}" x="${(X(i) + 3).toFixed(1)}" y="${yH.toFixed(1)}" width="${(bw - 6).toFixed(1)}" height="${(H - 22 - yH).toFixed(1)}" rx="4"/>${car > 0.05 ? `<rect class="kc" style="--i:${i}" x="${(X(i) + 3).toFixed(1)}" y="${yC.toFixed(1)}" width="${(bw - 6).toFixed(1)}" height="${(H - 22 - yC).toFixed(1)}" rx="4"/>` : ""}`; }).join("")}
       <polyline class="pl" points="${line}"/>
       <line class="nowl" x1="${(X(0) + nh * bw).toFixed(1)}" x2="${(X(0) + nh * bw).toFixed(1)}" y1="8" y2="${H - 22}"/>
       ${[0, 3, 6, 9, 12, 15, 18, 21].map((i) => `<text class="lbl" x="${(X(i) + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${String(i).padStart(2, "0")}</text>`).join("")}
     </svg></section>
-  <section class="panel"><div class="head"><span class="hicon amber"><ha-icon icon="mdi:cash-multiple"></ha-icon></span><div><h3>Hvad koster 1 kWh nu?</h3><p>${fmt(pNow, 2)} kr/kWh inkl. moms, delt op</p></div></div>
+  <section class="panel"><div class="head"><span class="hicon amber"><ha-icon icon="mdi:cash-multiple"></ha-icon></span><div><h3>Hvad koster 1 kWh nu?</h3><p>${fmt(pNow, 2)} kr/kWh med moms – her er hvad du betaler for</p></div></div>
     <div class="stack">${parts.map((x, i) => `<i style="width:${((x.v / pSum) * 100).toFixed(1)}%;background:${PAL[i % PAL.length]};--i:${i}"></i>`).join("")}</div>
     <div class="plist">${parts.map((x, i) => `<div><i style="background:${PAL[i % PAL.length]}"></i><span>${esc(x.n)}</span><b>${fmt(x.v, 2)} kr</b><em>${fmt((x.v / pSum) * 100)} %</em></div>`).join("")}</div>
   </section>
@@ -335,7 +335,7 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     <div class="donut"><svg viewBox="0 0 140 140"><circle class="bg" cx="70" cy="70" r="${RR}"/><circle class="dh" cx="70" cy="70" r="${RR}" stroke-dasharray="${((hk / tot) * CC).toFixed(1)} ${CC.toFixed(1)}"/><circle class="dc" cx="70" cy="70" r="${RR}" stroke-dasharray="${((ck / tot) * CC).toFixed(1)} ${CC.toFixed(1)}" stroke-dashoffset="${(-(hk / tot) * CC).toFixed(1)}"/></svg>
       <div class="dl"><div><i class="h"></i><span>Huset</span><b>${fmt(hk)} kr</b><em>${fmt(mNow?.house)} kWh</em></div><div><i class="c"></i><span>Bilen</span><b>${fmt(ck)} kr</b><em>${fmt(mNow?.car)} kWh</em></div><div class="t"><span>I alt</span><b>${fmt(mNow?.kr)} kr</b></div></div></div>
   </section>
-  <section class="panel w2"><div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-range"></ha-icon></span><div><h3>Dag for dag</h3><p>De sidste 30 dage i kr · bilens del lilla</p></div></div>
+  <section class="panel w2"><div class="head"><span class="hicon"><ha-icon icon="mdi:calendar-range"></ha-icon></span><div><h3>Dag for dag</h3><p>Hvad strømmen kostede hver dag de sidste 30 dage – bilens del er lilla</p></div></div>
     <div class="dbars">${days.map((x, i) => { const carKr = x.kwh > 0 ? (Math.min(x.car, x.kwh) / x.kwh) * x.kr : 0; return `<div class="dc2" style="--i:${i}" title="${x.d.getDate()}/${x.d.getMonth() + 1}: ${fmt(x.kr)} kr · ${fmt(x.kwh, 1)} kWh"><div class="dp"><i class="h" style="height:${(((x.kr - carKr) / dMax) * 100).toFixed(1)}%"></i><i class="c" style="height:${((carKr / dMax) * 100).toFixed(1)}%"></i></div><span>${x.d.getDate() % 5 === 0 || i === 29 ? x.d.getDate() : ""}</span></div>`; }).join("")}</div>
   </section>
 </div>`;
