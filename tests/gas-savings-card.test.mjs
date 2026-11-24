@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { installFakeDom } from "./helpers/fake-dom.mjs";
 installFakeDom();
-const { monthCompare, priceFor } = await import("../src/cards/ha-gas-savings-card/ha-gas-savings-card.js");
+const { monthCompare, priceFor, yearCompare } = await import("../src/cards/ha-gas-savings-card/ha-gas-savings-card.js");
 const cfg = { kwh_per_m3: 11, efficiency: 0.9, gas_fixed_year: 2400, service_year: 1200, heat_fixed_month: 300 };
 const r = monthCompare({ kwh: 1980, month: "2026-10", days: 31, gasPrice: 14, heatPrice: 0.6, cfg, now: new Date(2026, 11, 1) });
 assert.equal(Math.round(r.m3), 200);
@@ -13,3 +13,9 @@ assert.equal(Math.round(half.heat), 150);                // fixed amounts follow
 assert.equal(priceFor("2026-05", { "2026-05": 11.9 }, 14), 11.9);
 assert.equal(priceFor("2026-04", { "2026-05": 11.9 }, 14), 14);
 console.log("gas savings card tests passed");
+
+const yc = yearCompare("2025", { kwh: Array(12).fill(1100), price: Array(12).fill(10) }, { kwh_per_m3: 11, efficiency: 0.9, service_year: 1100, heat_fixed_month: 300 }, 0.6);
+assert.equal(Math.round(yc.m3), 1200);
+assert.equal(Math.round(yc.gas), 12000 + 1100);
+assert.equal(Math.round(yc.heat), Math.round(13200 * 0.9 * 0.6 + 3600));
+console.log("gas year compare tests passed");
