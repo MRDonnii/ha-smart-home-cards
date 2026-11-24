@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.309 */
+/* MRDonnii Smart Home Cards v0.5.310 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -35345,7 +35345,7 @@ function roomComfort(room, temp, humidity, co2) {
 var comfortScale = (v, min = 14, max = 28) => Math.max(0, Math.min(1, (v - min) / (max - min)));
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.14.0";
+var VERSION25 = "1.15.0";
 var isEnt = (id) => typeof id === "string" && id.includes(".");
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
@@ -35532,6 +35532,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .spread-dot{position:absolute;top:0;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--room-color,var(--rc-ok));box-shadow:0 0 0 2px var(--rc-surface),0 0 10px var(--room-color,var(--rc-ok));transition:left .6s ease,top .3s ease}
 .spread-dot[hidden]{display:none}
 /* Luftfugtighed (Claude AI, 2026-11-24): samme opbygning som temperaturens gennemsnit; godt omr\xE5de 40\u201360 % */
+.hzx{font-style:normal;font-weight:800;text-transform:none;letter-spacing:0;margin-left:4px;padding:1px 7px;border-radius:999px;color:var(--zc);background:color-mix(in srgb,var(--zc) 15%,transparent)}.hzx.dry2{--zc:#f97316}.hzx.dry{--zc:#f5b14c}.hzx.ok{--zc:var(--rc-ok)}.hzx.wet{--zc:#7dd3fc}.hzx.wet2{--zc:#60a5fa}
 .avgp{cursor:pointer;transition:transform .2s ease}.avgp:hover{transform:translateY(-2px)}.avgp:focus-visible{outline:2px solid var(--rc-accent);outline-offset:3px}
 dialog.avgpop{width:min(560px,calc(100vw - 24px));max-height:min(80vh,760px);padding:0;border:0;border-radius:24px;color:var(--rc-ink);background:var(--rc-surface,var(--card-background-color,#151b24));box-shadow:0 30px 80px -16px rgba(0,0,0,.8),inset 0 0 0 1px var(--rc-edge)}
 dialog.avgpop[open]{display:flex;flex-direction:column;animation:apin .25s cubic-bezier(.16,1,.3,1)}dialog.avgpop::backdrop{background:rgba(4,8,14,.6);backdrop-filter:blur(4px)}@keyframes apin{from{opacity:0;transform:translateY(10px) scale(.98)}}
@@ -36146,6 +36147,18 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       }
     }
     this._gauge(refs.gauges.humidity, model.humidity === void 0 ? DASH3 : `${this._format(model.humidity, 0)} %`, (model.humidity ?? 0) / 100, model.humidity === void 0);
+    {
+      const g = refs.gauges.humidity, h = model.humidity;
+      const lab = g?.querySelector("span");
+      if (lab) {
+        const z = !Number.isFinite(h) ? null : h < 30 ? ["dry2", "meget t\xF8r"] : h < 40 ? ["dry", "t\xF8r"] : h <= 60 ? ["ok", "god"] : h <= 65 ? ["wet", "lidt fugtig"] : ["wet2", "fugtig"];
+        const html = z ? `Fugt <em class="hzx ${z[0]}">${z[1]}</em>` : "Fugt";
+        if (lab._h !== html) {
+          lab._h = html;
+          lab.innerHTML = html;
+        }
+      }
+    }
     const co2 = model.air?.co2;
     this._gauge(refs.gauges.co2, co2 === void 0 ? DASH3 : `${this._format(co2, 0)} ppm`, co2 === void 0 ? 0 : (co2 - 400) / 1200, co2 === void 0);
     if (refs.gauges.co2) {

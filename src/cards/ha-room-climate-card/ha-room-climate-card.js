@@ -20,7 +20,7 @@ import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
 import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
 import { roomComfort, comfortScale } from "../shared/comfort.js";
 
-const VERSION = "1.14.0";
+const VERSION = "1.15.0";
 const isEnt = (id) => typeof id === "string" && id.includes(".");
 const TAG = "ha-room-climate-card";
 const DASH = "—";
@@ -208,6 +208,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .spread-dot{position:absolute;top:0;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--room-color,var(--rc-ok));box-shadow:0 0 0 2px var(--rc-surface),0 0 10px var(--room-color,var(--rc-ok));transition:left .6s ease,top .3s ease}
 .spread-dot[hidden]{display:none}
 /* Luftfugtighed (Claude AI, 2026-11-24): samme opbygning som temperaturens gennemsnit; godt område 40–60 % */
+.hzx{font-style:normal;font-weight:800;text-transform:none;letter-spacing:0;margin-left:4px;padding:1px 7px;border-radius:999px;color:var(--zc);background:color-mix(in srgb,var(--zc) 15%,transparent)}.hzx.dry2{--zc:#f97316}.hzx.dry{--zc:#f5b14c}.hzx.ok{--zc:var(--rc-ok)}.hzx.wet{--zc:#7dd3fc}.hzx.wet2{--zc:#60a5fa}
 .avgp{cursor:pointer;transition:transform .2s ease}.avgp:hover{transform:translateY(-2px)}.avgp:focus-visible{outline:2px solid var(--rc-accent);outline-offset:3px}
 dialog.avgpop{width:min(560px,calc(100vw - 24px));max-height:min(80vh,760px);padding:0;border:0;border-radius:24px;color:var(--rc-ink);background:var(--rc-surface,var(--card-background-color,#151b24));box-shadow:0 30px 80px -16px rgba(0,0,0,.8),inset 0 0 0 1px var(--rc-edge)}
 dialog.avgpop[open]{display:flex;flex-direction:column;animation:apin .25s cubic-bezier(.16,1,.3,1)}dialog.avgpop::backdrop{background:rgba(4,8,14,.6);backdrop-filter:blur(4px)}@keyframes apin{from{opacity:0;transform:translateY(10px) scale(.98)}}
@@ -689,6 +690,10 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
       }
     }
     this._gauge(refs.gauges.humidity, model.humidity === undefined ? DASH : `${this._format(model.humidity, 0)} %`, (model.humidity ?? 0) / 100, model.humidity === undefined);
+    // Hvert rumkort siger også, om luften er tør, god eller fugtig (bruger, 2026-11-24).
+    { const g = refs.gauges.humidity, h = model.humidity; const lab = g?.querySelector("span");
+      if (lab) { const z = !Number.isFinite(h) ? null : h < 30 ? ["dry2", "meget tør"] : h < 40 ? ["dry", "tør"] : h <= 60 ? ["ok", "god"] : h <= 65 ? ["wet", "lidt fugtig"] : ["wet2", "fugtig"];
+        const html = z ? `Fugt <em class="hzx ${z[0]}">${z[1]}</em>` : "Fugt"; if (lab._h !== html) { lab._h = html; lab.innerHTML = html; } } }
     const co2 = model.air?.co2;
     this._gauge(refs.gauges.co2, co2 === undefined ? DASH : `${this._format(co2, 0)} ppm`, co2 === undefined ? 0 : (co2 - 400) / 1200, co2 === undefined);
     if (refs.gauges.co2) {
