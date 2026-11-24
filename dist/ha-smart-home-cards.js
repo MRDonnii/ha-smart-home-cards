@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.301 */
+/* MRDonnii Smart Home Cards v0.5.302 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -55069,7 +55069,7 @@ var HACardListEditor12 = class extends HTMLElement {
 if (!customElements.get("ha-card-list-editor")) customElements.define("ha-card-list-editor", HACardListEditor12);
 
 // src/cards/ha-security-center-card/ha-security-center-card.js
-var SECURITY_CENTER_VERSION = "0.4.0";
+var SECURITY_CENTER_VERSION = "0.4.1";
 var HaSecurityCenterCard = class extends HTMLElement {
   static getStubConfig() {
     return {
@@ -55121,6 +55121,9 @@ var HaSecurityCenterCard = class extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const signature2 = this._signature();
+    if (this._pending) {
+      for (const [ent, p] of Object.entries(this._pending)) if (hass.states[ent]?.state !== p.from && !["locking", "unlocking"].includes(hass.states[ent]?.state)) delete this._pending[ent];
+    }
     if (signature2 !== this._lastSignature) {
       this._lastSignature = signature2;
       if (this._drag || this._holding) this._deferred = true;
@@ -55244,13 +55247,14 @@ var HaSecurityCenterCard = class extends HTMLElement {
     const tx = sl.querySelector(".txt");
     if (tx) tx.textContent = act === "unlock" ? "L\xE5ser op \u2026" : "L\xE5ser \u2026";
     sl.querySelector(".thumb ha-icon")?.setAttribute("icon", "mdi:loading");
-    (this._pending = this._pending || {})[ent] = Date.now();
+    (this._pending = this._pending || {})[ent] = { t: Date.now(), from: this._s(ent)?.state };
     this._service("lock", act, { entity_id: ent });
-    setTimeout(() => {
+    clearTimeout(this._pendT?.[ent]);
+    (this._pendT = this._pendT || {})[ent] = setTimeout(() => {
       delete this._pending[ent];
       this._lastSignature = "";
       this._render();
-    }, 25e3);
+    }, 15e3);
   }
   _runHold(btn) {
     const script = btn.dataset.hold;
@@ -55328,7 +55332,8 @@ var HaSecurityCenterCard = class extends HTMLElement {
     const locks = (C2.locks || []).map((x) => {
       const st = this._s(x.entity), state2 = st?.state;
       const fault = on(x.radio_fault_entity) || on(x.network_fault_entity) || on(x.hardware_fault_entity);
-      const moving = ["locking", "unlocking", "opening"].includes(state2) || pend[x.entity] && Date.now() - pend[x.entity] < 25e3 && !["locked", "unlocked"].includes(state2) || pend[x.entity] && Date.now() - pend[x.entity] < 4e3;
+      const pp = pend[x.entity];
+      const moving = ["locking", "unlocking", "opening"].includes(state2) || pp && Date.now() - pp.t < 15e3 && state2 === pp.from;
       const cls = state2 === void 0 || ["unavailable", "unknown", "jammed"].includes(state2) || fault ? "err" : state2 === "locked" ? "locked" : "open";
       return { ...x, state: state2, cls, moving, fault, bat: num6(x.battery_entity), since: this._ago(st?.last_changed) };
     });
@@ -55343,11 +55348,11 @@ var HaSecurityCenterCard = class extends HTMLElement {
     const total = locks.length + contacts.length + 1, secure = lockedN + contacts.filter((x) => x.cls === "locked").length + (opens.length ? 0 : 1);
     const R = 40, CC = 2 * Math.PI * R;
     const modes = [["disarmed", "Frakoblet", "mdi:shield-off-outline", C2.actions?.disarm], ["armed_home", "Hjemme", "mdi:shield-home", C2.actions?.home], ["armed_away", "Ude", "mdi:shield-lock", C2.actions?.away]];
-    const pad6 = (cls) => `<svg class="pad" viewBox="0 0 64 64" aria-hidden="true"><path class="shk" d="M20 30V21a12 12 0 0 1 24 0v9"/><rect class="body" x="13" y="29" width="38" height="28" rx="8"/><circle class="key" cx="32" cy="41" r="3.6"/><path class="key" d="M32 43.5v5.5"/></svg>`;
+    const pad6 = (cls) => `<svg class="pad" viewBox="-4 -12 72 76" aria-hidden="true"><path class="shk" d="M20 30V21a12 12 0 0 1 24 0v9"/><rect class="body" x="13" y="29" width="38" height="28" rx="8"/><circle class="key" cx="32" cy="41" r="3.6"/><path class="key" d="M32 43.5v5.5"/></svg>`;
     const lockCard = (x, i) => {
       const act = x.cls === "locked" ? "unlock" : "lock";
-      const label = x.cls === "err" ? x.state === "jammed" ? "Blokeret" : x.fault ? "Radiofejl" : "Ikke tilg\xE6ngelig" : x.moving ? x.state === "unlocking" || x.cls === "locked" && pend[x.entity] ? "L\xE5ser op \u2026" : "L\xE5ser \u2026" : x.cls === "locked" ? "L\xE5st" : "Ul\xE5st";
-      const slide = x.cls === "err" ? `<button class="errbtn" data-more="${esc20(x.entity)}"><ha-icon icon="mdi:alert-circle-outline"></ha-icon>Tjek l\xE5sen</button>` : `<div class="slide ${act}${x.moving ? " busy" : ""}" data-slide="${esc20(x.entity)}" data-act="${act}" style="--k:0"><i class="fill"></i><span class="txt">${x.moving ? label : act === "unlock" ? "Skub for at l\xE5se op" : "Skub for at l\xE5se"}<b>\u203A\u203A\u203A</b></span><button class="thumb" aria-label="${act === "unlock" ? "L\xE5s op" : "L\xE5s"} ${esc20(x.name)}"><ha-icon icon="${x.moving ? "mdi:loading" : act === "unlock" ? "mdi:lock-open-variant" : "mdi:lock"}"></ha-icon></button></div>`;
+      const label = x.cls === "err" ? x.state === "jammed" ? "Blokeret" : x.fault ? "Radiofejl" : "Ikke tilg\xE6ngelig" : x.moving ? x.state === "unlocking" || x.state !== "locking" && x.cls === "locked" ? "L\xE5ser op \u2026" : "L\xE5ser \u2026" : x.cls === "locked" ? "L\xE5st" : "Ul\xE5st";
+      const slide = x.cls === "err" ? `<button class="errbtn" data-more="${esc20(x.entity)}"><ha-icon icon="mdi:alert-circle-outline"></ha-icon>Tjek l\xE5sen</button>` : `<div class="slide range-slider ${act}${x.moving ? " busy" : ""}" data-slide="${esc20(x.entity)}" data-act="${act}" style="--k:0"><i class="fill"></i><span class="txt">${x.moving ? label : act === "unlock" ? "Skub for at l\xE5se op" : "Skub for at l\xE5se"}<b>\u203A\u203A\u203A</b></span><button class="thumb" aria-label="${act === "unlock" ? "L\xE5s op" : "L\xE5s"} ${esc20(x.name)}"><ha-icon icon="${x.moving ? "mdi:loading" : act === "unlock" ? "mdi:lock-open-variant" : "mdi:lock"}"></ha-icon></button></div>`;
       return `<article class="lk ${x.cls}${x.moving ? " moving" : ""}" style="--i:${i}">
         <div class="lkh" data-more="${esc20(x.entity)}">${pad6(x.cls)}<div class="lkt"><span>${esc20(x.name)}</span><b>${label}</b><small>${x.since}</small></div>
           <div class="lkm">${Number.isFinite(x.bat) ? `<em class="${x.bat <= 20 ? "low" : ""}"><ha-icon icon="${x.bat <= 20 ? "mdi:battery-alert-variant-outline" : x.bat <= 50 ? "mdi:battery-50" : "mdi:battery"}"></ha-icon>${x.bat} %</em>` : ""}</div></div>
@@ -55424,7 +55429,7 @@ h1{margin:4px 0 2px;font-size:32px;font-weight:850;letter-spacing:-.02em;line-he
 .lk{--lc:var(--ok);position:relative;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:16px;border-radius:22px;background:linear-gradient(160deg,color-mix(in srgb,var(--lc) 13%,transparent),color-mix(in srgb,var(--primary-text-color) 3%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 30%,transparent);animation:rise .55s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i) * 70ms)}
 .lk.open{--lc:var(--warn)}.lk.err{--lc:var(--bad)}@keyframes rise{from{opacity:0;transform:translateY(12px)}}
 .lkh{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;cursor:pointer}
-.pad{width:54px;height:54px;overflow:visible;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--lc) 55%,transparent))}
+.pad{width:56px;height:59px;overflow:visible;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--lc) 55%,transparent))}
 .pad .body{fill:color-mix(in srgb,var(--lc) 25%,transparent);stroke:var(--lc);stroke-width:3}.pad .shk{fill:none;stroke:var(--lc);stroke-width:5;stroke-linecap:round;transform-origin:44px 30px;transition:transform .6s cubic-bezier(.3,1.6,.5,1)}.pad .key{fill:var(--lc);stroke:var(--lc);stroke-width:3;stroke-linecap:round}
 .lk.open .pad .shk{transform:translateY(-7px) rotate(28deg)}.lk.moving .pad{animation:wig .5s ease-in-out infinite}@keyframes wig{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
 .lk.err .pad{animation:shake 1.6s ease-in-out infinite}@keyframes shake{0%,80%,100%{transform:none}84%,92%{transform:translateX(-3px)}88%,96%{transform:translateX(3px)}}
