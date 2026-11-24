@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.306 */
+/* MRDonnii Smart Home Cards v0.5.307 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -35345,7 +35345,7 @@ function roomComfort(room, temp, humidity, co2) {
 var comfortScale = (v, min = 14, max = 28) => Math.max(0, Math.min(1, (v - min) / (max - min)));
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.12.0";
+var VERSION25 = "1.13.0";
 var isEnt = (id) => typeof id === "string" && id.includes(".");
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
@@ -35520,7 +35520,7 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .tile .spark-wrap{--spark-h:30px;margin:auto -14px 0;padding-top:6px}
 
 /* summary */
-.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:14px;margin-top:26px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr);gap:14px;margin-top:26px}
 .panel,.stat{position:relative;isolation:isolate;min-width:0;overflow:hidden;border-radius:24px;background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--sc,var(--rc-accent)) 16%,transparent),transparent 60%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.012)),var(--rc-surface);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 0 0 1px rgba(255,255,255,.055),0 20px 40px -26px rgba(0,0,0,.85)}
 .panel{padding:18px 20px}
 .label{display:block;color:var(--rc-muted);font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
@@ -35531,6 +35531,13 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 .spread-band{position:absolute;top:8px;height:19px;border-radius:8px;background:color-mix(in srgb,var(--rc-ok) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc-ok) 50%,transparent)}
 .spread-dot{position:absolute;top:0;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--room-color,var(--rc-ok));box-shadow:0 0 0 2px var(--rc-surface),0 0 10px var(--room-color,var(--rc-ok));transition:left .6s ease,top .3s ease}
 .spread-dot[hidden]{display:none}
+/* Luftfugtighed (Claude AI, 2026-11-24): gennemsnit og zoner \u2013 t\xF8r under 40 %, godt 40\u201360 %, fugtig over 60 % */
+.hverdict{display:inline-flex;margin-top:6px;font-size:13px;font-weight:800;letter-spacing:0;line-height:1.3;padding:5px 12px;border-radius:999px;color:var(--hc,var(--rc-ok));background:color-mix(in srgb,var(--hc,var(--rc-ok)) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--hc,var(--rc-ok)) 35%,transparent)}.hverdict:empty{display:none}
+.hscale{position:relative;display:flex;height:12px;margin:24px 0 6px;border-radius:6px;overflow:visible}
+.hz{height:100%;display:block}.hz.z1{width:20%;background:color-mix(in srgb,#f97316 70%,transparent);border-radius:6px 0 0 6px}.hz.z2{width:10%;background:color-mix(in srgb,#facc15 65%,transparent)}.hz.z3{width:20%;background:color-mix(in srgb,var(--rc-ok) 70%,transparent)}.hz.z4{width:10%;background:color-mix(in srgb,#facc15 65%,transparent)}.hz.z5{width:40%;background:color-mix(in srgb,#60a5fa 60%,transparent);border-radius:0 6px 6px 0}
+.hdot{position:absolute;top:-14px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#60a5fa;box-shadow:0 0 0 2px var(--rc-surface)}.hdot[hidden]{display:none}
+.hmark{position:absolute;top:-6px;width:4px;height:24px;margin-left:-2px;border-radius:2px;background:var(--rc-ink);box-shadow:0 0 0 2px var(--rc-surface),0 0 12px var(--hc,var(--rc-ok));transition:left .8s cubic-bezier(.2,.8,.2,1)}
+.hlabels{display:flex;justify-content:space-between;margin-bottom:6px;font-size:10.5px;font-weight:700;color:var(--rc-muted)}.hlabels span:nth-child(2){color:var(--rc-ok)}
 .spread-scale{display:flex;justify-content:space-between;gap:10px;color:var(--rc-muted);font-size:11px}.spread-scale b{color:var(--rc-ink);font-weight:700}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;min-width:0}
 .stat{--sc:var(--rc-muted);display:flex;align-items:center;gap:13px;padding:14px 16px}
@@ -35568,7 +35575,8 @@ h2{margin:7px 0 0;font-size:28px;font-weight:800;line-height:1.05;letter-spacing
 @keyframes chipScroll{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(calc(-1 * var(--cd,0px)))}}
 @keyframes ring{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.18)}}
 @keyframes badge{50%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--room-color) 50%,transparent),0 0 0 5px color-mix(in srgb,var(--room-color) 16%,transparent)}}
-@container (max-width:1180px){.hero{grid-template-columns:1fr}.hero .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container (max-width:1180px){.hero{grid-template-columns:1fr 1fr}.hero .stats{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container (max-width:760px){.hero{grid-template-columns:1fr}}
 @container (max-width:760px){.shell{padding:14px}.head{flex-direction:column;align-items:stretch}.flow{min-width:0}.hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:42px}.legend{display:none}}
 @container (max-width:560px){.zones{grid-template-columns:1fr;gap:12px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-column:1/-1!important;grid-template-rows:none!important;grid-auto-flow:row!important}
   .zone{border-radius:24px}.z-head{padding:15px 15px 0}.z-body{padding:12px 15px 8px;gap:12px}.t-big{font-size:48px}.stat{padding:12px}.stat .ic{width:38px;height:38px}}
@@ -35943,6 +35951,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
             <div class="panel indoor"><span class="label">Indend\xF8rs gennemsnit</span><div class="big"><span data-s="avg">${DASH3}</span><small>\xB0C</small></div>
               <div class="spread" data-s="spread"><i class="spread-track"></i><i class="spread-band" data-s="band"></i>${dots}</div>
               <div class="spread-scale"><span data-s="coldest">${DASH3}</span><span data-s="warmest">${DASH3}</span></div></div>
+            <div class="panel humid" data-s="humid"><span class="label">Luftfugtighed \u2013 gennemsnit</span><div class="big"><span data-s="havg">${DASH3}</span><small>%</small></div><div class="hverdict" data-s="hverdict"></div>
+              <div class="hscale"><i class="hz z1"></i><i class="hz z2"></i><i class="hz z3"></i><i class="hz z4"></i><i class="hz z5"></i>${indexed.filter(({ room }) => !room.outdoor).map(({ room, index }) => `<i class="hdot" data-hdot="${index}" title="${esc20(room.name)}" hidden></i>`).join("")}<b class="hmark" data-s="hmark"></b></div>
+              <div class="hlabels"><span>T\xF8rt</span><span>Godt 40\u201360 %</span><span>Fugtigt</span></div>
+              <div class="spread-scale"><span data-s="hdry">${DASH3}</span><span data-s="hwet">${DASH3}</span></div></div>
             <div class="stats">
               <div class="stat" data-s="heat"><span class="ic"><ha-icon icon="mdi:radiator"></ha-icon></span><div><span>Varmer nu</span><strong>${DASH3}</strong><em>${DASH3}</em></div></div>
               <div class="stat" data-s="open"><span class="ic"><ha-icon icon="mdi:window-open-variant"></ha-icon></span><div><span>\xC5bninger</span><strong>${DASH3}</strong><em>${DASH3}</em></div></div>
@@ -36680,6 +36692,41 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     }
     sm.info.classList.toggle("show", lines.length > 0);
   }
+  // Gennemsnitlig luftfugtighed i rummene og om den ligger godt (40–60 %), tørt eller fugtigt (bruger, 2026-11-24: "til brug
+  // senere når jeg får befugter på"). Skalaen går fra 20 til 70 %.
+  _renderHumidity(models) {
+    const root = this.shadowRoot;
+    const host = root?.querySelector('[data-s="humid"]');
+    if (!host) return;
+    const rooms = this._config.rooms || [];
+    const list = models.map((m, i) => ({ m, i, room: rooms[i] })).filter(({ m, room }) => m.kind !== "outdoor" && !room?.outdoor && Number.isFinite(m.humidity));
+    const sig = JSON.stringify(list.map(({ i, m }) => [i, Math.round(m.humidity)]));
+    if (host._sig === sig) return;
+    host._sig = sig;
+    const pos = (v) => Math.max(0, Math.min(100, (v - 20) / 50 * 100));
+    root.querySelectorAll("[data-hdot]").forEach((d) => {
+      const e = list.find(({ i }) => String(i) === d.dataset.hdot);
+      d.hidden = !e;
+      if (e) {
+        d.style.left = `${pos(e.m.humidity)}%`;
+        d.title = `${e.room.name}: ${this._format(e.m.humidity, 0)} %`;
+      }
+    });
+    if (!list.length) {
+      this._setText(host.querySelector('[data-s="havg"]'), DASH3);
+      return;
+    }
+    const avg = list.reduce((s, { m }) => s + m.humidity, 0) / list.length;
+    const dry = list.reduce((a, b) => b.m.humidity < a.m.humidity ? b : a), wet = list.reduce((a, b) => b.m.humidity > a.m.humidity ? b : a);
+    const [txt, col] = avg < 30 ? ["Meget t\xF8r luft", "#f97316"] : avg < 40 ? ["T\xF8r luft \u2013 en befugter vil hj\xE6lpe", "#facc15"] : avg <= 60 ? ["God luftfugtighed", "var(--rc-ok)"] : avg <= 65 ? ["Lidt fugtig luft", "#facc15"] : ["For fugtig luft \u2013 luft ud", "#60a5fa"];
+    host.style.setProperty("--hc", col);
+    this._setText(host.querySelector('[data-s="havg"]'), this._format(avg, 0));
+    this._setText(host.querySelector('[data-s="hverdict"]'), txt);
+    host.querySelector('[data-s="hmark"]').style.left = `${pos(avg)}%`;
+    const sp = (pfx, e) => `${pfx}: ${e.room.name} ${this._format(e.m.humidity, 0)} %`;
+    host.querySelector('[data-s="hdry"]').innerHTML = this._escape(sp("T\xF8rrest", dry)).replace(/: (.*) (\d+ %)$/, ": $1 <b>$2</b>");
+    host.querySelector('[data-s="hwet"]').innerHTML = this._escape(sp("Fugtigst", wet)).replace(/: (.*) (\d+ %)$/, ": $1 <b>$2</b>");
+  }
   _sunActive(room) {
     return isEnt(room.sun) && this._hass?.states?.[room.sun]?.state === "on";
   }
@@ -36687,6 +36734,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     super._renderSummary(models);
     const sm = this._summary;
     this._renderInfo(sm);
+    this._renderHumidity(models);
     const id = this._config.flow_advice;
     if (!sm?.curve || !isEnt(id)) return;
     const st = this._hass?.states?.[id];
