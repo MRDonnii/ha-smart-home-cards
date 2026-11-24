@@ -6,7 +6,7 @@
 import { keepScroll } from "../shared/keep-scroll.js";
 import { countUp } from "../shared/count-up.js";
 
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString("da-DK", { minimumFractionDigits: d, maximumFractionDigits: d }) : "—");
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -31,6 +31,25 @@ export function yearCompare(year, h, cfg, heatPrice) {
   const heat = heatKwh * heatPrice + cfg.heat_fixed_month * 12;
   return { year, m3, gas, heatKwh, heat, saved: gas - heat, avgM3: m3 > 0 ? (gas - (cfg.service_year || 0)) / m3 : NaN };
 }
+/** Gasprisens sæsonmønster (bruger, 2026-11-24: "prediktion for gas og hvis den falder eller stiger"). Grundformen er
+ *  gasmarkedets typiske år (dyrest jan, billigst jun–jul); hvor stort udsvinget er, tilpasses de månedspriser, HA selv har
+ *  registreret (Gasprisguiden), med en lineær tilpasning pris = L·(1 + a·form). Regningernes pris pr. m³ bruges ikke: de
+ *  faste afgifter fordelt på få m³ gør sommeren kunstigt dyr. Giver 12 faktorer (snit 1). */
+export const GAS_SHAPE = [0.10, 0.08, 0.03, -0.03, -0.06, -0.08, -0.08, -0.06, -0.03, 0.01, 0.05, 0.08];
+export function seasonIndex(months, now = new Date()) {
+  const lim = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+  const pts = Object.entries(months || {}).map(([k, v]) => ({ d: new Date(+k.slice(0, 4), +k.slice(5) - 1, 1), v: Number(v) })).filter((p) => p.v > 0 && p.d >= lim);
+  let a = 1;
+  const xs = pts.map((p) => GAS_SHAPE[p.d.getMonth()]);
+  if (pts.length >= 4 && Math.max(...xs) - Math.min(...xs) > 0.05) {
+    const n = pts.length, mx = xs.reduce((s, x) => s + x, 0) / n, my = pts.reduce((s, p) => s + p.v, 0) / n;
+    const b1 = pts.reduce((s, p, i) => s + (xs[i] - mx) * (p.v - my), 0) / (xs.reduce((s, x) => s + (x - mx) ** 2, 0) || 1); const b0 = my - b1 * mx;
+    if (b0 > 0) a = Math.max(0.3, Math.min(2.5, b1 / b0));
+  }
+  return GAS_SHAPE.map((g) => 1 + a * g);
+}
+/** Forventet pris for en kalendermåned: dagens pris uden sæson (niveau) gange månedens sæsonfaktor. */
+export const predictPrice = (idx, now, monthNow, m) => (idx ? (now / idx[monthNow]) * idx[m] : now);
 export function priceFor(month, months, fallback) {
   const v = Number(months?.[month]);
   return Number.isFinite(v) && v > 0 ? v : fallback;
@@ -140,6 +159,34 @@ class HAGasSavingsCard extends HTMLElement {
   </section>`;
   }
 
+  // Gasprisen før og fremover (Claude AI, 2026-11-24): de sidste 12 måneders pris (registreret eller fra regningerne) og
+  // de næste 12 som prognose; grøn under dagens pris, rød over. Og hvad besparelsen bliver, hvis gassen falder eller stiger.
+  _predHtml(c, idx, gNow, now, forecast, heatPrice) {
+    if (!idx || !Number.isFinite(gNow)) return "";
+    let months = {}; try { months = c.gas_price_months ? JSON.parse(this._hass.states[c.gas_price_months]?.state || "{}") : {}; } catch { months = {}; }
+        const past = Array.from({ length: 12 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1), k = ym(d); const rec = Number(months[k]);
+      return { k, m: d.getMonth(), v: rec > 0 ? rec : NaN, rec: rec > 0 }; });
+    const fut = Array.from({ length: 12 }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1); return { k: ym(d), m: d.getMonth(), v: predictPrice(idx, gNow, now.getMonth(), d.getMonth()) }; });
+    const all = [...past, ...fut].filter((x) => Number.isFinite(x.v)); const max = Math.max(...all.map((x) => x.v)) * 1.05, min = Math.min(...all.map((x) => x.v)) * 0.9;
+    const hgt = (v) => Math.max(8, ((v - min) / (max - min || 1)) * 100);
+    const next = fut[0], hi = fut.reduce((a, b) => (b.v > a.v ? b : a)), lo = fut.reduce((a, b) => (b.v < a.v ? b : a));
+    const pct = (v) => ((v - gNow) / gNow) * 100; const arrow = (v) => (v >= gNow ? "▲" : "▼");
+    // Hvis gassen falder/stiger 20 % i forhold til prognosen: årets besparelse.
+    const yr = (f) => forecast.reduce((s, r) => s + r.m3 * r.gasPrice * f - r.m3 * r.gasPrice, 0) + forecast.reduce((s, r) => s + r.saved, 0);
+    const base = forecast.reduce((s, r) => s + r.saved, 0);
+    const col = (x, fut2) => `<div class="pp${fut2 ? " fut" : ""} ${x.v > gNow * 1.02 ? "up" : x.v < gNow * 0.98 ? "down" : "eq"}" title="${MONTHS[x.m]} ${x.k.slice(0, 4)}: ${Number.isFinite(x.v) ? `${fmt(x.v, 2)} kr/m³` : "ikke registreret"}${fut2 ? " (prognose)" : ""}"><i style="height:${Number.isFinite(x.v) ? hgt(x.v).toFixed(1) : 0}%"></i><span>${x.m % 3 === 0 ? MONTHS[x.m] : ""}</span></div>`;
+    return `<section class="panel pred">
+    <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bell-curve-cumulative"></ha-icon></span><div><h3>Gasprisen – før og fremover</h3><p>Registrerede priser de sidste 12 måneder og en prognose for de næste 12 · nu ${fmt(gNow, 2)} kr/m³</p></div></div>
+    <div class="pbars2">${past.map((x) => col(x, false)).join("")}<div class="pnow"><span>nu</span></div>${fut.map((x) => col(x, true)).join("")}</div>
+    <div class="chips pchips">
+      <span class="chip ${next.v >= gNow ? "bad" : "good"}"><ha-icon icon="mdi:calendar-arrow-right"></ha-icon>${MONTHS[next.m]}: ≈ ${fmt(next.v, 2)} kr/m³ ${arrow(next.v)} ${fmt(Math.abs(pct(next.v)), 0)} %</span>
+      <span class="chip bad"><ha-icon icon="mdi:arrow-up-bold"></ha-icon>Højest ${MONTHS[hi.m]} ≈ ${fmt(hi.v, 2)} kr/m³</span>
+      <span class="chip good"><ha-icon icon="mdi:arrow-down-bold"></ha-icon>Lavest ${MONTHS[lo.m]} ≈ ${fmt(lo.v, 2)} kr/m³</span>
+    </div>
+    ${forecast.length ? `<div class="scen">${[[0.8, "Gassen falder 20 %", "mdi:trending-down"], [1, "Som prognosen", "mdi:trending-neutral"], [1.2, "Gassen stiger 20 %", "mdi:trending-up"]].map(([f, l, ic]) => { const v = f === 1 ? base : yr(f); return `<div class="sc2 ${f < 1 ? "dn" : f > 1 ? "upx" : "mid"}"><ha-icon icon="${ic}"></ha-icon><span>${l}</span><b>${v >= 0 ? "+" : "−"}${fmt(Math.abs(v))} kr</b><small>sparet det næste år</small></div>`; }).join("")}</div>` : ""}
+  </section>`;
+  }
+
   getCardSize() { return 9; }
   getGridOptions() { return { rows: "auto", columns: 12, min_columns: 6 }; }
 
@@ -184,14 +231,16 @@ class HAGasSavingsCard extends HTMLElement {
     const prof = Array.isArray(c.heat_profile) && c.heat_profile.length === 12 ? c.heat_profile.map(Number) : null;
     const yearKwh = c.year_kwh || (prof ? prof.reduce((a, b) => a + b, 0) : (full.length >= 12 ? full.slice(-12).reduce((s, r) => s + r.kwh, 0) : NaN));
     const now = new Date();
+    let pmonths = {}; try { pmonths = c.gas_price_months ? JSON.parse(this._hass.states[c.gas_price_months]?.state || "{}") : {}; } catch { pmonths = {}; }
+    const sIdx = seasonIndex(pmonths, now); const gNow = gasNow || gasAvg; const pred = (m) => predictPrice(sIdx, gNow, now.getMonth(), m);
     const forecast = prof ? Array.from({ length: 12 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1), k = ym(d);
-      return monthCompare({ kwh: prof[d.getMonth()], month: k, days: daysIn(k), gasPrice: gasNow || gasAvg, heatPrice, cfg: c, now: new Date(0) });
+      return monthCompare({ kwh: prof[d.getMonth()], month: k, days: daysIn(k), gasPrice: pred(d.getMonth()), heatPrice, cfg: c, now: new Date(0) });
     }) : [];
     const fSaved = forecast.reduce((s, r) => s + r.saved, 0);
     const fMax = Math.max(1, ...forecast.map((r) => Math.max(r.gas, r.heat)));
     const trend = (() => { const ks = Object.keys(months).sort(); if (ks.length < 2) return NaN; const a = Number(months[ks[ks.length - 2]]), b = Number(months[ks[ks.length - 1]]); return a > 0 ? (b - a) / a * 100 : NaN; })();
-    const yearSaved = Number.isFinite(yearKwh)
+    const yearSaved = forecast.length ? forecast.reduce((a, r) => a + r.saved, 0) : Number.isFinite(yearKwh)
       ? (yearKwh / (c.kwh_per_m3 * c.efficiency)) * (gasNow || gasAvg) + c.gas_fixed_year + c.service_year - (yearKwh * heatPrice + c.heat_fixed_month * 12)
       : NaN;
     // Salget af det gamle gasfyr tæller med i afbetalingen (bruger, 2026-11-24: "vi solgte vores gamle fyr for 2000kr").
@@ -226,10 +275,11 @@ class HAGasSavingsCard extends HTMLElement {
     <section class="panel stat"><span>Forskel</span><b class="${saved >= 0 ? "s" : "r"}">${saved >= 0 ? "+" : "−"}${fmt(Math.abs(saved))} kr</b><small>${gasTot > 0 ? `${fmt((saved / gasTot) * 100)} % ${saved >= 0 ? "billigere" : "dyrere"}` : ""}</small></section>
   </div>
   ${forecast.length ? `<section class="panel fc">
-    <div class="head"><span class="hicon blue"><ha-icon icon="mdi:crystal-ball"></ha-icon></span><div><h3>Prognose de næste 12 måneder</h3><p>Normalt varmeforbrug pr. måned · gas til dagens pris ${fmt(gasNow || gasAvg, 2)} kr/m³ · fjernvarme til nuværende takst</p></div><b class="fsum ${fSaved >= 0 ? "pos" : "neg"}">${fSaved >= 0 ? "+" : ""}${fmt(fSaved)} kr</b></div>
+    <div class="head"><span class="hicon blue"><ha-icon icon="mdi:crystal-ball"></ha-icon></span><div><h3>Prognose de næste 12 måneder</h3><p>Normalt varmeforbrug pr. måned · gas til forventet pris (gasmarkedets sæsonmønster, tilpasset de registrerede priser) · fjernvarme til nuværende takst</p></div><b class="fsum ${fSaved >= 0 ? "pos" : "neg"}">${fSaved >= 0 ? "+" : ""}${fmt(fSaved)} kr</b></div>
     <div class="fbars">${forecast.map((r) => `<div class="fcol" title="${MONTHS[+r.month.slice(5) - 1]}: gas ${fmt(r.gas)} kr · fjernvarme ${fmt(r.heat)} kr"><div class="fpair"><i class="g" style="height:${((r.gas / fMax) * 100).toFixed(1)}%"></i><i class="h" style="height:${((r.heat / fMax) * 100).toFixed(1)}%"></i></div><em class="${r.saved >= 0 ? "pos" : "neg"}">${r.saved >= 0 ? "+" : ""}${fmt(r.saved / 1000, 1)}k</em><span>${MONTHS[+r.month.slice(5) - 1]}</span></div>`).join("")}</div>
-    <p class="foot">Gasprisen er ukendt fremover, så prognosen bruger dagens pris. Stiger gassen videre hen over vinteren, bliver besparelsen større – falder den, mindre. ${Number.isFinite(yearsLeft) && c.investment ? `Med dette niveau er anlægget betalt hjem om ca. ${fmt(yearsLeft, 1)} år.` : ""}</p>
+    <p class="foot">Gasprisen fremover er et skøn: dagens pris fulgt af gasmarkedets sæsonmønster (dyrest i januar, billigst i juni–juli), tilpasset de priser HA har registreret. Stiger gassen mere, bliver besparelsen større – falder den, mindre. ${Number.isFinite(yearsLeft) && c.investment ? `Med dette niveau er anlægget betalt hjem om ca. ${fmt(yearsLeft, 1)} år.` : ""}</p>
   </section>` : ""}
+  ${this._predHtml(c, sIdx, gNow, now, forecast, heatPrice)}
   <section class="panel">
     <div class="head"><span class="hicon"><ha-icon icon="mdi:chart-bar"></ha-icon></span><div><h3>Måned for måned</h3><p>Samme varme: gas til den måneds pris mod det, fjernvarmen kostede</p></div></div>
     <div class="months">${rows.slice().reverse().map((r) => `<div class="mrow">
@@ -286,6 +336,11 @@ const STYLE = `
 .kwh{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end}.kc{display:flex;flex-direction:column;align-items:center;gap:4px}.kp{position:relative;height:120px;width:70%}.kp i{position:absolute;left:0;right:0;bottom:0;border-radius:6px 6px 2px 2px}.kp i.n{background:color-mix(in srgb,var(--h) 30%,transparent)}.kp i.m{left:22%;right:22%;background:var(--h)}.kc span{font-size:11px;color:var(--secondary-text-color);font-weight:700}
 .hicon.green{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
 @media(max-width:720px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center;padding:20px 16px}.id{min-width:0;max-width:100%}.id h2{font-size:30px}.mood,.chips{justify-content:center}.grid{grid-template-columns:1fr}.mrow{grid-template-columns:56px minmax(0,1fr) 62px}}
+.pbars2{display:flex;align-items:stretch;gap:3px;height:130px}.pp{flex:1;min-width:0;display:grid;grid-template-rows:minmax(0,1fr) 16px}.pp i{align-self:end;display:block;border-radius:4px 4px 2px 2px;background:color-mix(in srgb,var(--g) 45%,transparent);animation:up .8s cubic-bezier(.2,.8,.2,1) both}.pp.fut i{background:repeating-linear-gradient(180deg,color-mix(in srgb,var(--g) 85%,transparent) 0 6px,color-mix(in srgb,var(--g) 55%,transparent) 6px 9px)}.pp.fut.up i{background:repeating-linear-gradient(180deg,var(--bad) 0 6px,color-mix(in srgb,var(--bad) 60%,transparent) 6px 9px)}.pp.fut.down i{background:repeating-linear-gradient(180deg,var(--ok) 0 6px,color-mix(in srgb,var(--ok) 60%,transparent) 6px 9px)}.pp span{font-size:10px;font-weight:700;text-align:center;color:var(--secondary-text-color);padding-top:3px}
+.pnow{flex:0 0 2px;background:color-mix(in srgb,var(--primary-text-color) 35%,transparent);position:relative;margin:0 4px}.pnow span{position:absolute;top:-2px;left:5px;font-size:9.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--secondary-text-color)}
+.pchips{margin-top:12px}.chip.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.scen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.sc2{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:16px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);box-shadow:inset 0 0 0 1px var(--l)}.sc2 ha-icon{--mdc-icon-size:22px}.sc2 span{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--secondary-text-color)}.sc2 b{font-size:22px;font-weight:850}.sc2 small{font-size:11px;color:var(--secondary-text-color)}.sc2.dn ha-icon{color:var(--ok)}.sc2.upx ha-icon{color:var(--bad)}.sc2.mid{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--g) 45%,transparent);background:color-mix(in srgb,var(--g) 8%,transparent)}.sc2.mid ha-icon{color:var(--g)}
+@media(max-width:720px){.scen{grid-template-columns:1fr}.pbars2{height:110px;gap:2px}.pp span{font-size:8.5px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 `;
 
