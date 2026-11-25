@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.310 */
+/* MRDonnii Smart Home Cards v0.5.311 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -34645,7 +34645,21 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
     hi2 = middle + span * 0.62;
     const x = (time) => (time - t0) / Math.max(t1 - t0, 1) * SPARK_W;
     const y = (value) => SPARK_H - (value - lo) / (hi2 - lo) * SPARK_H;
-    const line = smoothPath(points.map((point) => [x(point.t), y(point.v)]));
+    const buckets = 48, step = Math.max(t1 - t0, 1) / buckets, sums = [];
+    for (const point of points) {
+      const i = Math.min(buckets - 1, Math.floor((point.t - t0) / step));
+      if (!sums[i]) sums[i] = { t: 0, v: 0, n: 0 };
+      sums[i].t += point.t;
+      sums[i].v += point.v;
+      sums[i].n += 1;
+    }
+    const coarse = sums.filter(Boolean).map((b) => ({ t: b.t / b.n, v: b.v / b.n }));
+    const smooth2 = coarse.map((p, i) => {
+      const a = coarse[Math.max(0, i - 1)], c2 = coarse[Math.min(coarse.length - 1, i + 1)];
+      return { t: p.t, v: (a.v + 2 * p.v + c2.v) / 4 };
+    });
+    const drawn = smooth2.length >= 2 ? smooth2 : points;
+    const line = smoothPath(drawn.map((point) => [x(point.t), y(point.v)]));
     spark.line.setAttribute("d", line);
     spark.area.setAttribute("d", `${line}L${SPARK_W} ${SPARK_H}L0 ${SPARK_H}Z`);
     if (showTarget) {
