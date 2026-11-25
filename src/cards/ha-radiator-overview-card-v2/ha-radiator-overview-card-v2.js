@@ -985,7 +985,13 @@ export class HARadiatorOverviewCardV2 extends HTMLElement {
     // Smoother curve on the room tiles (user, 2026-11-25: "ikke så savtakket"): sensors now report every few
     // minutes, so the raw points are averaged into ~48 time buckets and then over 3 neighbours before drawing.
     const buckets = 48, step = Math.max(t1 - t0, 1) / buckets, sums = [];
-    for (const point of points) { const i = Math.min(buckets - 1, Math.floor((point.t - t0) / step)); (sums[i] ||= { t: 0, v: 0, n: 0 }); sums[i].t += point.t; sums[i].v += point.v; sums[i].n += 1; }
+    for (const point of points) {
+      const i = Math.min(buckets - 1, Math.floor((point.t - t0) / step));
+      if (!sums[i]) sums[i] = { t: 0, v: 0, n: 0 };
+      sums[i].t += point.t;
+      sums[i].v += point.v;
+      sums[i].n += 1;
+    }
     const coarse = sums.filter(Boolean).map((b) => ({ t: b.t / b.n, v: b.v / b.n }));
     const smooth = coarse.map((p, i) => { const a = coarse[Math.max(0, i - 1)], c = coarse[Math.min(coarse.length - 1, i + 1)]; return { t: p.t, v: (a.v + 2 * p.v + c.v) / 4 }; });
     const drawn = smooth.length >= 2 ? smooth : points;
