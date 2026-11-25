@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.311 */
+/* MRDonnii Smart Home Cards v0.5.312 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -35359,7 +35359,7 @@ function roomComfort(room, temp, humidity, co2) {
 var comfortScale = (v, min = 14, max = 28) => Math.max(0, Math.min(1, (v - min) / (max - min)));
 
 // src/cards/ha-room-climate-card/ha-room-climate-card.js
-var VERSION25 = "1.15.0";
+var VERSION25 = "1.15.1";
 var isEnt = (id) => typeof id === "string" && id.includes(".");
 var TAG3 = "ha-room-climate-card";
 var DASH3 = "\u2014";
@@ -35914,7 +35914,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller d\xF8r er \xE5ben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge sun" data-b="sun" title="Solen varmer rummet \u2013 m\xE5let er s\xE6nket midlertidigt"><ha-icon icon="mdi:weather-sunny"></ha-icon></span>
-            <span class="badge mould" data-b="mould" title="Fugt ved v\xE6ggens koldeste punkt (skimmelrisiko)"><ha-icon icon="mdi:wall"></ha-icon><b></b></span>
+            <span class="badge mould" data-b="mould" title="Fugt ved v\xE6ggens koldeste punkt, gennemsnit over 3 d\xF8gn (skimmelrisiko)"><ha-icon icon="mdi:wall"></ha-icon><b></b></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
             <span class="badge learn" data-b="learn" title="AC'en l\xE6rer anl\xE6ggets Follow Me \u2013 se AC-fanen"><ha-icon icon="mdi:school-outline"></ha-icon><b></b></span>
           </span>
@@ -36626,7 +36626,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     this._batteryIcon(content.querySelector('[data-c="battery"] ha-icon'), model.batteryMin);
     chip("window", model.windowOpen ? "Vindue/d\xF8r \xE5ben" : void 0);
     const mould = this._mould(room);
-    chip("mould", mould === void 0 || mould < 70 ? void 0 : `Skimmelrisiko ${this._format(mould, 0)} %`);
+    chip("mould", mould === void 0 || mould < 70 ? void 0 : `Skimmelrisiko ${this._format(mould, 0)} % (3 d\xF8gn)`);
     content.querySelector('[data-c="mould"]')?.classList.toggle("warn", mould !== void 0 && mould >= 70 && mould < 80);
     content.querySelector('[data-c="mould"]')?.classList.toggle("bad", mould !== void 0 && mould >= 80);
     chip("sun", this._sunActive(room) ? "Sol \u2013 s\xE6nket 1\xB0" : void 0);
@@ -36721,7 +36721,7 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     const risky = rooms.map((room) => [room.name, this._mould(room)]).filter(([, v]) => v !== void 0 && v >= 70).sort((a, b) => b[1] - a[1]);
     const sunny = rooms.filter((room) => this._sunActive(room)).map((room) => room.name);
     const lines = [];
-    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved v\xE6ggen: ${risky.map(([n, v]) => `${esc20(n)} ${this._format(v, 0)} %`).join(", ")} \u2013 luft ud eller hold rummet varmere</span></div>`);
+    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved v\xE6ggen (3 d\xF8gn): ${risky.map(([n, v]) => `${esc20(n)} ${this._format(v, 0)} %`).join(", ")} \u2013 luft ud eller hold rummet varmere</span></div>`);
     if (sunny.length) lines.push(`<div class="sun"><ha-icon icon="mdi:weather-sunny"></ha-icon><span>Solen varmer ${esc20(sunny.join(" og "))} \u2013 m\xE5let er s\xE6nket midlertidigt</span></div>`);
     const html = lines.join("");
     if (sm.info._h !== html) {

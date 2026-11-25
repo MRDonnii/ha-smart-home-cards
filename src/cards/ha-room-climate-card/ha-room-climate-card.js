@@ -20,7 +20,7 @@ import { isNewLook, LOOK_LABELS } from "../../shared/look.js";
 import { PREMIUM_STYLE, DIAL_MARKUP, WX_MARKUP, wxInfo, compass, sunTimes } from "./premium.js";
 import { roomComfort, comfortScale } from "../shared/comfort.js";
 
-const VERSION = "1.15.0";
+const VERSION = "1.15.1";
 const isEnt = (id) => typeof id === "string" && id.includes(".");
 const TAG = "ha-room-climate-card";
 const DASH = "—";
@@ -503,7 +503,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
           <span class="badges">
             <span class="badge window" data-b="window" title="Vindue eller dør er åben"><ha-icon icon="mdi:window-open-variant"></ha-icon></span>
             <span class="badge sun" data-b="sun" title="Solen varmer rummet – målet er sænket midlertidigt"><ha-icon icon="mdi:weather-sunny"></ha-icon></span>
-            <span class="badge mould" data-b="mould" title="Fugt ved væggens koldeste punkt (skimmelrisiko)"><ha-icon icon="mdi:wall"></ha-icon><b></b></span>
+            <span class="badge mould" data-b="mould" title="Fugt ved væggens koldeste punkt, gennemsnit over 3 døgn (skimmelrisiko)"><ha-icon icon="mdi:wall"></ha-icon><b></b></span>
             <span class="badge battery" data-b="battery" title="Lavt batteri i termostat"><ha-icon icon="mdi:battery-alert-variant-outline"></ha-icon></span>
             <span class="badge learn" data-b="learn" title="AC'en lærer anlæggets Follow Me – se AC-fanen"><ha-icon icon="mdi:school-outline"></ha-icon><b></b></span>
           </span>
@@ -1016,7 +1016,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     this._batteryIcon(content.querySelector('[data-c="battery"] ha-icon'), model.batteryMin);
     chip("window", model.windowOpen ? "Vindue/dør åben" : undefined);
     const mould = this._mould(room);
-    chip("mould", mould === undefined || mould < 70 ? undefined : `Skimmelrisiko ${this._format(mould, 0)} %`);
+    chip("mould", mould === undefined || mould < 70 ? undefined : `Skimmelrisiko ${this._format(mould, 0)} % (3 døgn)`);
     content.querySelector('[data-c="mould"]')?.classList.toggle("warn", mould !== undefined && mould >= 70 && mould < 80);
     content.querySelector('[data-c="mould"]')?.classList.toggle("bad", mould !== undefined && mould >= 80);
     chip("sun", this._sunActive(room) ? "Sol – sænket 1°" : undefined);
@@ -1098,7 +1098,7 @@ class HARoomClimateCard extends HARadiatorOverviewCardV2 {
     const risky = rooms.map((room) => [room.name, this._mould(room)]).filter(([, v]) => v !== undefined && v >= 70).sort((a, b) => b[1] - a[1]);
     const sunny = rooms.filter((room) => this._sunActive(room)).map((room) => room.name);
     const lines = [];
-    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved væggen: ${risky.map(([n, v]) => `${esc(n)} ${this._format(v, 0)} %`).join(", ")} – luft ud eller hold rummet varmere</span></div>`);
+    if (risky.length) lines.push(`<div class="mould${risky[0][1] >= 80 ? " bad" : ""}"><ha-icon icon="mdi:wall"></ha-icon><span>Skimmelrisiko ved væggen (3 døgn): ${risky.map(([n, v]) => `${esc(n)} ${this._format(v, 0)} %`).join(", ")} – luft ud eller hold rummet varmere</span></div>`);
     if (sunny.length) lines.push(`<div class="sun"><ha-icon icon="mdi:weather-sunny"></ha-icon><span>Solen varmer ${esc(sunny.join(" og "))} – målet er sænket midlertidigt</span></div>`);
     const html = lines.join("");
     if (sm.info._h !== html) { sm.info._h = html; sm.info.innerHTML = html; }
