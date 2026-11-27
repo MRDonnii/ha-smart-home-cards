@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.316 */
+/* MRDonnii Smart Home Cards v0.5.317 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -52498,7 +52498,7 @@ var VC_CSS = `
 .cam img:not([src]){opacity:0}
 .cam:hover img{transform:scale(1.06)}
 /* Live: stillbilledet sl\xF8res bag videoen, s\xE5 kameraer med et andet format (fx 4:3) f\xE5r en rolig baggrund i stedet for et dobbeltbillede */
-.cam.lvon img{filter:blur(16px) brightness(.55);transform:scale(1.12)}
+.cam.lvok img{filter:blur(16px) brightness(.55);transform:scale(1.12)}.cam .lv ha-camera-stream{opacity:0;transition:opacity .35s ease}.cam.lvok .lv ha-camera-stream{opacity:1}
 .cam .lv{position:absolute;inset:0;pointer-events:none}.cam .lv ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
 .cam .sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 22%,transparent 50%,rgba(0,0,0,.82))}
 .cam .rec{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.14em;background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
@@ -52922,6 +52922,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       lv2.appendChild(v);
       on.add(b);
       b.classList.add("lvon");
+      this._watchLive(b, v);
     };
     const pump = () => {
       this._lvT = null;
@@ -52934,15 +52935,32 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       queue.push(b);
       if (!this._lvT) this._lvT = setTimeout(pump, on.size ? 0 : 300);
     };
-    const stop = (b) => {
+    const stopNow = (b) => {
+      clearTimeout(b._stopT);
+      b._stopT = null;
       const i = queue.indexOf(b);
       if (i >= 0) queue.splice(i, 1);
+      this._keepFrame(b);
       const lv2 = b.querySelector(".lv");
       if (lv2) lv2.innerHTML = "";
+      clearInterval(b._lvW);
       on.delete(b);
-      b.classList.remove("lvon");
+      b.classList.remove("lvon", "lvok");
     };
-    this._io = new IntersectionObserver((list) => list.forEach((x) => x.isIntersecting ? start(x.target) : stop(x.target)), { rootMargin: "100px" });
+    const stop = (b) => {
+      const i = queue.indexOf(b);
+      if (i >= 0) {
+        queue.splice(i, 1);
+        return;
+      }
+      if (!b._stopT && b.querySelector(".lv")?.firstChild) b._stopT = setTimeout(() => stopNow(b), 15e3);
+    };
+    const seen = (b) => {
+      clearTimeout(b._stopT);
+      b._stopT = null;
+      start(b);
+    };
+    this._io = new IntersectionObserver((list) => list.forEach((x) => x.isIntersecting ? seen(x.target) : stop(x.target)), { rootMargin: "300px" });
     this._r.querySelectorAll(".cam").forEach((b) => this._io.observe(b));
   }
   _stopTiles() {
@@ -52951,10 +52969,62 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
     this._io?.disconnect();
     this._io = null;
     this._r?.querySelectorAll(".cam").forEach((b) => {
+      clearTimeout(b._stopT);
+      b._stopT = null;
+      clearInterval(b._lvW);
+      this._keepFrame(b);
       const lv2 = b.querySelector(".lv");
       if (lv2) lv2.innerHTML = "";
-      b.classList.remove("lvon");
+      b.classList.remove("lvon", "lvok");
     });
+  }
+  // Videoen vises først, når den faktisk spiller ("lvok"); indtil da – og hvis den går i stå – står stillbilledet skarpt.
+  // HA's kamerastrøm starter både HLS og WebRTC; HLS kommer tit først, men flere sekunder bagud, og et sekund efter skifter den
+  // til WebRTC – billedet hopper og "starter forfra". Derfor vises videoen først, når WebRTC spiller; HLS kun hvis WebRTC ikke
+  // kommer inden for 6 s (fx uden for hjemmet).
+  _liveVideo(v, rtcOnly = false) {
+    const f = (n, rtc) => {
+      if (!n) return null;
+      const inRtc = rtc || n.tagName === "HA-WEB-RTC-PLAYER";
+      if (n.tagName === "VIDEO" && n.readyState >= 2 && n.videoWidth && (inRtc || !rtcOnly)) return n;
+      for (const c2 of [...n.shadowRoot?.children || [], ...n.children]) {
+        const r = f(c2, inRtc);
+        if (r) return r;
+      }
+      return null;
+    };
+    return f(v, false);
+  }
+  _watchLive(b, v) {
+    clearInterval(b._lvW);
+    let bad = 0;
+    const t0 = Date.now();
+    b._lvW = setInterval(() => {
+      if (!v.isConnected) {
+        clearInterval(b._lvW);
+        return;
+      }
+      const ok = !!this._liveVideo(v, Date.now() - t0 < 6e3);
+      bad = ok ? 0 : bad + 1;
+      if (ok) b.classList.add("lvok");
+      else if (bad > 6) b.classList.remove("lvok");
+    }, 250);
+  }
+  // Gem videoens sidste billede som stillbillede, så feltet ikke er sort/gammelt, når det startes igen.
+  _keepFrame(b) {
+    try {
+      const v = this._liveVideo(b.querySelector(".lv"));
+      const img = b.querySelector("img");
+      if (!v || !img) return;
+      const c2 = document.createElement("canvas");
+      const w = Math.min(960, v.videoWidth);
+      c2.width = w;
+      c2.height = Math.round(w * v.videoHeight / v.videoWidth);
+      c2.getContext("2d").drawImage(v, 0, 0, c2.width, c2.height);
+      img.src = c2.toDataURL("image/jpeg", 0.75);
+      b._at = Date.now();
+    } catch (e) {
+    }
   }
   // Stillbilleder: højst 3 ad gangen (de øverste fliser først) og i mindre størrelse – optageren laver dem ud fra 4K (1,5–5 s
   // hver), og 11 på én gang optog alle browserens forbindelser til HA, så miniaturer og video stod i kø.
