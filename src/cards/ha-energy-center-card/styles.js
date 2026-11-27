@@ -7,6 +7,7 @@
  */
 
 import { POWER_DETAIL_STYLE } from "./components/power-detail.js";
+import { UNITS_STYLE } from "./components/units-dialog.js";
 
 export const STYLE = `
 :host{
@@ -457,4 +458,5 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
   .kpis[data-n]{grid-template-columns:minmax(0,1fr)}
 }
 ${POWER_DETAIL_STYLE}
+${UNITS_STYLE}
 `;

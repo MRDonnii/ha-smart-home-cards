@@ -183,7 +183,7 @@ export class PowerDetail {
     <section class="card pd-panel" data-ref="pdUnmCard">${head("mdi:help-circle-outline", "Umålt", "pdUnmSub", "Hovedmåler minus alle målere")}<div class="pd-box" data-hov="unm" data-ref="pdUnm"></div></section>
   </div>
   <section class="card pd-panel a-full" data-ref="pdTopCard">
-    ${head("mdi:trophy-outline", "Top 10 strømforbrugere i dag", "pdTopSub", "kWh og kr siden midnat, med forløbet time for time")}
+    <div class="sect-head">${head("mdi:trophy-outline", "Top 10 strømforbrugere i dag", "pdTopSub", "kWh og kr siden midnat, med forløbet time for time")}<button type="button" class="pd-units" data-units>${icon("mdi:format-list-bulleted")}Pr. enhed</button></div>
     <div class="pd-top" data-ref="pdTop"></div>
   </section>`;
   }
@@ -698,6 +698,7 @@ export class PowerDetail {
       items.push({ id, name: names.get(id) || c._hass?.states?.[id]?.attributes?.friendly_name || id, kwh, kr, hours, color: col.get(id) || UNM_COL });
     }
     items.sort((a, b) => b.kwh - a.kwh);
+    this.todayMap = new Map(items.map((t) => [t.id, { kwh: t.kwh, kr: d.hasMoney ? t.kr : NaN }]));
     const top = items.slice(0, 10);
     const r = this.refs;
     r.pdTopSub.textContent = end - i0 > 0 ? `kWh og kr siden midnat (hele timer), med forløbet time for time` : "Ingen hele timer i dag endnu";
@@ -809,10 +810,6 @@ export class PowerDetail {
     host.addEventListener("pointermove", (ev) => ev.pointerType !== "touch" && move(ev));
     host.addEventListener("pointerdown", (ev) => ev.pointerType === "touch" && move(ev));
     host.addEventListener("pointerleave", hide);
-    host.addEventListener("click", (ev) => {
-      const row = ev.target.closest?.(".pd-row[data-entity]");
-      if (row) this.card.moreInfo(row.dataset.entity);
-    });
   }
 }
 

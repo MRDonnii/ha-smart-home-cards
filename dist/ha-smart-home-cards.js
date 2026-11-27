@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.313 */
+/* MRDonnii Smart Home Cards v0.5.314 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -9239,9 +9239,9 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const L = p?.limit;
     const held = !!L && L.wait && L.above >= 0.5 && Number.isFinite(L.reach) && L.reach > soc;
     const aim = held ? L.reach : tg;
-    const pw = this._pw();
-    const raw = this._num(pw);
-    const kw2 = raw == null ? null : this._unit(pw) === "W" || raw > 100 ? raw / 1e3 : raw;
+    const pw2 = this._pw();
+    const raw = this._num(pw2);
+    const kw2 = raw == null ? null : this._unit(pw2) === "W" || raw > 100 ? raw / 1e3 : raw;
     const now = Date.now();
     const dlT = p?.deadline ? Date.parse(p.deadline) : NaN;
     const parts = p ? ctlParts({ now, blocks: p.blocks, deadline: dlT, prices: p.prices, minutes: p.minutes }) : [];
@@ -37764,9 +37764,9 @@ function computeInsights(hass, cfg = {}, hourly2 = []) {
     if (start > now && start - now < 864e5 && (!soon || start < soon.start)) soon = { start, text: String(a.message).trim(), all: a.all_day, id };
   }
   if (soon) add(6, { key: "cal", icon: "mdi:calendar-clock", tone: "info", text: `${soon.all ? soon.start.getDate() === now.getDate() ? "I dag" : "I morgen" : when(soon.start).replace(/^kl\./, "Kl.")} \xB7 ${soon.text}`, entity: soon.id });
-  const pw = S(cfg.power), price = num6(cfg.price);
-  if (pw && valid2(pw.state) && Number.isFinite(price)) {
-    const w = parseFloat(pw.state) * (String(pw.attributes?.unit_of_measurement || "W").toLowerCase() === "kw" ? 1e3 : 1);
+  const pw2 = S(cfg.power), price = num6(cfg.price);
+  if (pw2 && valid2(pw2.state) && Number.isFinite(price)) {
+    const w = parseFloat(pw2.state) * (String(pw2.attributes?.unit_of_measurement || "W").toLowerCase() === "kw" ? 1e3 : 1);
     const mean = num6(cfg.price_mean), min = num6(cfg.price_min), at = S(cfg.price_min)?.attributes?.at;
     const tone3 = Number.isFinite(mean) ? price <= mean * 0.85 ? "ok" : price >= mean * 1.15 ? "warn" : "info" : "info";
     let cheap = "";
@@ -43798,23 +43798,23 @@ var HAPetNutritionCard = class extends HTMLElement {
     const food = this._s(c2.food)?.state || "";
     const kcal100 = kcalFor(food, c2.food_kcal, this._num(c2.food_kcal_entity) || 385);
     const portions = this._num(c2.portions);
-    const pw = this._num(c2.portion_weight) || 6;
+    const pw2 = this._num(c2.portion_weight) || 6;
     const meals = (c2.meals || []).length ? c2.meals.filter((id) => this._s(id)?.state === "on").length : +c2.meals_count;
-    const gramsDay = portions * pw * meals;
+    const gramsDay = portions * pw2 * meals;
     const kcalDay = gramsDay * kcal100 / 100;
     const weight = this._num(c2.weight);
     const goalWeight = this._num(c2.goal_weight);
     const goal = goalOf(this._s(c2.goal)?.state);
     const rec = recommendedKcal(weight, goalWeight, goal.label);
     const recGrams = rec / kcal100 * 100;
-    const recPortions = Number.isFinite(rec) && meals ? Math.round(recGrams / pw / meals) : NaN;
+    const recPortions = Number.isFinite(rec) && meals ? Math.round(recGrams / pw2 / meals) : NaN;
     const diff = Number.isFinite(rec) ? Math.round((kcalDay / rec - 1) * 100) : NaN;
     const tone3 = !Number.isFinite(diff) ? "idle" : Math.abs(diff) <= 5 ? "good" : Math.abs(diff) <= 15 ? "warn" : "danger";
     const age = ageMonths(this._s(c2.birthday)?.state);
     const container = this._num(c2.container);
     const daysLeft = gramsDay > 0 && container >= 0 ? container / gramsDay : NaN;
     const options = this._s(c2.food)?.attributes?.options || [];
-    return { food, kcal100, portions, pw, meals, gramsDay, kcalDay, weight, goalWeight, goal, rec, recGrams, recPortions, diff, tone: tone3, age, daysLeft, options };
+    return { food, kcal100, portions, pw: pw2, meals, gramsDay, kcalDay, weight, goalWeight, goal, rec, recGrams, recPortions, diff, tone: tone3, age, daysLeft, options };
   }
   _render() {
     if (!this.shadowRoot || !this._config || !this._hass) return;
@@ -67510,7 +67510,7 @@ var PowerDetail = class {
     <section class="card pd-panel" data-ref="pdUnmCard">${head("mdi:help-circle-outline", "Um\xE5lt", "pdUnmSub", "Hovedm\xE5ler minus alle m\xE5lere")}<div class="pd-box" data-hov="unm" data-ref="pdUnm"></div></section>
   </div>
   <section class="card pd-panel a-full" data-ref="pdTopCard">
-    ${head("mdi:trophy-outline", "Top 10 str\xF8mforbrugere i dag", "pdTopSub", "kWh og kr siden midnat, med forl\xF8bet time for time")}
+    <div class="sect-head">${head("mdi:trophy-outline", "Top 10 str\xF8mforbrugere i dag", "pdTopSub", "kWh og kr siden midnat, med forl\xF8bet time for time")}<button type="button" class="pd-units" data-units>${icon3("mdi:format-list-bulleted")}Pr. enhed</button></div>
     <div class="pd-top" data-ref="pdTop"></div>
   </section>`;
   }
@@ -67996,6 +67996,7 @@ var PowerDetail = class {
       items.push({ id, name: names2.get(id) || c2._hass?.states?.[id]?.attributes?.friendly_name || id, kwh: kwh2, kr: kr2, hours, color: col.get(id) || UNM_COL });
     }
     items.sort((a, b) => b.kwh - a.kwh);
+    this.todayMap = new Map(items.map((t) => [t.id, { kwh: t.kwh, kr: d.hasMoney ? t.kr : NaN }]));
     const top = items.slice(0, 10);
     const r = this.refs;
     r.pdTopSub.textContent = end - i0 > 0 ? `kWh og kr siden midnat (hele timer), med forl\xF8bet time for time` : "Ingen hele timer i dag endnu";
@@ -68100,10 +68101,6 @@ var PowerDetail = class {
     host.addEventListener("pointermove", (ev2) => ev2.pointerType !== "touch" && move(ev2));
     host.addEventListener("pointerdown", (ev2) => ev2.pointerType === "touch" && move(ev2));
     host.addEventListener("pointerleave", hide2);
-    host.addEventListener("click", (ev2) => {
-      const row = ev2.target.closest?.(".pd-row[data-entity]");
-      if (row) this.card.moreInfo(row.dataset.entity);
-    });
   }
 };
 var POWER_DETAIL_STYLE = `
@@ -68166,6 +68163,248 @@ var POWER_DETAIL_STYLE = `
   .pd-panel{padding:12px}
   .pd-row{grid-template-columns:16px minmax(0,1fr) 48px 62px 50px;gap:6px;font-size:12px}.pd-row .sp svg{width:48px}
 }
+`;
+
+// src/cards/ha-energy-center-card/components/units-dialog.js
+var ON_W = 0.5;
+var pw = (w) => {
+  if (!Number.isFinite(w)) return "Ingen data";
+  const p = fmtPower2(w);
+  return `${p.v} ${p.u}`;
+};
+var UnitsDialog = class {
+  constructor(card) {
+    this.card = card;
+  }
+  _members(id) {
+    const ids = this.card._hass?.states?.[id]?.attributes?.entity_id;
+    return Array.isArray(ids) && ids.length > 1 ? ids.filter((x) => typeof x === "string") : null;
+  }
+  _name(id, fallback) {
+    return fallback || this.card._hass?.states?.[id]?.attributes?.friendly_name || id;
+  }
+  _today(id) {
+    return this.card._powerDetail?.()?.todayMap?.get(id);
+  }
+  _groupColor(g) {
+    const pd2 = this.card._powerDetail?.();
+    const col = pd2?.col;
+    if (!col) return "var(--c-el)";
+    if (pd2.evIds?.length && g.entities.some((m) => pd2.evIds.includes(m.entity))) return col.Billader || "var(--c-el)";
+    const series = pd2.series?.find((s) => g.entities.some((m) => s.entities.includes(m.entity)));
+    return series && col[series.name] || "var(--c-el)";
+  }
+  open(dlg) {
+    const c2 = this.card;
+    this.dlg = dlg;
+    this.open_ = /* @__PURE__ */ new Set();
+    dlg.classList.add("wide");
+    dlg.querySelector("[data-dlg-icon]").innerHTML = icon3("mdi:format-list-bulleted");
+    dlg.querySelector("[data-dlg-title]").textContent = "Alle m\xE5lte enheder";
+    this.sumEl = dlg.querySelector("[data-dlg-sum]");
+    const rows = dlg.querySelector("[data-dlg-rows]");
+    rows.classList.add("u-wrap");
+    rows.innerHTML = c2.config.groups.map(
+      (g, gi) => `
+      <section class="u-grp" data-gi="${gi}" style="--gc:${this._groupColor(g)}">
+        <button type="button" class="u-gh" data-u="grp" data-gi="${gi}" aria-expanded="true">
+          <span class="u-dot"></span><span class="u-gn">${escapeHtml3(g.name)}</span>
+          <span class="u-gv num" data-gv>\u2014</span>${icon3("mdi:chevron-down", "u-chev")}
+        </button>
+        <div class="u-list">${g.entities.map((m) => this._row(m.entity, m.name)).join("")}</div>
+      </section>`
+    ).join("");
+    this.rows = rows;
+    this.seen = /* @__PURE__ */ new Map();
+    this.update(true);
+  }
+  _row(id, name) {
+    const members = this._members(id);
+    const t = this._today(id);
+    const today = t ? `i dag ${fmt5(t.kwh, 2)} kWh${Number.isFinite(t.kr) && t.kr > 0 ? ` \xB7 ${fmt5(t.kr, 2)} kr` : ""}` : "";
+    if (!members) {
+      return `<button type="button" class="u-row" data-entity="${escapeHtml3(id)}" data-w="${escapeHtml3(id)}"><span class="u-n">${escapeHtml3(this._name(id, name))}</span><span class="u-v num">\u2014</span><small class="u-t">${today}</small></button>`;
+    }
+    return `<div class="u-agg" data-agg="${escapeHtml3(id)}">
+      <button type="button" class="u-row agg" data-u="agg" data-id="${escapeHtml3(id)}" data-w="${escapeHtml3(id)}" aria-expanded="false">
+        <span class="u-n">${icon3("mdi:chevron-right", "u-chev")}${escapeHtml3(this._name(id, name))}<em data-cnt></em></span><span class="u-v num">\u2014</span><small class="u-t">${today}</small>
+      </button>
+      <div class="u-sub" hidden></div>
+    </div>`;
+  }
+  /** Visningsnavn for en del-enhed: enhedens navn (uden " power"), ellers sensorens navn. */
+  _memberName(id) {
+    const h = this.card._hass;
+    const dev = h?.devices?.[h?.entities?.[id]?.device_id];
+    const n = dev?.name_by_user || dev?.name || h?.states?.[id]?.attributes?.friendly_name || id;
+    return n.replace(/\s+(power|effekt)$/i, "");
+  }
+  _area(id) {
+    const h = this.card._hass;
+    const e = h?.entities?.[id];
+    const a = e?.area_id || h?.devices?.[e?.device_id]?.area_id;
+    return a && h?.areas?.[a]?.name || "Uden rum";
+  }
+  _renderSub(agg) {
+    const id = agg.dataset.agg;
+    const sub2 = agg.querySelector(".u-sub");
+    const all = agg.dataset.all === "1";
+    const members = (this._members(id) || []).map((m) => ({ id: m, w: this.card.wattsOf(m) }));
+    const byW = (a, b) => (Number.isFinite(b.w) ? b.w : -1) - (Number.isFinite(a.w) ? a.w : -1);
+    members.sort(byW);
+    const row = (m) => `<button type="button" class="u-row sub${m.w >= ON_W ? "" : " off"}" data-entity="${escapeHtml3(m.id)}"><span class="u-n">${escapeHtml3(this._memberName(m.id))}</span><span class="u-v num">${pw(m.w)}</span></button>`;
+    const on = members.filter((m) => m.w >= ON_W).length;
+    const rest2 = members.length - on;
+    const more = rest2 > 0 ? `<button type="button" class="u-more" data-u="all">${all ? "Skjul det der er slukket" : `Vis alle ${members.length} (${rest2} slukket)`}</button>` : "";
+    if (members.length > 10) {
+      const areas = /* @__PURE__ */ new Map();
+      for (const m of members) {
+        const a = this._area(m.id);
+        if (!areas.has(a)) areas.set(a, []);
+        areas.get(a).push(m);
+      }
+      const openSet = (this.openAreas ||= /* @__PURE__ */ new Map()).get(id) || /* @__PURE__ */ new Set();
+      const list = [...areas].map(([name, ms]) => ({ name, ms, w: ms.reduce((s, m) => s + (m.w >= 0 ? m.w : 0), 0), on: ms.filter((m) => m.w >= ON_W).length })).sort((a, b) => b.w - a.w);
+      const shown2 = all ? list : list.filter((a) => a.on > 0);
+      sub2.innerHTML = shown2.map((a) => {
+        const open = openSet.has(a.name);
+        const ms = all ? a.ms : a.ms.filter((m) => m.w >= ON_W);
+        return `<div class="u-area${open ? " open" : ""}"><button type="button" class="u-row area${a.on ? "" : " off"}" data-u="area" data-area="${escapeHtml3(a.name)}" aria-expanded="${open}"><span class="u-n">${icon3("mdi:chevron-right", "u-chev")}${escapeHtml3(a.name)}<em>${a.on} af ${a.ms.length} t\xE6ndt</em></span><span class="u-v num">${pw(a.w)}</span></button>${open ? `<div class="u-sub2">${ms.map(row).join("")}</div>` : ""}</div>`;
+      }).join("") + (shown2.length ? "" : `<div class="u-none">Ingen bruger str\xF8m lige nu</div>`) + (list.length > shown2.length || all ? `<button type="button" class="u-more" data-u="all">${all ? "Skjul rum uden forbrug" : `Vis alle ${list.length} rum`}</button>` : "");
+      return;
+    }
+    const shown = all ? members : members.filter((m) => m.w >= ON_W);
+    sub2.innerHTML = shown.map(row).join("") + (shown.length ? "" : `<div class="u-none">Ingen bruger str\xF8m lige nu</div>`) + more;
+  }
+  click(el) {
+    const kind = el.dataset.u;
+    if (kind === "grp") {
+      const sec = el.closest(".u-grp");
+      const open = sec.classList.toggle("closed");
+      el.setAttribute("aria-expanded", String(!open));
+      return;
+    }
+    const agg = el.closest(".u-agg");
+    if (kind === "agg" && agg) {
+      const sub2 = agg.querySelector(".u-sub");
+      sub2.hidden = !sub2.hidden;
+      el.setAttribute("aria-expanded", String(!sub2.hidden));
+      agg.classList.toggle("open", !sub2.hidden);
+      if (!sub2.hidden) this._renderSub(agg);
+      return;
+    }
+    if (kind === "area" && agg) {
+      const map = this.openAreas ||= /* @__PURE__ */ new Map();
+      const set = map.get(agg.dataset.agg) || /* @__PURE__ */ new Set();
+      const name = el.dataset.area;
+      if (set.has(name)) set.delete(name);
+      else set.add(name);
+      map.set(agg.dataset.agg, set);
+      this._renderSub(agg);
+      return;
+    }
+    if (kind === "all" && agg) {
+      agg.dataset.all = agg.dataset.all === "1" ? "0" : "1";
+      this._renderSub(agg);
+    }
+  }
+  update(force = false) {
+    const c2 = this.card;
+    if (!this.rows?.isConnected) return;
+    let changed = force;
+    for (const el of this.rows.querySelectorAll("[data-w]")) {
+      const id = el.dataset.w;
+      const obj = c2._hass?.states?.[id];
+      if (this.seen.get(id) !== obj) {
+        this.seen.set(id, obj);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    let total = 0;
+    let n = 0;
+    let kwh2 = 0;
+    let kr2 = 0;
+    c2.config.groups.forEach((g, gi) => {
+      const sec = this.rows.querySelector(`.u-grp[data-gi="${gi}"]`);
+      if (!sec) return;
+      let gs = 0;
+      const items = [];
+      for (const m of g.entities) {
+        const w = c2.wattsOf(m.entity);
+        if (Number.isFinite(w)) gs += Math.max(w, 0);
+        items.push([m.entity, w]);
+        const t = this._today(m.entity);
+        if (t) {
+          kwh2 += t.kwh;
+          kr2 += Number.isFinite(t.kr) ? t.kr : 0;
+        }
+        n += this._members(m.entity)?.length || 1;
+      }
+      total += gs;
+      sec.querySelector("[data-gv]").textContent = pw(gs);
+      sec.style.order = String(Math.round(-gs * 10));
+      const list = sec.querySelector(".u-list");
+      items.forEach(([id, w]) => {
+        const row = list.querySelector(`:scope > [data-w="${CSS.escape(id)}"], :scope > .u-agg[data-agg="${CSS.escape(id)}"]`);
+        if (!row) return;
+        const btn = row.matches("[data-w]") ? row : row.querySelector("[data-w]");
+        btn.querySelector(".u-v").textContent = pw(w);
+        btn.classList.toggle("off", !(w >= ON_W));
+        row.style.order = String(Number.isFinite(w) ? Math.round(-w * 10) : 1e9);
+        if (row.classList.contains("u-agg")) {
+          const mem = this._members(id) || [];
+          const on = mem.filter((x) => c2.wattsOf(x) >= ON_W).length;
+          row.querySelector("[data-cnt]").textContent = `${on} af ${mem.length} t\xE6ndt`;
+          if (!row.querySelector(".u-sub").hidden) this._renderSub(row);
+        }
+      });
+    });
+    const today = kwh2 > 0 ? ` \xB7 i dag ${fmt5(kwh2, 1)} kWh${kr2 > 0 ? ` / ${fmt5(kr2, 2)} kr` : ""}` : "";
+    this.sumEl.textContent = `${pw(total)} m\xE5lt lige nu \xB7 ${n} enheder i ${c2.config.groups.length} grupper${today}`;
+  }
+  close() {
+    this.dlg?.classList.remove("wide");
+    this.rows?.classList.remove("u-wrap");
+    this.rows = null;
+  }
+};
+var UNITS_STYLE = `
+dialog.detail.wide{width:min(1000px,calc(100vw - 24px));max-height:min(86vh,900px)}
+.dlg-rows.u-wrap{display:block;columns:2 330px;column-gap:14px;padding:12px 14px 16px}
+.u-grp{break-inside:avoid;display:flex;flex-direction:column;margin:0 0 12px;padding:6px;border-radius:14px;background:var(--ec-surface-2);border:1px solid var(--ec-border);border-left:3px solid var(--gc)}
+.u-gh{display:grid;grid-template-columns:10px minmax(0,1fr) auto 18px;gap:10px;align-items:center;padding:8px 8px;border-radius:10px;font-size:14px;font-weight:650;text-align:left}
+.u-gh:hover{background:var(--ec-surface-2)}
+.u-dot{width:10px;height:10px;border-radius:3px;background:var(--gc)}
+.u-gn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.u-gv{font-weight:700}
+.u-chev{--mdc-icon-size:18px;color:var(--ec-muted);transition:transform .15s ease}
+.u-grp.closed .u-gh .u-chev{transform:rotate(-90deg)}
+.u-grp.closed .u-list{display:none}
+.u-list{display:flex;flex-direction:column;padding:0 2px 2px}
+.u-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n v" "t t";gap:0 10px;align-items:center;padding:7px 8px 7px 28px;border-radius:9px;text-align:left;font-size:13px}
+.u-row:hover{background:var(--ec-surface-2)}
+.u-row .u-n{grid-area:n;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.u-row .u-v{grid-area:v;font-weight:650;text-align:right;white-space:nowrap}
+.u-row .u-t{grid-area:t;font-size:11.5px;color:var(--ec-muted)}.u-row .u-t:empty{display:none}
+.u-row.off .u-v{color:var(--ec-faint)}
+.u-row.agg{padding-left:8px}.u-row.agg .u-chev{margin-right:2px}
+.u-row.agg em{font-style:normal;font-size:11.5px;color:var(--ec-muted);margin-left:6px;font-weight:500}
+.u-agg{display:flex;flex-direction:column}
+.u-agg.open > .u-row .u-chev{transform:rotate(90deg)}
+.u-sub{display:flex;flex-direction:column;margin:2px 0 6px 18px;padding-left:8px;border-left:1px dashed var(--ec-border-strong)}
+.u-sub[hidden]{display:none}
+.u-row.sub{padding:5px 8px;font-size:12.5px;grid-template-areas:"n v"}
+.u-row.area{padding:6px 8px;font-size:12.5px;font-weight:600}.u-row.area em{font-style:normal;font-size:11px;color:var(--ec-muted);margin-left:6px;font-weight:500}
+.u-area{display:flex;flex-direction:column}
+.u-area.open > .u-row .u-chev{transform:rotate(90deg)}
+.u-sub2{display:flex;flex-direction:column;margin:0 0 4px 16px;padding-left:6px;border-left:1px dashed var(--ec-border)}
+.u-more{align-self:flex-start;margin:4px 8px;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--ec-accent);background:color-mix(in srgb,var(--ec-accent) 10%,transparent)}
+.u-none{font-size:12px;color:var(--ec-muted);padding:6px 8px}
+.pd-units{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;font-size:12.5px;font-weight:650;color:var(--ec-text);background:color-mix(in srgb,var(--ec-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--ec-accent) 40%,transparent)}
+.pd-units:hover{background:color-mix(in srgb,var(--ec-accent) 20%,transparent)}
+.pd-units .ic{--mdc-icon-size:16px;color:var(--ec-accent)}
+@media (max-width:640px){.dlg-rows.u-wrap{columns:1;padding:10px}}
 `;
 
 // src/cards/ha-energy-center-card/styles.js
@@ -68618,6 +68857,7 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
   .kpis[data-n]{grid-template-columns:minmax(0,1fr)}
 }
 ${POWER_DETAIL_STYLE}
+${UNITS_STYLE}
 `;
 
 // src/cards/ha-energy-center-card/utils/stats.js
@@ -69701,7 +69941,7 @@ var PowerSection = class extends Section {
   <section class="card a-full" data-ref="groupsCard">
     <div class="sect-head">
       <div class="card-head">${icon3("mdi:chart-bar-stacked")}<div><h3>Fordeling pr. gruppe</h3><small data-ref="grpSum">\u2014</small></div></div>
-      <span class="hint">Tryk p\xE5 en gruppe for detaljer</span>
+      <button type="button" class="pd-units" data-units>${icon3("mdi:format-list-bulleted")}Pr. enhed</button>
     </div>
     <div class="groups">${groups}</div>
   </section>
@@ -70855,7 +71095,7 @@ var HaEnergyCenterCard = class extends HTMLElement {
     this.metrics.flushes += 1;
     const entry = this._ensureSection(this._tab);
     if (entry) this._updateSection(entry, false);
-    if (this._dlg?.open) this._updateDialog();
+    if (this._dlg?.open) this._dlgMode === "units" ? this._units?.update() : this._updateDialog();
     this.metrics.lastUpdateMs = performance.now() - t0;
   }
   _updateSection(entry, force) {
@@ -70937,6 +71177,9 @@ var HaEnergyCenterCard = class extends HTMLElement {
       if (tab) return this.switchTab(tab.dataset.tab);
       const go = t.closest?.("[data-goto]");
       if (go) return this.switchTab(go.dataset.goto);
+      const u2 = t.closest?.("[data-u]");
+      if (u2) return this._units?.click(u2);
+      if (t.closest?.("[data-units]")) return this.openUnits();
       const grp = t.closest?.("[data-group]");
       if (grp) return this.openGroup(Number(grp.dataset.group));
       if (t.closest?.("[data-close]")) return this._dlg.close();
@@ -70954,6 +71197,8 @@ var HaEnergyCenterCard = class extends HTMLElement {
     });
     this._dlg.addEventListener("close", () => {
       this._dlgGroup = void 0;
+      this._dlgMode = void 0;
+      this._units?.close();
     });
   }
   switchTab(key2) {
@@ -70998,6 +71243,8 @@ var HaEnergyCenterCard = class extends HTMLElement {
   openGroup(index) {
     const g = this.config.groups[index];
     if (!g || !this._dlg) return;
+    this._units?.close();
+    this._dlgMode = "group";
     this._dlgGroup = index;
     const root = this._dlg;
     root.querySelector("[data-dlg-icon]").innerHTML = icon3(g.icon || "mdi:flash");
@@ -71022,6 +71269,18 @@ var HaEnergyCenterCard = class extends HTMLElement {
     this._dlgSeen = /* @__PURE__ */ new Map();
     this._updateDialog(true);
     if (!root.open) root.showModal();
+  }
+  /** "Pr. enhed": alle målte enheder samlet i grupperne (Claude AI, 2026-11-27). */
+  openUnits() {
+    if (!this._dlg || !this.config.groups.length) return;
+    this._dlgGroup = void 0;
+    this._dlgMode = "units";
+    this._units ||= new UnitsDialog(this);
+    this._units.open(this._dlg);
+    if (!this._dlg.open) this._dlg.showModal();
+  }
+  _powerDetail() {
+    return this._sections.get("power")?.section?.detail;
   }
   _updateDialog(force = false) {
     const g = this.config.groups[this._dlgGroup];
@@ -74656,7 +74915,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const w = Math.max(280, Math.round(host.clientWidth || 600));
     const h = w < 520 ? 240 : 290;
     const pad6 = { l: 52, r: 6, t: 20, b: 26 };
-    const pw = w - pad6.l - pad6.r;
+    const pw2 = w - pad6.l - pad6.r;
     const ph2 = h - pad6.t - pad6.b;
     const now = /* @__PURE__ */ new Date();
     const cy = now.getFullYear();
@@ -74668,7 +74927,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       return [{ y: y2, ...t || { v: null }, partial: y2 === cy }];
     });
     const max = niceMax2(Math.max(1, ...values.flat().map((x) => x.v || 0)) * 1.08);
-    const gw = pw / groups;
+    const gw = pw2 / groups;
     const per = values[0].length;
     const bw = Math.max(3, Math.min(34, gw * 0.78 / per));
     const y = (v) => pad6.t + ph2 - v / max * ph2;
@@ -74769,7 +75028,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     const w = Math.max(280, Math.round(host.clientWidth || 600));
     const h = w < 520 ? 240 : 290;
     const pad6 = { l: 52, r: 6, t: 20, b: 26 };
-    const pw = w - pad6.l - pad6.r, ph2 = h - pad6.t - pad6.b;
+    const pw2 = w - pad6.l - pad6.r, ph2 = h - pad6.t - pad6.b;
     let groups;
     if (month) groups = keys.map((k) => ({ k, ...months[k] }));
     else {
@@ -74787,7 +75046,7 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
       g.v = g.gasBill + g.gasEvida + g.heatMeasured + g.heatEstimate;
     });
     const max = niceMax2(Math.max(1, ...groups.map((g) => Math.max(g.v, g.aconto))) * 1.08);
-    const gw = pw / groups.length;
+    const gw = pw2 / groups.length;
     const bw = Math.max(3, Math.min(34, gw * 0.72));
     const y = (v) => pad6.t + ph2 - v / max * ph2;
     let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Opvarmning i kr"><defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="2" opacity=".5"/></pattern></defs><g class="grid axis">`;
@@ -79479,22 +79738,22 @@ var ThBatteryCard = class extends HTMLElement {
   update() {
     if (!this._h || !this._r) return;
     const NB = this.NB, NP = this.NP, rated = (this.n("rated") || NB * NP * this.PK * 1e3) / 1e3;
-    const soc = this.n("soc"), pw = this.n("power"), eod = this.n("eod"), eoc = this.n("eoc");
-    const state2 = !Number.isFinite(pw) ? "off" : pw > 25 ? "ch" : pw < -25 ? "dis" : "idle";
+    const soc = this.n("soc"), pw2 = this.n("power"), eod = this.n("eod"), eoc = this.n("eoc");
+    const state2 = !Number.isFinite(pw2) ? "off" : pw2 > 25 ? "ch" : pw2 < -25 ? "dis" : "idle";
     const col = { ch: "var(--emer)", dis: "var(--coral)", idle: "var(--ice)", off: "var(--faint)" }[state2];
     this.$("c").style.setProperty("--st", col);
     this.set("kick", `LUNA2000 \xB7 ${NB} \xD7 ${tbn(NP * this.PK, 0)} kWh`);
-    this.set("chip", `<i></i>${{ ch: `Lader ${tbkw(pw)}`, dis: `Aflader ${tbkw(pw)}`, idle: "Hviler", off: "Offline" }[state2]}`);
+    this.set("chip", `<i></i>${{ ch: `Lader ${tbkw(pw2)}`, dis: `Aflader ${tbkw(pw2)}`, idle: "Hviler", off: "Offline" }[state2]}`);
     this.set("soc", `${Number.isFinite(soc) ? Math.round(soc) : "\u2013"}<small>%</small>`);
     const kwh2 = (soc || 0) / 100 * rated;
     this.set("sub", `<b>${tbn(kwh2, 1)} kWh</b> af ${tbn(rated, 0)} kWh lagret`);
     let eta = "&nbsp;";
     if (state2 === "ch" && Number.isFinite(eoc)) {
-      const h = (eoc / 100 * rated - kwh2) / (pw / 1e3);
+      const h = (eoc / 100 * rated - kwh2) / (pw2 / 1e3);
       if (h > 0 && h < 48) eta = `Fuld (${Math.round(eoc)} %) om ca. ${Math.floor(h)} t ${String(Math.round(h % 1 * 60)).padStart(2, "0")} m`;
     }
     if (state2 === "dis" && Number.isFinite(eod)) {
-      const h = (kwh2 - eod / 100 * rated) / (-pw / 1e3);
+      const h = (kwh2 - eod / 100 * rated) / (-pw2 / 1e3);
       if (h > 0) eta = h > 36 ? "R\xE6kker mere end et d\xF8gn ved dette forbrug" : `R\xE6kker ca. ${Math.floor(h)} t ${String(Math.round(h % 1 * 60)).padStart(2, "0")} m ved dette forbrug`;
     }
     if (state2 === "idle") eta = soc >= (eoc || 100) - 1 ? "Fuldt opladet" : "Venter p\xE5 overskud fra solen eller billig str\xF8m";
@@ -79509,7 +79768,7 @@ var ThBatteryCard = class extends HTMLElement {
     }
     const bats = [];
     for (let i = 1; i <= NB; i++) {
-      const bs = Number.isFinite(this.b(i, "state_of_capacity")) ? this.b(i, "state_of_capacity") : soc, bp = Number.isFinite(this.b(i, "charge_discharge_power")) ? this.b(i, "charge_discharge_power") : (pw || 0) / NB;
+      const bs = Number.isFinite(this.b(i, "state_of_capacity")) ? this.b(i, "state_of_capacity") : soc, bp = Number.isFinite(this.b(i, "charge_discharge_power")) ? this.b(i, "charge_discharge_power") : (pw2 || 0) / NB;
       const packs = [];
       for (let j = 1; j <= NP; j++) {
         const ps = this.p(i, j, "state_of_capacity");
@@ -79533,7 +79792,7 @@ var ThBatteryCard = class extends HTMLElement {
       });
     }
     this.flow(bats);
-    this.$("busT").textContent = state2 === "ch" ? `\u2191 ${tbkw(pw)} ind` : state2 === "dis" ? `\u2193 ${tbkw(pw)} til huset` : "Omformer";
+    this.$("busT").textContent = state2 === "ch" ? `\u2191 ${tbkw(pw2)} ind` : state2 === "dis" ? `\u2193 ${tbkw(pw2)} til huset` : "Omformer";
     this.set("cap2", bats.map((b, k) => {
       const s = b.p > 25 ? "var(--emer)" : b.p < -25 ? "var(--coral)" : "var(--ice)", ts = b.packs.map((x) => x.t).filter(Number.isFinite);
       return `<div class="bc" style="--s:${s};animation-delay:${k * 80}ms"><div class="n"><i></i>Batteri ${b.i}${b.st && b.st !== "Running" ? ` \xB7 ${b.st}` : ""}</div>
@@ -81146,7 +81405,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
     const w = Math.max(280, Math.round(host.clientWidth || 600));
     const h = w < 520 ? 240 : 290;
     const pad6 = { l: 46, r: 6, t: 20, b: 26 };
-    const pw = w - pad6.l - pad6.r;
+    const pw2 = w - pad6.l - pad6.r;
     const ph2 = h - pad6.t - pad6.b;
     const now = /* @__PURE__ */ new Date();
     const cy = now.getFullYear();
@@ -81160,7 +81419,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
       return [{ y: y2, v: arr2.slice(0, upto).reduce((s2, x) => s2 + (x ?? 0), 0) || null, partial: y2 === cy, n: arr2.slice(0, upto).filter((x) => x != null).length }];
     });
     const max = niceMax3(Math.max(1, ...values.flat().map((x) => x.v || 0)) * 1.08);
-    const gw = pw / groups;
+    const gw = pw2 / groups;
     const per = values[0].length;
     const bw = Math.max(3, Math.min(34, gw * 0.78 / per));
     const y = (v) => pad6.t + ph2 - v / max * ph2;

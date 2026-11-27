@@ -17,6 +17,7 @@
 
 import { DEFAULT_CONFIG, DEFAULT_ENTITIES, DEFAULT_GROUPS, DEFAULT_PHASES } from "./defaults.js";
 import { STYLE } from "./styles.js";
+import { UnitsDialog } from "./components/units-dialog.js";
 import { StatsStore, sumSince } from "./utils/stats.js";
 import { periodRange } from "./components/history.js";
 import { HOUR_MS, MINUTE_MS, escapeHtml, fmt, fmtPower, hourKey, icon, normalize, startOfDay, toNumber } from "./utils/format.js";
@@ -245,7 +246,7 @@ class HaEnergyCenterCard extends HTMLElement {
     this.metrics.flushes += 1;
     const entry = this._ensureSection(this._tab);
     if (entry) this._updateSection(entry, false);
-    if (this._dlg?.open) this._updateDialog();
+    if (this._dlg?.open) (this._dlgMode === "units" ? this._units?.update() : this._updateDialog());
     this.metrics.lastUpdateMs = performance.now() - t0;
   }
 
@@ -335,6 +336,9 @@ class HaEnergyCenterCard extends HTMLElement {
       if (tab) return this.switchTab(tab.dataset.tab);
       const go = t.closest?.("[data-goto]");
       if (go) return this.switchTab(go.dataset.goto);
+      const u = t.closest?.("[data-u]");
+      if (u) return this._units?.click(u);
+      if (t.closest?.("[data-units]")) return this.openUnits();
       const grp = t.closest?.("[data-group]");
       if (grp) return this.openGroup(Number(grp.dataset.group));
       if (t.closest?.("[data-close]")) return this._dlg.close();
@@ -352,6 +356,8 @@ class HaEnergyCenterCard extends HTMLElement {
     });
     this._dlg.addEventListener("close", () => {
       this._dlgGroup = undefined;
+      this._dlgMode = undefined;
+      this._units?.close();
     });
   }
 
@@ -402,6 +408,8 @@ class HaEnergyCenterCard extends HTMLElement {
   openGroup(index) {
     const g = this.config.groups[index];
     if (!g || !this._dlg) return;
+    this._units?.close();
+    this._dlgMode = "group";
     this._dlgGroup = index;
     const root = this._dlg;
     root.querySelector("[data-dlg-icon]").innerHTML = icon(g.icon || "mdi:flash");
@@ -428,6 +436,20 @@ class HaEnergyCenterCard extends HTMLElement {
     this._dlgSeen = new Map();
     this._updateDialog(true);
     if (!root.open) root.showModal();
+  }
+
+  /** "Pr. enhed": alle målte enheder samlet i grupperne (Claude AI, 2026-11-27). */
+  openUnits() {
+    if (!this._dlg || !this.config.groups.length) return;
+    this._dlgGroup = undefined;
+    this._dlgMode = "units";
+    this._units ||= new UnitsDialog(this);
+    this._units.open(this._dlg);
+    if (!this._dlg.open) this._dlg.showModal();
+  }
+
+  _powerDetail() {
+    return this._sections.get("power")?.section?.detail;
   }
 
   _updateDialog(force = false) {

@@ -124,7 +124,7 @@ export class PowerSection extends Section {
   <section class="card a-full" data-ref="groupsCard">
     <div class="sect-head">
       <div class="card-head">${icon("mdi:chart-bar-stacked")}<div><h3>Fordeling pr. gruppe</h3><small data-ref="grpSum">—</small></div></div>
-      <span class="hint">Tryk på en gruppe for detaljer</span>
+      <button type="button" class="pd-units" data-units>${icon("mdi:format-list-bulleted")}Pr. enhed</button>
     </div>
     <div class="groups">${groups}</div>
   </section>
