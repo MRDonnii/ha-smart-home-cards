@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.317 */
+/* MRDonnii Smart Home Cards v0.5.318 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -52498,7 +52498,8 @@ var VC_CSS = `
 .cam img:not([src]){opacity:0}
 .cam:hover img{transform:scale(1.06)}
 /* Live: stillbilledet sl\xF8res bag videoen, s\xE5 kameraer med et andet format (fx 4:3) f\xE5r en rolig baggrund i stedet for et dobbeltbillede */
-.cam.lvok img{filter:blur(16px) brightness(.55);transform:scale(1.12)}.cam .lv ha-camera-stream{opacity:0;transition:opacity .35s ease}.cam.lvok .lv ha-camera-stream{opacity:1}
+.cam.lvok img{filter:blur(16px) brightness(.55);transform:scale(1.12)}.cam .lv ha-camera-stream,.cam .lv .rtc{opacity:0;transition:opacity .35s ease}.cam.lvok .lv ha-camera-stream,.cam.lvok .lv .rtc{opacity:1}
+.cam .lv .rtc{position:absolute;inset:0}.cam .lv .rtc video{width:100%;height:100%;object-fit:contain;display:block}
 .cam .lv{position:absolute;inset:0;pointer-events:none}.cam .lv ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
 .cam .sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 22%,transparent 50%,rgba(0,0,0,.82))}
 .cam .rec{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.14em;background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
@@ -52913,16 +52914,22 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       if (!lv2 || lv2.firstChild || on.size >= max || !b.isConnected || this._sheet || this._view) return;
       const s = this._h.states[b.dataset.live];
       if (!s) return;
-      const v = document.createElement("ha-camera-stream");
-      v.hass = this._h;
-      v.stateObj = s;
-      v.muted = true;
-      v.controls = false;
-      v.allowExoPlayer = false;
-      lv2.appendChild(v);
       on.add(b);
       b.classList.add("lvon");
+      const v = this.cfg.tile_player === "ha" || b._noRtc ? this._haStream(lv2, s) : this._rtcTile(b, lv2, s.entity_id, () => {
+        b._noRtc = true;
+        b._restart?.();
+      });
       this._watchLive(b, v);
+      b._restart = () => {
+        this._keepFrame(b);
+        clearInterval(b._lvW);
+        this._rtcStop(b);
+        lv2.innerHTML = "";
+        on.delete(b);
+        b.classList.remove("lvon", "lvok");
+        startNow(b);
+      };
     };
     const pump = () => {
       this._lvT = null;
@@ -52941,6 +52948,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       const i = queue.indexOf(b);
       if (i >= 0) queue.splice(i, 1);
       this._keepFrame(b);
+      this._rtcStop(b);
       const lv2 = b.querySelector(".lv");
       if (lv2) lv2.innerHTML = "";
       clearInterval(b._lvW);
@@ -52973,10 +52981,117 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       b._stopT = null;
       clearInterval(b._lvW);
       this._keepFrame(b);
+      this._rtcStop(b);
       const lv2 = b.querySelector(".lv");
       if (lv2) lv2.innerHTML = "";
       b.classList.remove("lvon", "lvok");
     });
+  }
+  _haStream(lv2, s) {
+    const v = document.createElement("ha-camera-stream");
+    v.hass = this._h;
+    v.stateObj = s;
+    v.muted = true;
+    v.controls = false;
+    v.allowExoPlayer = false;
+    lv2.appendChild(v);
+    return v;
+  }
+  // WebRTC direkte via HA's websocket (camera/webrtc/offer) – samme vej som HA's egen afspiller, men uden den parallelle HLS-
+  // strøm, der over http holdt browserens 6 forbindelser til HA optaget, så stillbillederne stod i kø (Claude AI, 2026-11-28).
+  _rtcTile(b, lv2, entity_id, fail) {
+    const box = document.createElement("div");
+    box.className = "rtc";
+    box.dataset.rtc = "1";
+    const v = document.createElement("video");
+    v.muted = true;
+    v.autoplay = true;
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.dataset.rtc = "1";
+    box.appendChild(v);
+    lv2.appendChild(box);
+    const conn = this._h?.connection;
+    if (!conn || typeof RTCPeerConnection !== "function") {
+      queueMicrotask(fail);
+      return box;
+    }
+    const st = b._rtc = { pc: null, unsub: null, dead: false };
+    const bail = () => {
+      if (st.dead) return;
+      this._rtcStop(b);
+      fail();
+    };
+    st.timer = setTimeout(() => {
+      if (!(v.readyState >= 2 && v.videoWidth)) bail();
+    }, 9e3);
+    (async () => {
+      try {
+        const cc = this._rtcCfg ||= {};
+        const cfg = cc[entity_id] ||= await conn.sendMessagePromise({ type: "camera/webrtc/get_client_config", entity_id }).catch(() => ({}));
+        if (st.dead) return;
+        const pc = st.pc = new RTCPeerConnection(cfg?.configuration || {});
+        pc.addTransceiver("video", { direction: "recvonly" });
+        pc.ontrack = (e) => {
+          if (!v.srcObject) {
+            v.srcObject = e.streams[0] || new MediaStream([e.track]);
+            v.play?.().catch(() => {
+            });
+          }
+        };
+        pc.onconnectionstatechange = () => {
+          if (pc.connectionState === "failed") bail();
+        };
+        let session = null;
+        const pend = [];
+        pc.onicecandidate = (e) => {
+          if (!e.candidate) return;
+          const c2 = e.candidate.toJSON();
+          if (session) conn.sendMessage({ type: "camera/webrtc/candidate", entity_id, session_id: session, candidate: c2 });
+          else pend.push(c2);
+        };
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        if (st.dead) return;
+        st.unsub = await conn.subscribeMessage(async (m) => {
+          if (st.dead) return;
+          if (m.type === "session") {
+            session = m.session_id;
+            pend.splice(0).forEach((c2) => conn.sendMessage({ type: "camera/webrtc/candidate", entity_id, session_id: session, candidate: c2 }));
+          } else if (m.type === "answer") await pc.setRemoteDescription({ type: "answer", sdp: m.answer });
+          else if (m.type === "candidate") {
+            try {
+              await pc.addIceCandidate(m.candidate);
+            } catch (e) {
+            }
+          } else if (m.type === "error") bail();
+        }, { type: "camera/webrtc/offer", entity_id, offer: offer.sdp });
+        if (st.dead) {
+          try {
+            st.unsub();
+          } catch (e) {
+          }
+        }
+      } catch (e) {
+        bail();
+      }
+    })();
+    return box;
+  }
+  _rtcStop(b) {
+    const st = b._rtc;
+    if (!st) return;
+    st.dead = true;
+    clearTimeout(st.timer);
+    try {
+      st.unsub?.();
+    } catch (e) {
+    }
+    try {
+      st.pc?.close();
+    } catch (e) {
+    }
+    b._rtc = null;
   }
   // Videoen vises først, når den faktisk spiller ("lvok"); indtil da – og hvis den går i stå – står stillbilledet skarpt.
   // HA's kamerastrøm starter både HLS og WebRTC; HLS kommer tit først, men flere sekunder bagud, og et sekund efter skifter den
@@ -52985,7 +53100,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   _liveVideo(v, rtcOnly = false) {
     const f = (n, rtc) => {
       if (!n) return null;
-      const inRtc = rtc || n.tagName === "HA-WEB-RTC-PLAYER";
+      const inRtc = rtc || n.tagName === "HA-WEB-RTC-PLAYER" || n.dataset?.rtc === "1";
       if (n.tagName === "VIDEO" && n.readyState >= 2 && n.videoWidth && (inRtc || !rtcOnly)) return n;
       for (const c2 of [...n.shadowRoot?.children || [], ...n.children]) {
         const r = f(c2, inRtc);
@@ -52997,17 +53112,27 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   }
   _watchLive(b, v) {
     clearInterval(b._lvW);
-    let bad = 0;
+    let bad = 0, still = 0, last = -1, seen = false;
     const t0 = Date.now();
     b._lvW = setInterval(() => {
       if (!v.isConnected) {
         clearInterval(b._lvW);
         return;
       }
-      const ok = !!this._liveVideo(v, Date.now() - t0 < 6e3);
+      const vid = this._liveVideo(v, Date.now() - t0 < 6e3);
+      const n = vid ? vid.getVideoPlaybackQuality?.().totalVideoFrames ?? Math.round(vid.currentTime * 30) : -1;
+      still = vid && n === last ? still + 1 : 0;
+      last = n;
+      const ok = !!vid && still < 4;
       bad = ok ? 0 : bad + 1;
-      if (ok) b.classList.add("lvok");
-      else if (bad > 6) b.classList.remove("lvok");
+      if (ok) {
+        b.classList.add("lvok");
+        seen = true;
+      } else if (bad > 6) b.classList.remove("lvok");
+      if (seen && bad > 20 && b._restart) {
+        clearInterval(b._lvW);
+        b._restart();
+      }
     }, 250);
   }
   // Gem videoens sidste billede som stillbillede, så feltet ikke er sort/gammelt, når det startes igen.
@@ -53031,12 +53156,14 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
   _refresh(force) {
     if (!this._r || document.hidden || this._sheet || this._view) return;
     const every = (this.cfg.refresh || (this.cams().length > 8 ? 5 : 3)) * 1e3;
+    const pendingEvery = this.cfg.fast_streams ? 1e3 : every;
     if (force) this._r.querySelectorAll(".cam").forEach((b) => {
       b._at = 0;
     });
     for (const b of this._r.querySelectorAll(".cam")) {
       if ((this._stillN || 0) >= (this.cfg.fast_streams ? 6 : 3)) break;
-      if (b._busy || Date.now() - (b._at || 0) < every || b.querySelector(".lv")?.firstChild && b.dataset.img) continue;
+      const pending = b.classList.contains("lvon") && !b.classList.contains("lvok");
+      if (b._busy || Date.now() - (b._at || 0) < (pending ? pendingEvery : every) || b.querySelector(".lv")?.firstChild && b.dataset.img && !pending) continue;
       const s = this._h.states[b.dataset.tile || b.dataset.id];
       if (!s?.attributes?.entity_picture) continue;
       b._busy = true;

@@ -4,6 +4,7 @@
  * exclude: [camera.x, …]   kameraer der ikke skal vises (alle kanaler af kameraet), og deres hændelser
  * live_tiles: true  – fliserne viser live video (WebRTC, kameraets laveste kanal) som i UniFi Protect; false = stillbilleder
  * max_live: hvor mange fliser der må køre live på én gang (standard 16); kun fliser, der er på skærmen
+ * tile_player: rtc (standard) | ha  – fliserne afspiller live med kortets egen WebRTC (kun video, ingen ekstra HLS); ha = HA's afspiller
  * order: [camera.x, …]  – valgfri rækkefølge (Claude AI, 2026-11-27); de nævnte kameraer først i den rækkefølge, resten efter navn
  * fast_streams: { suffix: _fast, hd_suffix: _fast_hd }  – valgfri (Claude AI, 2026-11-27): ekstra kameraer pr. kamera
  *         (camera.<navn><suffix>, fx en generisk kamera-entitet fra en forvarmet restream som Scrypted/go2rtc), der bruges til
@@ -90,7 +91,8 @@ const VC_CSS = `
 .cam img:not([src]){opacity:0}
 .cam:hover img{transform:scale(1.06)}
 /* Live: stillbilledet sløres bag videoen, så kameraer med et andet format (fx 4:3) får en rolig baggrund i stedet for et dobbeltbillede */
-.cam.lvok img{filter:blur(16px) brightness(.55);transform:scale(1.12)}.cam .lv ha-camera-stream{opacity:0;transition:opacity .35s ease}.cam.lvok .lv ha-camera-stream{opacity:1}
+.cam.lvok img{filter:blur(16px) brightness(.55);transform:scale(1.12)}.cam .lv ha-camera-stream,.cam .lv .rtc{opacity:0;transition:opacity .35s ease}.cam.lvok .lv ha-camera-stream,.cam.lvok .lv .rtc{opacity:1}
+.cam .lv .rtc{position:absolute;inset:0}.cam .lv .rtc video{width:100%;height:100%;object-fit:contain;display:block}
 .cam .lv{position:absolute;inset:0;pointer-events:none}.cam .lv ha-camera-stream{display:block;width:100%;height:100%;--video-max-height:100%}
 .cam .sh{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.25),transparent 22%,transparent 50%,rgba(0,0,0,.82))}
 .cam .rec{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.14em;background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
@@ -346,10 +348,15 @@ class ThCameraCard extends HTMLElement {
     // gang holdt alle browserens forbindelser til HA, så miniaturer og afspilleren stod i kø i 10 s.
     const max = this.cfg.max_live || 16, on = new Set(), queue = [];
     const startNow = (b) => { const lv = b.querySelector('.lv'); if (!lv || lv.firstChild || on.size >= max || !b.isConnected || this._sheet || this._view) return; const s = this._h.states[b.dataset.live]; if (!s) return;
-      const v = document.createElement('ha-camera-stream'); v.hass = this._h; v.stateObj = s; v.muted = true; v.controls = false; v.allowExoPlayer = false; lv.appendChild(v); on.add(b); b.classList.add('lvon'); this._watchLive(b, v); };
+      on.add(b); b.classList.add('lvon');
+      // Egen WebRTC-afspiller (kun live-video, over HA's åbne forbindelse); HA's afspiller kun som reserve.
+      const v = this.cfg.tile_player === 'ha' || b._noRtc ? this._haStream(lv, s) : this._rtcTile(b, lv, s.entity_id, () => { b._noRtc = true; b._restart?.(); });
+      this._watchLive(b, v);
+      // Fryser videoen, startes den forfra af sig selv (stillbilledet står imens).
+      b._restart = () => { this._keepFrame(b); clearInterval(b._lvW); this._rtcStop(b); lv.innerHTML = ''; on.delete(b); b.classList.remove('lvon', 'lvok'); startNow(b); }; };
     const pump = () => { this._lvT = null; const b = queue.shift(); if (b) startNow(b); if (queue.length) this._lvT = setTimeout(pump, this.cfg.fast_streams ? 150 : 500); };
     const start = (b) => { if (queue.includes(b) || b.querySelector('.lv')?.firstChild) return; queue.push(b); if (!this._lvT) this._lvT = setTimeout(pump, on.size ? 0 : 300); };
-    const stopNow = (b) => { clearTimeout(b._stopT); b._stopT = null; const i = queue.indexOf(b); if (i >= 0) queue.splice(i, 1); this._keepFrame(b); const lv = b.querySelector('.lv'); if (lv) lv.innerHTML = ''; clearInterval(b._lvW); on.delete(b); b.classList.remove('lvon', 'lvok'); };
+    const stopNow = (b) => { clearTimeout(b._stopT); b._stopT = null; const i = queue.indexOf(b); if (i >= 0) queue.splice(i, 1); this._keepFrame(b); this._rtcStop(b); const lv = b.querySelector('.lv'); if (lv) lv.innerHTML = ''; clearInterval(b._lvW); on.delete(b); b.classList.remove('lvon', 'lvok'); };
     // Et felt der scrolles ud af skærmen kører videre et stykke tid, så det ikke starter forfra (og blinker), når man scroller
     // lidt frem og tilbage (Claude AI, 2026-11-27; bruger: "så blinker de lige og starter forfra").
     const stop = (b) => { const i = queue.indexOf(b); if (i >= 0) { queue.splice(i, 1); return; } if (!b._stopT && b.querySelector('.lv')?.firstChild) b._stopT = setTimeout(() => stopNow(b), 15000); };
@@ -357,18 +364,59 @@ class ThCameraCard extends HTMLElement {
     this._io = new IntersectionObserver((list) => list.forEach(x => x.isIntersecting ? seen(x.target) : stop(x.target)), { rootMargin: '300px' });
     this._r.querySelectorAll('.cam').forEach(b => this._io.observe(b));
   }
-  _stopTiles() { clearTimeout(this._lvT); this._lvT = null; this._io?.disconnect(); this._io = null; this._r?.querySelectorAll('.cam').forEach(b => { clearTimeout(b._stopT); b._stopT = null; clearInterval(b._lvW); this._keepFrame(b); const lv = b.querySelector('.lv'); if (lv) lv.innerHTML = ''; b.classList.remove('lvon', 'lvok'); }); }
+  _stopTiles() { clearTimeout(this._lvT); this._lvT = null; this._io?.disconnect(); this._io = null; this._r?.querySelectorAll('.cam').forEach(b => { clearTimeout(b._stopT); b._stopT = null; clearInterval(b._lvW); this._keepFrame(b); this._rtcStop(b); const lv = b.querySelector('.lv'); if (lv) lv.innerHTML = ''; b.classList.remove('lvon', 'lvok'); }); }
+  _haStream(lv, s) { const v = document.createElement('ha-camera-stream'); v.hass = this._h; v.stateObj = s; v.muted = true; v.controls = false; v.allowExoPlayer = false; lv.appendChild(v); return v; }
+  // WebRTC direkte via HA's websocket (camera/webrtc/offer) – samme vej som HA's egen afspiller, men uden den parallelle HLS-
+  // strøm, der over http holdt browserens 6 forbindelser til HA optaget, så stillbillederne stod i kø (Claude AI, 2026-11-28).
+  _rtcTile(b, lv, entity_id, fail) {
+    const box = document.createElement('div'); box.className = 'rtc'; box.dataset.rtc = '1';
+    const v = document.createElement('video'); v.muted = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.dataset.rtc = '1'; box.appendChild(v); lv.appendChild(box);
+    const conn = this._h?.connection; if (!conn || typeof RTCPeerConnection !== 'function') { queueMicrotask(fail); return box; }
+    const st = b._rtc = { pc: null, unsub: null, dead: false };
+    const bail = () => { if (st.dead) return; this._rtcStop(b); fail(); };
+    st.timer = setTimeout(() => { if (!(v.readyState >= 2 && v.videoWidth)) bail(); }, 9000); // ingen video på 9 s: brug HA's afspiller
+    (async () => {
+      try {
+        const cc = this._rtcCfg ||= {};
+        const cfg = cc[entity_id] ||= await conn.sendMessagePromise({ type: 'camera/webrtc/get_client_config', entity_id }).catch(() => ({}));
+        if (st.dead) return;
+        const pc = st.pc = new RTCPeerConnection(cfg?.configuration || {});
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        pc.ontrack = (e) => { if (!v.srcObject) { v.srcObject = e.streams[0] || new MediaStream([e.track]); v.play?.().catch(() => {}); } };
+        pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') bail(); };
+        let session = null; const pend = [];
+        pc.onicecandidate = (e) => { if (!e.candidate) return; const c = e.candidate.toJSON(); if (session) conn.sendMessage({ type: 'camera/webrtc/candidate', entity_id, session_id: session, candidate: c }); else pend.push(c); };
+        const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+        if (st.dead) return;
+        st.unsub = await conn.subscribeMessage(async (m) => {
+          if (st.dead) return;
+          if (m.type === 'session') { session = m.session_id; pend.splice(0).forEach(c => conn.sendMessage({ type: 'camera/webrtc/candidate', entity_id, session_id: session, candidate: c })); }
+          else if (m.type === 'answer') await pc.setRemoteDescription({ type: 'answer', sdp: m.answer });
+          else if (m.type === 'candidate') { try { await pc.addIceCandidate(m.candidate); } catch (e) { /* ignorer */ } }
+          else if (m.type === 'error') bail();
+        }, { type: 'camera/webrtc/offer', entity_id, offer: offer.sdp });
+        if (st.dead) { try { st.unsub(); } catch (e) { /* */ } }
+      } catch (e) { bail(); }
+    })();
+    return box;
+  }
+  _rtcStop(b) { const st = b._rtc; if (!st) return; st.dead = true; clearTimeout(st.timer); try { st.unsub?.(); } catch (e) { /* */ } try { st.pc?.close(); } catch (e) { /* */ } b._rtc = null; }
   // Videoen vises først, når den faktisk spiller ("lvok"); indtil da – og hvis den går i stå – står stillbilledet skarpt.
   // HA's kamerastrøm starter både HLS og WebRTC; HLS kommer tit først, men flere sekunder bagud, og et sekund efter skifter den
   // til WebRTC – billedet hopper og "starter forfra". Derfor vises videoen først, når WebRTC spiller; HLS kun hvis WebRTC ikke
   // kommer inden for 6 s (fx uden for hjemmet).
-  _liveVideo(v, rtcOnly = false) { const f = (n, rtc) => { if (!n) return null; const inRtc = rtc || n.tagName === 'HA-WEB-RTC-PLAYER'; if (n.tagName === 'VIDEO' && n.readyState >= 2 && n.videoWidth && (inRtc || !rtcOnly)) return n; for (const c of [...(n.shadowRoot?.children || []), ...n.children]) { const r = f(c, inRtc); if (r) return r; } return null; }; return f(v, false); }
+  _liveVideo(v, rtcOnly = false) { const f = (n, rtc) => { if (!n) return null; const inRtc = rtc || n.tagName === 'HA-WEB-RTC-PLAYER' || n.dataset?.rtc === '1'; if (n.tagName === 'VIDEO' && n.readyState >= 2 && n.videoWidth && (inRtc || !rtcOnly)) return n; for (const c of [...(n.shadowRoot?.children || []), ...n.children]) { const r = f(c, inRtc); if (r) return r; } return null; }; return f(v, false); }
   _watchLive(b, v) {
-    clearInterval(b._lvW); let bad = 0; const t0 = Date.now();
+    clearInterval(b._lvW); let bad = 0, still = 0, last = -1, seen = false; const t0 = Date.now();
     b._lvW = setInterval(() => {
       if (!v.isConnected) { clearInterval(b._lvW); return; }
-      const ok = !!this._liveVideo(v, Date.now() - t0 < 6000); bad = ok ? 0 : bad + 1;
-      if (ok) b.classList.add('lvok'); else if (bad > 6) b.classList.remove('lvok'); // ~1,5 s i stå: vis stillbilledet
+      const vid = this._liveVideo(v, Date.now() - t0 < 6000);
+      // Kører billederne? (antal viste billeder stiger) – en frossen video har stadig readyState 4.
+      const n = vid ? (vid.getVideoPlaybackQuality?.().totalVideoFrames ?? Math.round(vid.currentTime * 30)) : -1;
+      still = vid && n === last ? still + 1 : 0; last = n;
+      const ok = !!vid && still < 4; bad = ok ? 0 : bad + 1;
+      if (ok) { b.classList.add('lvok'); seen = true; } else if (bad > 6) b.classList.remove('lvok'); // ~1,5 s i stå: vis stillbilledet
+      if (seen && bad > 20 && b._restart) { clearInterval(b._lvW); b._restart(); } // ~5 s frosset: start forfra
     }, 250);
   }
   // Gem videoens sidste billede som stillbillede, så feltet ikke er sort/gammelt, når det startes igen.
@@ -382,10 +430,13 @@ class ThCameraCard extends HTMLElement {
   _refresh(force) {
     if (!this._r || document.hidden || this._sheet || this._view) return;
     const every = (this.cfg.refresh || (this.cams().length > 8 ? 5 : 3)) * 1000; // sjældnere med mange kameraer
+    // Med forvarmede kameraer er et stillbillede ~0,1 s: mens et felt venter på videoen, opdateres det hvert sekund.
+    const pendingEvery = this.cfg.fast_streams ? 1000 : every;
     if (force) this._r.querySelectorAll('.cam').forEach(b => { b._at = 0; });
     for (const b of this._r.querySelectorAll('.cam')) {
       if ((this._stillN || 0) >= (this.cfg.fast_streams ? 6 : 3)) break; // forvarmede stillbilleder er små og hurtige
-      if (b._busy || Date.now() - (b._at || 0) < every || (b.querySelector('.lv')?.firstChild && b.dataset.img)) continue;
+      const pending = b.classList.contains('lvon') && !b.classList.contains('lvok');
+      if (b._busy || Date.now() - (b._at || 0) < (pending ? pendingEvery : every) || (b.querySelector('.lv')?.firstChild && b.dataset.img && !pending)) continue;
       const s = this._h.states[b.dataset.tile || b.dataset.id]; if (!s?.attributes?.entity_picture) continue;
       b._busy = true; this._stillN = (this._stillN || 0) + 1;
       const img = b.querySelector('img'), n = new Image();
