@@ -4,6 +4,7 @@
  * exclude: [camera.x, …]   kameraer der ikke skal vises (alle kanaler af kameraet), og deres hændelser
  * live_tiles: true  – fliserne viser live video (WebRTC, kameraets laveste kanal) som i UniFi Protect; false = stillbilleder
  * max_live: hvor mange fliser der må køre live på én gang (standard 16); kun fliser, der er på skærmen
+ * order: [camera.x, …]  – valgfri rækkefølge (Claude AI, 2026-11-27); de nævnte kameraer først i den rækkefølge, resten efter navn
  * fast_streams: { suffix: _fast, hd_suffix: _fast_hd }  – valgfri (Claude AI, 2026-11-27): ekstra kameraer pr. kamera
  *         (camera.<navn><suffix>, fx en generisk kamera-entitet fra en forvarmet restream som Scrypted/go2rtc), der bruges til
  *         fliserne, stillbillederne og live i den lille afspiller; <hd_suffix> til live i den store visning. Optagelser og
@@ -52,6 +53,11 @@ const VC_CSS = `
 /* HA's visning lægger selv luft til iPhonens statuslinje – ikke en gang til her */
 @media(max-width:1100px){:host{padding:10px 10px 112px}}
 @media(max-width:480px){:host{padding:4px 4px 112px}.p{padding:10px!important}}
+/* Telefon (Claude AI, 2026-11-27; bruger: kamerabillederne må gerne være større på mobilen og ikke have luft ud til siden af
+   containeren): kamerapanelet uden ramme og indre luft, så billederne går helt ud til kanten. */
+@media(max-width:640px){:host{padding-left:0;padding-right:0}.p.pcams{padding:0!important;background:none;box-shadow:none;border-radius:0}
+  .p.pcams .hd{padding:6px 12px 0;margin-bottom:8px}.p.pcams .cams{gap:6px}.p.pcams .cam{border-radius:10px}
+  .g > .p:not(.pcams){margin:0 6px}}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
 .g{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
 /* PC: højre kolonne (afspiller + hændelser) er lige så høj som kameraerne, og listen fylder resten (bruger 2026-10-26) */
@@ -239,7 +245,13 @@ class ThCameraCard extends HTMLElement {
       if (f) { r.tile = f; r.live = f; }
       if (fh) r.hd = fh;
       return r;
-    }).sort((a, b) => a.name.localeCompare(b.name, 'da'));
+    }).sort((a, b) => this._rank(a) - this._rank(b) || a.name.localeCompare(b.name, 'da'));
+  }
+  // Placering efter `order` (et kamera kan nævnes med enhver af sine kanaler); ikke nævnte kommer bagefter.
+  _rank(c) {
+    const o = this.cfg.order; if (!Array.isArray(o) || !o.length) return 0;
+    const strip = x => String(x).replace(/_(high|medium|low)(_resolution_channel)?$/, '');
+    const i = o.findIndex(x => strip(x) === c.base); return i < 0 ? o.length : i;
   }
   live(base) {
     const st = this._h.states, b = base.replace('camera.', ''), on = e => st[e]?.state === 'on';
@@ -257,7 +269,7 @@ class ThCameraCard extends HTMLElement {
     const cams = this.cams(), w = this.$('w'), mode = this._mode(), key = mode + cams.map(c => c.id).join();
     if (key !== this._key) { this._key = key; this._lastMode = mode;
       if (!cams.length) { w.innerHTML = `<div class="p"><div class="hd"><div><div class="k">Kameraer</div><h2>UniFi Protect</h2></div></div><div class="empty">Ingen UniFi‑kameraer fundet endnu.</div></div>`; return; }
-      const camsP = `<div class="p"><div class="hd"><div><div class="k">Kameraer · UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
+      const camsP = `<div class="p pcams"><div class="hd"><div><div class="k">Kameraer · UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
           <div class="cams">${cams.map((c, i) => `<button class="cam" data-b="${c.base}" data-id="${c.id}" data-tile="${c.tile}" data-live="${c.live}" style="animation-delay:${i * 70}ms"><img alt=""><div class="lv"></div><div class="sh"></div>
             <div class="rec"><i></i>REC</div><div class="tg"></div>
             <div class="bot"><span class="nm"><b>${vci('cam', 14)}${vce(c.name)}</b><span class="last">${vci('clock', 12)}<span>–</span></span></span><span class="cnt">–</span></div></button>`).join('')}</div>

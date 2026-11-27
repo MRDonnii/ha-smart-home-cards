@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.315 */
+/* MRDonnii Smart Home Cards v0.5.316 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -52461,6 +52461,11 @@ var VC_CSS = `
 /* HA's visning l\xE6gger selv luft til iPhonens statuslinje \u2013 ikke en gang til her */
 @media(max-width:1100px){:host{padding:10px 10px 112px}}
 @media(max-width:480px){:host{padding:4px 4px 112px}.p{padding:10px!important}}
+/* Telefon (Claude AI, 2026-11-27; bruger: kamerabillederne m\xE5 gerne v\xE6re st\xF8rre p\xE5 mobilen og ikke have luft ud til siden af
+   containeren): kamerapanelet uden ramme og indre luft, s\xE5 billederne g\xE5r helt ud til kanten. */
+@media(max-width:640px){:host{padding-left:0;padding-right:0}.p.pcams{padding:0!important;background:none;box-shadow:none;border-radius:0}
+  .p.pcams .hd{padding:6px 12px 0;margin-bottom:8px}.p.pcams .cams{gap:6px}.p.pcams .cam{border-radius:10px}
+  .g > .p:not(.pcams){margin:0 6px}}
 *{box-sizing:border-box}button{font:inherit;color:inherit}
 .g{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
 /* PC: h\xF8jre kolonne (afspiller + h\xE6ndelser) er lige s\xE5 h\xF8j som kameraerne, og listen fylder resten (bruger 2026-10-26) */
@@ -52698,7 +52703,15 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       }
       if (fh) r.hd = fh;
       return r;
-    }).sort((a, b) => a.name.localeCompare(b.name, "da"));
+    }).sort((a, b) => this._rank(a) - this._rank(b) || a.name.localeCompare(b.name, "da"));
+  }
+  // Placering efter `order` (et kamera kan nævnes med enhver af sine kanaler); ikke nævnte kommer bagefter.
+  _rank(c2) {
+    const o = this.cfg.order;
+    if (!Array.isArray(o) || !o.length) return 0;
+    const strip = (x) => String(x).replace(/_(high|medium|low)(_resolution_channel)?$/, "");
+    const i = o.findIndex((x) => strip(x) === c2.base);
+    return i < 0 ? o.length : i;
   }
   live(base) {
     const st = this._h.states, b = base.replace("camera.", ""), on = (e) => st[e]?.state === "on";
@@ -52720,7 +52733,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
         w.innerHTML = `<div class="p"><div class="hd"><div><div class="k">Kameraer</div><h2>UniFi Protect</h2></div></div><div class="empty">Ingen UniFi\u2011kameraer fundet endnu.</div></div>`;
         return;
       }
-      const camsP = `<div class="p"><div class="hd"><div><div class="k">Kameraer \xB7 UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
+      const camsP = `<div class="p pcams"><div class="hd"><div><div class="k">Kameraer \xB7 UniFi Protect</div><h2>${cams.length} kameraer</h2></div><span style="margin-left:auto" id="stat"></span></div>
           <div class="cams">${cams.map((c2, i) => `<button class="cam" data-b="${c2.base}" data-id="${c2.id}" data-tile="${c2.tile}" data-live="${c2.live}" style="animation-delay:${i * 70}ms"><img alt=""><div class="lv"></div><div class="sh"></div>
             <div class="rec"><i></i>REC</div><div class="tg"></div>
             <div class="bot"><span class="nm"><b>${vci("cam", 14)}${vce(c2.name)}</b><span class="last">${vci("clock", 12)}<span>\u2013</span></span></span><span class="cnt">\u2013</span></div></button>`).join("")}</div>
