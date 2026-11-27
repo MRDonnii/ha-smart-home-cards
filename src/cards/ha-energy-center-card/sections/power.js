@@ -1,5 +1,6 @@
 import { Section } from "./base.js";
 import { HistoryPanel } from "../components/history.js";
+import { PowerDetail } from "../components/power-detail.js";
 import { escapeHtml, fmt, fmtEnergy, fmtKr, fmtPower, icon } from "../utils/format.js";
 
 const TODAY_KEYS = [
@@ -41,6 +42,7 @@ export class PowerSection extends Section {
     this.panels = [
       new HistoryPanel(card, { key: "pw-hist", title: "Historik – elforbrug", icon: "mdi:chart-bar", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "day" }),
     ];
+    this.detail = new PowerDetail(card);
   }
 
   ids() {
@@ -93,6 +95,7 @@ export class PowerSection extends Section {
       </div>`;
     return `
 <div class="layout pw">
+  ${this.detail.html()}
   <section class="card hero-main tone-el a-half clickable" data-entity="${ent("grid_power")}" tabindex="0" role="button" data-ref="hero">
     <div class="hero-head"><div class="card-head">${icon("mdi:flash")}<h3>Strøm lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="mega num"><b data-ref="mainV">—</b><small data-ref="mainU">W</small></div>
@@ -139,15 +142,19 @@ export class PowerSection extends Section {
   mount(root) {
     super.mount(root);
     this.groupState = this.card.config.groups.map(() => ({}));
+    this.detail.mount(root, this.refs);
   }
 
   shown() {
     super.shown();
+    this.detail.observe();
+    this.detail.render();
     this.card.loadToday(TODAY_KEYS, () => this._updateToday());
   }
 
   hourTick() {
     super.hourTick();
+    this.detail.refresh();
     this.card.loadToday(TODAY_KEYS, () => this._updateToday());
   }
 
@@ -166,6 +173,8 @@ export class PowerSection extends Section {
     this.show("groupsCard", c.config.groups.length > 0);
     this.show("phasesCard", phasesOn);
     this.show(this.panels[0].el, has(this.panels[0].o.stat));
+    const pd = this.detail.enabled();
+    for (const ref of ["pdKpis", "pdMain", "pdG3", "pdTopCard"]) this.show(ref, pd);
   }
 
   update() {
@@ -220,6 +229,7 @@ export class PowerSection extends Section {
     const c = this.card;
     this.value("mMain", fmtEnergy(c.today("grid_energy", "energy")));
     this.text("mMainCost", fmtKr(c.today("grid_cost", "monetary")));
+    this.detail.updateKpis();
   }
 
   _updateGroups(grid) {

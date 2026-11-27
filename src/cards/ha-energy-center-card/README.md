@@ -63,3 +63,25 @@ a sideways swipe on the tabs scrolls the tabs instead of switching dashboard vie
 | `phase_moderate_a`, `phase_high_a` | 3, 6 | Phase imbalance thresholds in ampere. |
 | `water_high_flow_lpm` | 15 | Water flow above this is shown as high (display only, no leak alarm). |
 | `ev_charging_threshold_w` | 0 | EV power above this counts as charging. |
+
+## Strøm-detaljer (Strøm-fanen)
+
+Øverst i Strøm-fanen: nøgletal, døgnet time for time pr. gruppe (24 t / 7 dage / 30 dage, med eller uden billader),
+elprisen i sin egen graf på samme tidsakse, pris pr. time, grundlast (laveste nattetime de sidste 30 dage, omregnet til
+kWh og kr om året), umålt forbrug (hovedmåler minus alle målere) og top 10 forbrugere i dag. Effekt hentes som
+timegennemsnit fra recorderens statistik; timeprisen regnes ud fra `grid_cost` ÷ `grid_energy`.
+
+```yaml
+power_detail:
+  enabled: true            # false skjuler delen
+  max_series: 7            # flere grupper samles i "Øvrigt"
+  other_name: Øvrigt
+  shiftable:               # udstyr der kan flyttes; tippet viser hvad seneste kørsel havde kostet i billigste time
+    - sensor.dishwasher_power
+groups:
+  - name: Have
+    chart_group: Øvrigt    # vis gruppen sammen med en anden i grafen
+    entities: [...]
+```
+
+Billader-gruppen er den gruppe, der indeholder `ev_power` (eller har `ev: true`).

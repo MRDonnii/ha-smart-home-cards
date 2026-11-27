@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.312 */
+/* MRDonnii Smart Home Cards v0.5.313 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -3003,14 +3003,14 @@ function dayWord(t, now) {
 function meanPrice(prices, minutes2, t, e) {
   if (!Array.isArray(prices) || !prices.length) return NaN;
   const len = (minutes2 || 15) * 6e4;
-  let sum = 0;
+  let sum2 = 0;
   let n = 0;
   for (const x of prices) {
     if (x.t + len <= t || x.t >= e || !Number.isFinite(x.p)) continue;
-    sum += x.p;
+    sum2 += x.p;
     n += 1;
   }
-  return n ? sum / n : NaN;
+  return n ? sum2 / n : NaN;
 }
 function ctlParts({ now = Date.now(), blocks = [], deadline = NaN, prices = [], minutes: minutes2 = 15 }) {
   const list = blocks.filter((b) => Number.isFinite(b.t) && Number.isFinite(b.e) && b.e > now).sort((a, b) => a.t - b.t);
@@ -6511,7 +6511,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       return t ? `${f.date(t)} ${f.time(t)}` : "";
     };
     const where = (x) => x.location_kind === "home" ? "Hjemme" : x.location_name || "Ude";
-    const sum = this._ceSummary(c2);
+    const sum2 = this._ceSummary(c2);
     const canPlace = pub && c2.latitude != null && c2.longitude != null;
     const list = charges.map((x) => {
       const s = this._ceSummary(x);
@@ -6526,7 +6526,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       </header>
       <section class="rb-sec">
         <h4>${ttdIcon("mdi:cash")}Pris</h4>
-        <p class="rb-note">Nu: <b>${ttdEsc(sum.price)}</b>${sum.missing ? "" : ` \xB7 ${ttdEsc(sum.source)}`}</p>
+        <p class="rb-note">Nu: <b>${ttdEsc(sum2.price)}</b>${sum2.missing ? "" : ` \xB7 ${ttdEsc(sum2.source)}`}</p>
         <div class="ce-f">
           <label class="rb-f"><span>kWh</span><input type="text" inputmode="decimal" autocomplete="off" data-cein="kwh" value="${ttdEsc(d.kwh)}" placeholder="23,4"></label>
           <label class="rb-f main"><span>Pris (${ttdEsc(unit)})</span><input type="text" inputmode="decimal" autocomplete="off" data-cein="per" value="${ttdEsc(d.per)}" placeholder="3,95"></label>
@@ -6588,8 +6588,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
       if (key2 === "total") d.last = "total";
       if (kwh2 > 0 && total != null) set("per", ttdCeText(total / kwh2, 2));
     }
-    const sum = body?.querySelector("[data-cesum]");
-    if (sum) sum.textContent = this._ceSumText();
+    const sum2 = body?.querySelector("[data-cesum]");
+    if (sum2) sum2.textContent = this._ceSumText();
     for (const node of body?.querySelectorAll(".rb-err,.ce-ok") || []) node.hidden = true;
   }
   _ceAction(target2) {
@@ -7974,7 +7974,7 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     };
     const drive = bars("d");
     const energy = bars("e");
-    const sum = (field) => data.slots.reduce((total, slot) => total + (slot[field] ?? 0), 0);
+    const sum2 = (field) => data.slots.reduce((total, slot) => total + (slot[field] ?? 0), 0);
     this._hide("smD", !data.hasDrive);
     this._hide("smE", !data.hasEnergy);
     if (data.hasDrive && r.barsD.innerHTML !== drive.html) r.barsD.innerHTML = drive.html;
@@ -7994,8 +7994,8 @@ var ThTeslaDashboardCard = class extends HTMLElement {
     this._t("chartEmpty", empty);
     const period = TTD_CHART_RANGES[data.range].label.toLowerCase();
     const totals = [
-      data.hasDrive ? `${f.number(data.range === "today" && this._num("daily_energy") != null ? this._num("daily_energy") : sum("d"), 1)} ${dUnit}` : null,
-      data.hasEnergy ? `${f.number(sum("e"), 1)} ${eUnit}` : null
+      data.hasDrive ? `${f.number(data.range === "today" && this._num("daily_energy") != null ? this._num("daily_energy") : sum2("d"), 1)} ${dUnit}` : null,
+      data.hasEnergy ? `${f.number(sum2("e"), 1)} ${eUnit}` : null
     ].filter(Boolean);
     const daily = this._value("daily_energy", 1);
     this._t("dailySub", totals.length ? `${totals.join(" \xB7 ")} ${period}` : daily === TTD_DASH ? "" : `${daily} k\xF8rt i dag`);
@@ -9143,7 +9143,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
     const soc = Number.isFinite(p.soc) ? p.soc : 0;
     const tg = Number.isFinite(p.target) ? p.target : 100;
     const first = p.blocks[0];
-    const avg = p.kwh ? p.cost / p.kwh : NaN;
+    const avg2 = p.kwh ? p.cost / p.kwh : NaN;
     const running = !!first && first.t <= now;
     const dlT = p.deadline ? Date.parse(p.deadline) : Math.max(now + 36e5, ...p.blocks.map((b) => b.e));
     const end = Math.max(dlT, ...p.blocks.map((b) => b.e));
@@ -9183,7 +9183,7 @@ var HATeslaGlanceCard = class extends HTMLElement {
         <div class="pt"><b>Ladeplan \xB7 ${esc3(MODE[p.mode] || p.mode)}</b><span>${ctlBattery(soc, aim, false)}${esc3(p.name)} \xB7 ${Math.round(soc)} % \u2192 ${held && Number.isFinite(L.reach) && p.blocks.length ? `${Math.round(L.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}</span></div>
         <div class="pstart"><small>${!first ? "Venter" : running ? "I gang" : "Starter"}</small><b>${!first ? `${this._fmt(L.price, 2)} kr` : running ? "nu" : hm4(first.t)}</b><em>${esc3(until2)}</em></div></div>
       <div class="ctl-tl">${track2}</div>
-      <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held, L, soc, tg) : ""}</div>`;
+      <div class="pnums${over && L.canWait ? " has-btn" : ""}">${first && !over ? `<span><b>${this._fmt(avg2, 2)}</b> kr/kWh</span>` : ""}${first ? `<span><b>${this._fmt(p.kwh, 1)}</b> kWh</span><span><b>${this._fmt(p.cost, 2)}</b> kr</span>` : ""}${over ? `<span class="held">${this._limitText(L, held)}</span>` : ""}${!over && Number.isFinite(p.save) && p.save > 0.5 ? `<span class="save"><ha-icon icon="mdi:piggy-bank-outline"></ha-icon>Sparer <b>${this._fmt(p.save, 2)} kr</b></span>` : ""}${over && L.canWait ? this._waitBtn(held, L, soc, tg) : ""}</div>`;
   }
   _limitText(L, held) {
     const best = L.cheaper.reduce((m, w) => !m || Number(w.saving) > Number(m.saving) ? w : m, null);
@@ -11123,10 +11123,10 @@ init_chart_hover();
 function svgFit(box, width, height) {
   const w = box.clientWidth;
   const h = box.clientHeight;
-  const scale = Math.min(w / width, h / height) || 1;
-  const ox = (w - width * scale) / 2;
-  const oy = (h - height * scale) / 2;
-  return { viewX: (fraction) => (fraction * w - ox) / scale, box: (x, y) => ({ x: (ox + x * scale) / w, y: (oy + y * scale) / h }) };
+  const scale2 = Math.min(w / width, h / height) || 1;
+  const ox = (w - width * scale2) / 2;
+  const oy = (h - height * scale2) / 2;
+  return { viewX: (fraction) => (fraction * w - ox) / scale2, box: (x, y) => ({ x: (ox + x * scale2) / w, y: (oy + y * scale2) / h }) };
 }
 var daNum = (value, digits = 1) => value.toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 var daDay = (date2) => `${date2.toLocaleDateString("da-DK", { weekday: "short" })} ${date2.getDate()}/${date2.getMonth() + 1}`;
@@ -11214,14 +11214,14 @@ var PoolHistoryCard = class extends HTMLElement {
       const pumpValues = this._valuesInRange(pumpSeries, dayStart, dayEnd);
       const high = tempValues.length ? Math.max(...tempValues) : null;
       const low = tempValues.length ? Math.min(...tempValues) : null;
-      const avg = tempValues.length ? tempValues.reduce((a, b) => a + b, 0) / tempValues.length : null;
+      const avg2 = tempValues.length ? tempValues.reduce((a, b) => a + b, 0) / tempValues.length : null;
       const pump = pumpValues.length ? Math.max(...pumpValues) : null;
       days.push({
         date: new Date(cursor),
         label: `${cursor.getDate()}/${cursor.getMonth() + 1}`,
         high,
         low,
-        avg,
+        avg: avg2,
         pump
       });
       cursor.setDate(cursor.getDate() + 1);
@@ -11354,7 +11354,7 @@ var PoolHistoryCard = class extends HTMLElement {
     const pumpDays = days.map((day2) => day2.pump).filter(Number.isFinite);
     const weekHigh = highs.length ? Math.max(...highs) : null;
     const weekLow = lows.length ? Math.min(...lows) : null;
-    const totalPump = pumpDays.length ? pumpDays.reduce((sum, value) => sum + value, 0) : null;
+    const totalPump = pumpDays.length ? pumpDays.reduce((sum2, value) => sum2 + value, 0) : null;
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -12980,7 +12980,7 @@ var HAACClimateCard = class extends HTMLElement {
     const states = units.map((u2) => this._state(u2));
     const single = units.length === 1;
     const active2 = states.filter((s) => s.active).length;
-    const power2 = states.reduce((sum, s) => sum + (s.power || 0), 0);
+    const power2 = states.reduce((sum2, s) => sum2 + (s.power || 0), 0);
     this.shadowRoot.innerHTML = `<style>${STYLE}${AC_UNIT_VISUAL_STYLE}</style>
       <ha-card class="${this._config.animation === false ? "no-animation" : ""} ${single ? "single" : ""}">
         <div class="shell">
@@ -15103,7 +15103,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
     const values = points.map((point) => point.price);
     const min = values.length ? Math.min(...values) : NaN;
     const max = values.length ? Math.max(...values) : NaN;
-    const avg = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : NaN;
+    const avg2 = values.length ? values.reduce((sum2, value) => sum2 + value, 0) / values.length : NaN;
     const price = this.shadowRoot.querySelector(".price b");
     const source = this.shadowRoot.querySelector(".source");
     if (price) price.textContent = this._fmt(data.current);
@@ -15122,7 +15122,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       }
     }
     this.shadowRoot.querySelectorAll(".stat").forEach((stat, index) => {
-      const value = [min, avg, max][index];
+      const value = [min, avg2, max][index];
       stat.style.setProperty("--stat-color", this._color(value));
       const label = stat.querySelector("b");
       if (label) label.textContent = this._fmt(value);
@@ -15170,7 +15170,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
   }
   _render() {
     if (!this.shadowRoot) return;
-    const data = this._data(), forecast = this._days(data.forecast), points = this._selected(data), values = points.map((p) => p.price), min = values.length ? Math.min(...values) : NaN, max = values.length ? Math.max(...values) : NaN, avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : NaN;
+    const data = this._data(), forecast = this._days(data.forecast), points = this._selected(data), values = points.map((p) => p.price), min = values.length ? Math.min(...values) : NaN, max = values.length ? Math.max(...values) : NaN, avg2 = values.length ? values.reduce((a, b) => a + b, 0) / values.length : NaN;
     const dayPicker = `<div class="week-slot">${this._tab === "forecast" ? `<div class="week-nav"><div class="days">${forecast.map((day2, index) => {
       const label = this._dayLabel(day2);
       return `<button data-day="${index}" class="day-choice ${index === this._forecastDay ? "active" : ""}"><b>${label.weekday}</b><span>${label.date}</span></button>`;
@@ -15195,7 +15195,7 @@ var HAElectricityPriceCard = class _HAElectricityPriceCard extends HTMLElement {
       @media(max-width:700px){.tabs{gap:0;padding:0;overflow:hidden;border:0;background:transparent;box-shadow:inset 0 0 0 1px var(--divider-color,var(--edge))}.tabs button{border-radius:0}.tabs button:first-child{border-radius:14px 0 0 14px}.tabs button:last-child{border-radius:0 14px 14px 0}}
       /* Telefon: fanerne rykker op, s\xE5 der er lige langt fra rammen til kortets top og sider. */
       @media(max-width:600px){ha-card{padding-top:8px}}
-    </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}"><header class="top">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><strong>Str\xF8mpris</strong><span class="subtitle">Priser i dag, i morgen og ugen</span></div></div><span class="live-status ${this._stromligningLive() ? "is-live" : "is-offline"}">${this._stromligningLive() ? "Str\xF8mligning live" : "Str\xF8mligning ikke live"}</span></div>`}<nav class="tabs" aria-label="Prisperioder">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</nav></header>${dayPicker}<div class="summary"><div class="day">${this._tab === "today" ? `<span class="now-label">Pris lige nu${this._resToggle()}</span><strong class="now-value">${this._fmt(data.current)}<small>kr/kWh</small></strong>` : `<span class="day-date">${this._date(points)}</span>${this._resToggle()}`}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>LAV</span><b>${this._fmt(min)}</b></div><div class="stat" style="--stat-color:${this._color(avg)}"><span>SNIT</span><b>${this._fmt(avg)}</b></div><div class="stat" style="--stat-color:${this._color(max)}"><span>H\xD8J</span><b>${this._fmt(max)}</b></div></div>${this._bars(points)}</ha-card>`;
+    </style><ha-card class="${this._config.show_header === false ? "no-head" : ""}"><header class="top">${this._config.show_header === false ? "" : `<div class="head"><div class="identity"><span class="icon"><ha-icon icon="mdi:flash"></ha-icon></span><div><strong>Str\xF8mpris</strong><span class="subtitle">Priser i dag, i morgen og ugen</span></div></div><span class="live-status ${this._stromligningLive() ? "is-live" : "is-offline"}">${this._stromligningLive() ? "Str\xF8mligning live" : "Str\xF8mligning ikke live"}</span></div>`}<nav class="tabs" aria-label="Prisperioder">${tab("today", "I dag", "Aktiv fane", "mdi:calendar-today")}${tab("tomorrow", "I morgen", data.tomorrowOfficial ? "N\xE6ste d\xF8gn" : "Prisforecast", "mdi:calendar-arrow-right")}${tab("forecast", "Uge", "Fremtidige priser", "mdi:calendar-week")}</nav></header>${dayPicker}<div class="summary"><div class="day">${this._tab === "today" ? `<span class="now-label">Pris lige nu${this._resToggle()}</span><strong class="now-value">${this._fmt(data.current)}<small>kr/kWh</small></strong>` : `<span class="day-date">${this._date(points)}</span>${this._resToggle()}`}</div><div class="stat" style="--stat-color:${this._color(min)}"><span>LAV</span><b>${this._fmt(min)}</b></div><div class="stat" style="--stat-color:${this._color(avg2)}"><span>SNIT</span><b>${this._fmt(avg2)}</b></div><div class="stat" style="--stat-color:${this._color(max)}"><span>H\xD8J</span><b>${this._fmt(max)}</b></div></div>${this._bars(points)}</ha-card>`;
     const compactMobile = window.matchMedia("(max-width: 600px)").matches;
     const card = this.shadowRoot.querySelector("ha-card");
     const weekSlot = this.shadowRoot.querySelector(".week-slot");
@@ -15900,10 +15900,10 @@ var ThElectricityPriceCard = class extends HTMLElement {
       ["Till\xE6g", "sensor.stromligning_surcharge_vat", "var(--tep-surcharge,#ff6b81)"],
       ["Elafgift", "sensor.stromligning_electricity_tax_vat", "var(--tep-tax,#a3e635)"]
     ].map(([n, e, c2]) => [n, this.n(e), c2]).filter((x) => Number.isFinite(x[1]) && x[1] > 0);
-    const sum = parts.reduce((a, b) => a + b[1], 0) || 1, ck = parts.map((x) => x[1].toFixed(3)).join();
+    const sum2 = parts.reduce((a, b) => a + b[1], 0) || 1, ck = parts.map((x) => x[1].toFixed(3)).join();
     if (ck !== this._ck) {
       this._ck = ck;
-      this.$("cbar").innerHTML = parts.map(([n, v, c2]) => `<b title="${n} ${tn(v)} kr" style="width:${v / sum * 100}%;background:${c2}"></b>`).join("");
+      this.$("cbar").innerHTML = parts.map(([n, v, c2]) => `<b title="${n} ${tn(v)} kr" style="width:${v / sum2 * 100}%;background:${c2}"></b>`).join("");
       this.$("clg").innerHTML = parts.map(([n, v, c2]) => `<span><i style="background:${c2}"></i>${n} ${tn(v)}</span>`).join("");
     }
     const ch = this.charge(), ev2 = this.$("ev"), ek = ch ? JSON.stringify([ch.kwh, ch.cost, ch.blocks.length, ch.soc, ch.target, ch.charging, ch.mode, ch.limit, ch.nowCost]) : "";
@@ -15912,13 +15912,13 @@ var ThElectricityPriceCard = class extends HTMLElement {
       this._pk = null;
       ev2.classList.toggle("on", !!ch && this.cfg.charge_panel !== false);
       if (ch) {
-        const avg = ch.kwh ? ch.cost / ch.kwh : NaN, st = ch.blocks[0], soc = Number.isFinite(ch.soc) ? ch.soc : 0, tg = Number.isFinite(ch.target) ? ch.target : 100;
+        const avg2 = ch.kwh ? ch.cost / ch.kwh : NaN, st = ch.blocks[0], soc = Number.isFinite(ch.soc) ? ch.soc : 0, tg = Number.isFinite(ch.target) ? ch.target : 100;
         const MODE = { smart: "Smart", fixed: "Fast tid", now: "Lad nu", price_cap: "Prisloft" };
         ev2.innerHTML = `<div class="car">${ti("car", 22)}<em>${ti("bolt", 11, 2.2)}</em></div>
           <div style="min-width:0"><div class="t">${ch.charging ? "Lader nu" : "Ladeplan aktiv"} <span>\xB7 ${this.esc(ch.name)} \xB7 ${MODE[ch.mode] || ch.mode}</span></div>
             <div class="soc"><i style="width:${soc}%"></i><u style="left:${soc}%;width:${Math.max(0, tg - soc)}%"></u></div>
             <div style="font-size:10.5px;color:var(--mut);margin-top:5px">${Math.round(soc)} % \u2192 ${ch.limit?.held && ch.blocks.length && Number.isFinite(ch.limit.reach) ? `${Math.round(ch.limit.reach)} % \xB7 m\xE5l ${Math.round(tg)} %` : `${Math.round(tg)} %`}${ch.deadline ? ` \xB7 klar ${new Date(ch.deadline).toLocaleDateString("da-DK", { weekday: "short" })} ${tt(new Date(ch.deadline))}` : ""}</div></div>
-          <div class="m">${st ? `<div>Ladepris<b>${tn(avg)} kr/kWh</b></div><div>${tn(ch.kwh, 1)} kWh<b>${tn(ch.cost)} kr</b></div><div>${st.t <= Date.now() ? "I gang" : "Start"}<b>${st.t <= Date.now() ? "nu" : tt(new Date(st.t))}</b></div>` : `<div>Venter<b>over ${tn(ch.limit.price)} kr</b></div>`}${Number.isFinite(ch.save) && ch.save > 0.5 ? `<div>Sparer<b class="g">${tn(ch.save)} kr</b></div>` : ""}</div>
+          <div class="m">${st ? `<div>Ladepris<b>${tn(avg2)} kr/kWh</b></div><div>${tn(ch.kwh, 1)} kWh<b>${tn(ch.cost)} kr</b></div><div>${st.t <= Date.now() ? "I gang" : "Start"}<b>${st.t <= Date.now() ? "nu" : tt(new Date(st.t))}</b></div>` : `<div>Venter<b>over ${tn(ch.limit.price)} kr</b></div>`}${Number.isFinite(ch.save) && ch.save > 0.5 ? `<div>Sparer<b class="g">${tn(ch.save)} kr</b></div>` : ""}</div>
           ${this.holdRow(ch)}`;
       }
     }
@@ -15993,18 +15993,18 @@ var ThElectricityPriceCard = class extends HTMLElement {
   // Gennemsnitspris over [s, s+dur], vægtet efter hvor meget af kørslen der ligger i hver prisperiode; null når priserne ikke dækker hele kørslen
   avgOver(all, s, dur3) {
     const e = s + dur3;
-    let sum = 0, cov = 0, fc = false;
+    let sum2 = 0, cov = 0, fc = false;
     for (const p of all) {
       if (p.e <= s) continue;
       if (p.t >= e) break;
       const ov2 = Math.min(e, p.e) - Math.max(s, p.t);
       if (ov2 > 0) {
-        sum += ov2 * p.p;
+        sum2 += ov2 * p.p;
         cov += ov2;
         fc = fc || p.f;
       }
     }
-    return cov >= dur3 * 0.98 ? { avg: sum / cov, fc } : null;
+    return cov >= dur3 * 0.98 ? { avg: sum2 / cov, fc } : null;
   }
   // Alle mulige starttidspunkter de næste 24 t. Prisen er stykvis lineær i starttidspunktet, så det billigste ligger altid hvor kørslens start eller slutning rammer en periodegrænse
   scan(all, dur3, now, ok = () => true, hours = 24) {
@@ -28491,7 +28491,7 @@ var HAHeatPumpOverviewCard = class extends HTMLElement {
     const active2 = states.filter((s) => s.active).length;
     const problems = states.filter((s) => ["problem", "warn"].includes(s.level)).length;
     const totalOutput = this._number(this._config.total_output);
-    const totalInput = states.reduce((sum, s) => sum + (s.input || 0), 0);
+    const totalInput = states.reduce((sum2, s) => sum2 + (s.input || 0), 0);
     const totalCost = this._number(this._config.total_cost);
     const noAnimation = this._config.animation === false ? "no-animation" : "";
     this.shadowRoot.innerHTML = `<style>
@@ -32479,7 +32479,7 @@ var HARadiatorOverviewCard = class extends HTMLElement {
     const heating = radiatorStates.filter((state2) => state2.heating).length;
     const open = radiatorStates.filter((state2) => state2.windowOpen).length;
     const values = rooms.map((room, i) => room.outdoor ? void 0 : states[i].current).filter((value) => value !== void 0);
-    const average = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : void 0;
+    const average = values.length ? values.reduce((sum2, value) => sum2 + value, 0) / values.length : void 0;
     const animationClass = this._config.animation === false ? "no-animation" : "";
     if (this._rendered && this.shadowRoot.querySelector("ha-card")) {
       this._updateMain(states, heating, open, average);
@@ -34697,7 +34697,7 @@ var HARadiatorOverviewCardV2 = class extends HTMLElement {
       acUnits.set(room.ac.climate, unit);
     });
     const acOn = [...acUnits.values()].filter((unit) => unit.active);
-    const average = indoor.length ? indoor.reduce((sum, { model }) => sum + model.current, 0) / indoor.length : void 0;
+    const average = indoor.length ? indoor.reduce((sum2, { model }) => sum2 + model.current, 0) / indoor.length : void 0;
     const targets = zones.map(({ model }) => model.target).filter((value) => value !== void 0);
     const demandEntity = this._entity(this._config.total_demand);
     const demand = this._number(demandEntity?.state);
@@ -36771,11 +36771,11 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       el.style.top = lane ? "20px" : "4px";
       el.title = `${e.room.name}: ${this._format(e.m.humidity, 0)} %`;
     });
-    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const avg2 = vals.reduce((a, b) => a + b, 0) / vals.length;
     const dry = list.reduce((a, b) => b.m.humidity < a.m.humidity ? b : a), wet = list.reduce((a, b) => b.m.humidity > a.m.humidity ? b : a);
-    const [txt, col] = avg < 30 ? ["Meget t\xF8r luft", "#f97316"] : avg < 40 ? ["T\xF8r luft \u2013 en befugter vil hj\xE6lpe", "var(--rc-warn, #f5b14c)"] : avg <= 60 ? ["God luftfugtighed", "var(--rc-ok)"] : avg <= 65 ? ["Lidt fugtig luft", "var(--rc-warn, #f5b14c)"] : ["For fugtig luft \u2013 luft ud", "var(--rc-cool, #60a5fa)"];
+    const [txt, col] = avg2 < 30 ? ["Meget t\xF8r luft", "#f97316"] : avg2 < 40 ? ["T\xF8r luft \u2013 en befugter vil hj\xE6lpe", "var(--rc-warn, #f5b14c)"] : avg2 <= 60 ? ["God luftfugtighed", "var(--rc-ok)"] : avg2 <= 65 ? ["Lidt fugtig luft", "var(--rc-warn, #f5b14c)"] : ["For fugtig luft \u2013 luft ud", "var(--rc-cool, #60a5fa)"];
     host.style.setProperty("--hc", col);
-    this._setText(host.querySelector('[data-s="havg"]'), this._format(avg, 0));
+    this._setText(host.querySelector('[data-s="havg"]'), this._format(avg2, 0));
     this._setText(host.querySelector('[data-s="hverdict"]'), txt);
     host.querySelector('[data-s="hdry"]').innerHTML = `T\xF8rrest <b>${this._escape(dry.room.name)} ${this._format(dry.m.humidity, 0)} %</b>`;
     host.querySelector('[data-s="hwet"]').innerHTML = `Fugtigst <b>${this._escape(wet.room.name)} ${this._format(wet.m.humidity, 0)} %</b>`;
@@ -36815,10 +36815,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
     let head = "", body = "", rows = [];
     if (kind === "temp") {
       rows = list.filter(({ m }) => Number.isFinite(m.current)).sort((a, b) => b.m.current - a.m.current);
-      const avg = rows.reduce((s, r) => s + r.m.current, 0) / (rows.length || 1);
+      const avg2 = rows.reduce((s, r) => s + r.m.current, 0) / (rows.length || 1);
       const lo = Math.min(...rows.map((r) => Math.min(r.m.current, r.m.target ?? r.m.current))) - 0.5, hi2 = Math.max(...rows.map((r) => Math.max(r.m.current, r.m.target ?? r.m.current))) + 0.5;
       const pos = (v) => (v - lo) / (hi2 - lo || 1) * 100;
-      head = `<div class="aph"><span class="apic t"><ha-icon icon="mdi:thermometer"></ha-icon></span><div><b>Temperatur \u2013 gennemsnit</b><small>${f(avg)} \xB0C i gennemsnit i ${rows.length} rum</small></div><button class="apx" aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      head = `<div class="aph"><span class="apic t"><ha-icon icon="mdi:thermometer"></ha-icon></span><div><b>Temperatur \u2013 gennemsnit</b><small>${f(avg2)} \xB0C i gennemsnit i ${rows.length} rum</small></div><button class="apx" aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
         <p class="apt">Gennemsnittet af temperaturen i alle rum. Den lodrette streg p\xE5 hver linje er rummets m\xE5l \u2013 er prikken ved stregen, er rummet, som det skal v\xE6re.</p>`;
       body = rows.map(({ m, room }) => {
         const t = m.target;
@@ -36828,10 +36828,10 @@ var HARoomClimateCard = class extends HARadiatorOverviewCardV2 {
       }).join("");
     } else {
       rows = list.filter(({ m }) => Number.isFinite(m.humidity)).sort((a, b) => a.m.humidity - b.m.humidity);
-      const avg = rows.reduce((s, r) => s + r.m.humidity, 0) / (rows.length || 1);
+      const avg2 = rows.reduce((s, r) => s + r.m.humidity, 0) / (rows.length || 1);
       const zone = (v) => v < 30 ? ["dry2", "Meget t\xF8rt"] : v < 40 ? ["dry", "T\xF8rt"] : v <= 60 ? ["ok", "Godt"] : v <= 65 ? ["wet", "Lidt fugtigt"] : ["wet2", "For fugtigt"];
       const pos = (v) => Math.max(0, Math.min(100, (v - 20) / 55 * 100));
-      head = `<div class="aph"><span class="apic h"><ha-icon icon="mdi:water-percent"></ha-icon></span><div><b>Luftfugtighed \u2013 gennemsnit</b><small>${f(avg, 0)} % i gennemsnit i ${rows.length} rum</small></div><button class="apx" aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
+      head = `<div class="aph"><span class="apic h"><ha-icon icon="mdi:water-percent"></ha-icon></span><div><b>Luftfugtighed \u2013 gennemsnit</b><small>${f(avg2, 0)} % i gennemsnit i ${rows.length} rum</small></div><button class="apx" aria-label="Luk"><ha-icon icon="mdi:close"></ha-icon></button></div>
         <p class="apt">Godt indeklima ligger mellem <b>40 og 60 %</b>. Under 40 % er luften t\xF8r \u2013 det kan give t\xF8rre \xF8jne og slimhinder, og en befugter vil hj\xE6lpe. Over 60 % er luften fugtig, og der kan komme skimmel \u2013 s\xE5 skal der luftes ud.</p>
         <div class="apz"><span class="dry2">under 30 %<b>Meget t\xF8rt</b></span><span class="dry">30\u201340 %<b>T\xF8rt</b></span><span class="ok">40\u201360 %<b>Godt</b></span><span class="wet">60\u201365 %<b>Lidt fugtigt</b></span><span class="wet2">over 65 %<b>For fugtigt</b></span></div>`;
       body = rows.map(({ m, room }) => {
@@ -37271,10 +37271,10 @@ var HATemperatureTargetCard = class extends HTMLElement {
     const controlled = states.filter((s) => s.target !== void 0);
     const above = controlled.filter((s) => s.delta > 0.4).length, below = controlled.filter((s) => s.delta < -0.4).length, onTarget = controlled.length - above - below;
     const average = states.map((s) => s.current).filter((v) => v !== void 0);
-    const avg = average.length ? average.reduce((a, b) => a + b, 0) / average.length : void 0;
+    const avg2 = average.length ? average.reduce((a, b) => a + b, 0) / average.length : void 0;
     const noAnimation = this._config.animation === false ? "no-animation" : "";
     if (this._rendered && this.shadowRoot.querySelector("ha-card")) {
-      this._update(rooms, states, { onTarget, controlled: controlled.length, above, below, average: avg });
+      this._update(rooms, states, { onTarget, controlled: controlled.length, above, below, average: avg2 });
       return;
     }
     this.shadowRoot.innerHTML = `<style>
@@ -37284,7 +37284,7 @@ var HATemperatureTargetCard = class extends HTMLElement {
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}.room{--tone:var(--measure);position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;padding:15px;border:1px solid color-mix(in srgb,var(--tone) 25%,var(--edge));border-left:calc(var(--dashboard-left-accent-width, 1) * 4px) solid var(--tone);border-radius:18px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 5%,transparent),rgba(0,0,0,.035));box-shadow:0 8px 24px rgba(0,0,0,.08);transition:transform .2s ease,box-shadow .2s ease}.room.above{--tone:var(--above)}.room.below{--tone:var(--below)}.room.target{--tone:var(--target)}.room.heating{--tone:var(--heat)}.room:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.14),0 0 0 1px color-mix(in srgb,var(--tone) 17%,transparent)}.glow{position:absolute;right:-55px;top:-60px;width:145px;height:145px;border-radius:50%;background:var(--tone);opacity:.08;filter:blur(25px)}.heating .glow{animation:breathe 2.2s ease-in-out infinite}.head{display:flex;justify-content:space-between;gap:10px}.room-name{display:block;font-size:15px;font-weight:800}.status{display:flex;align-items:center;gap:6px;margin-top:4px;color:var(--secondary-text-color);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.status i{width:7px;height:7px;border-radius:50%;background:var(--tone);box-shadow:0 0 8px var(--tone)}.reading{display:flex;align-items:flex-start}.reading strong{font-size:27px;line-height:1;letter-spacing:-.04em}.reading span{margin:2px 0 0 3px;color:var(--secondary-text-color);font-size:10px}.explain{min-height:30px;margin-top:9px;color:color-mix(in srgb,var(--tone) 72%,var(--primary-text-color));font-size:10px;line-height:1.35}.graph{height:220px;margin:10px 0 2px}.chart{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 16px;height:100%}.y-axis{position:relative;grid-row:1}.y-axis span{position:absolute;right:7px;transform:translateY(-50%);color:var(--secondary-text-color);font-size:9px;font-weight:600;font-variant-numeric:tabular-nums;opacity:.75}.plot{position:relative;grid-row:1;grid-column:2;min-width:0}.plot svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:hidden;border-radius:8px}.times{grid-column:2;display:flex;justify-content:space-between;align-items:flex-end;color:var(--secondary-text-color);font-size:9px;font-weight:700;letter-spacing:.04em}.grid-line{stroke:var(--primary-text-color);stroke-opacity:.07;stroke-width:1;vector-effect:non-scaling-stroke}.target-band{fill:var(--target);fill-opacity:.09}.fill-top{stop-color:var(--tone);stop-opacity:.2}.fill-bottom{stop-color:var(--tone);stop-opacity:0}.temperature-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.temperature-line.above{stroke:var(--above)}.temperature-line.on{stroke:var(--target)}.temperature-line.below{stroke:var(--below)}.target-tag{position:absolute;left:6px;transform:translateY(-50%);padding:1px 7px;border-radius:999px;border:1px solid color-mix(in srgb,var(--target) 45%,transparent);background:color-mix(in srgb,var(--ha-card-background,var(--card-background-color,#111)) 88%,transparent);color:var(--target);font-size:9px;font-weight:800;letter-spacing:.03em;white-space:nowrap;pointer-events:none}.now-dot{position:absolute;right:-4px;width:9px;height:9px;margin-top:-4.5px;border-radius:50%;border:2px solid var(--ha-card-background,var(--card-background-color,#111));background:var(--target);box-shadow:0 0 0 3px color-mix(in srgb,var(--target) 25%,transparent)}.now-dot.above{background:var(--above);box-shadow:0 0 0 3px color-mix(in srgb,var(--above) 25%,transparent)}.now-dot.below{background:var(--below);box-shadow:0 0 0 3px color-mix(in srgb,var(--below) 25%,transparent)}.target-line{stroke:var(--target);stroke-width:1;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}.empty-graph{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--secondary-text-color);font-size:10px}.empty-graph ha-icon{width:24px;height:24px;--mdc-icon-size:24px;color:var(--tone)}
     .footer{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding-top:9px;border-top:1px solid var(--edge)}.footer span{display:block;color:var(--secondary-text-color);font-size:8px;text-transform:uppercase}.footer strong{display:block;margin-top:2px;font-size:10px;white-space:nowrap}.footer .delta{color:var(--tone)}.thermostat{margin-top:14px;padding:13px;border:1px solid color-mix(in srgb,var(--tone) 20%,var(--edge));border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 7%,transparent),rgba(0,0,0,.08))}.thermostat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.thermostat-head span,.target-control span,.thermostat-metrics span{display:block;color:var(--secondary-text-color);font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.thermostat-head strong{display:block;margin-top:2px;font-size:12px}.thermostat-head ha-icon{color:var(--tone)}.target-control{display:grid;grid-template-columns:46px 1fr 46px;gap:8px}.target-control>div{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--tone) 24%,var(--edge));border-radius:13px;background:color-mix(in srgb,var(--tone) 7%,transparent)}.target-control strong{font-size:18px}.target-control button,.presets button,.mode-actions button{border:1px solid var(--edge);border-radius:12px;background:rgba(255,255,255,.045);color:var(--primary-text-color);font:inherit;font-weight:800;cursor:pointer}.target-control button{min-height:44px;font-size:21px}.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px}.presets button{min-height:32px;font-size:11px}.presets button.active,.mode-actions button.active{border-color:var(--tone);background:color-mix(in srgb,var(--tone) 15%,transparent);color:var(--tone)}.thermostat-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.thermostat-metrics>div{min-width:0;padding:8px;border:1px solid var(--edge);border-radius:11px;background:rgba(0,0,0,.08)}.thermostat-metrics strong{display:block;margin-top:3px;font-size:12px}.thermostat-metrics small{display:block;overflow:hidden;margin-top:2px;color:var(--secondary-text-color);font-size:7px;text-overflow:ellipsis;white-space:nowrap}.thermostat-metrics .warn strong{color:var(--error-color,#db4437)}.mode-actions{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:7px;margin-top:10px}.mode-actions button{display:flex;align-items:center;justify-content:center;gap:5px;min-height:38px;font-size:10px}.mode-actions ha-icon{width:16px;height:16px;--mdc-icon-size:16px}.no-animation *{animation:none!important}
     @keyframes pulse{50%{opacity:.4;transform:scale(1.45)}}@keyframes breathe{50%{opacity:.17;transform:scale(1.15)}}@media(max-width:760px){.graph{height:180px}.shell{padding:15px}header{display:block}.summary{justify-content:flex-start;margin-top:12px}.summary>div{flex:1}.grid{grid-template-columns:1fr}.legend{gap:10px;flex-wrap:wrap}.legend strong{width:100%}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
-  </style><ha-card class="${noAnimation}"><div class="shell"><div class="backdrop"></div><header><div><div class="eyebrow"><i></i>24 timers temperaturhistorik</div><h2>${this._escape(this._config.title)}</h2></div><div class="summary"><div><span>P\xE5 m\xE5l</span><strong data-value="summary-target">${onTarget} / ${controlled.length}</strong></div><div class="high"><span>Over m\xE5l</span><strong data-value="summary-high">${above}</strong></div><div class="low"><span>Under m\xE5l</span><strong data-value="summary-low">${below}</strong></div><div><span>Gennemsnit</span><strong data-value="summary-average">${this._format(avg)}\xB0</strong></div></div></header><div class="legend"><strong>Kurven skifter farve omkring termostatens m\xE5l</strong><span class="over"><i></i>Over m\xE5l</span><span class="goal"><i></i>M\xE5lomr\xE5de</span><span class="under"><i></i>Under m\xE5l</span></div><div class="grid">${rooms.map((room, index) => this._room(room, index)).join("")}</div></div></ha-card>`;
+  </style><ha-card class="${noAnimation}"><div class="shell"><div class="backdrop"></div><header><div><div class="eyebrow"><i></i>24 timers temperaturhistorik</div><h2>${this._escape(this._config.title)}</h2></div><div class="summary"><div><span>P\xE5 m\xE5l</span><strong data-value="summary-target">${onTarget} / ${controlled.length}</strong></div><div class="high"><span>Over m\xE5l</span><strong data-value="summary-high">${above}</strong></div><div class="low"><span>Under m\xE5l</span><strong data-value="summary-low">${below}</strong></div><div><span>Gennemsnit</span><strong data-value="summary-average">${this._format(avg2)}\xB0</strong></div></div></header><div class="legend"><strong>Kurven skifter farve omkring termostatens m\xE5l</strong><span class="over"><i></i>Over m\xE5l</span><span class="goal"><i></i>M\xE5lomr\xE5de</span><span class="under"><i></i>Under m\xE5l</span></div><div class="grid">${rooms.map((room, index) => this._room(room, index)).join("")}</div></div></ha-card>`;
     this._rendered = true;
     this.shadowRoot.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -39038,8 +39038,8 @@ var HAHomeHeaderCard = class extends HTMLElement {
     const models = ["v3-cloud-model-a", "v3-cloud-model-b", "v3-cloud-model-c"];
     const band = 78 / count2;
     for (let i = 0; i < count2; i++) {
-      const top = (4 + i * band + Math.random() * band * 0.9).toFixed(1), scale = (0.36 + Math.random() * 0.8).toFixed(2), duration2 = Math.max(4, Math.round((65 + Math.random() * 95) * speed)), delay = -Math.round(Math.random() * duration2), opacity = (0.45 + Math.random() * 0.42).toFixed(2), start = Math.round(1700 + Math.random() * 900), end = Math.round(-260 - Math.random() * 160), model = models[Math.floor(Math.random() * models.length)];
-      html += `<div class="v3-cloud ${cloudClass} ${model}" style="top:${top}%;--cloud-scale:${scale};--cloud-duration:${duration2}s;--cloud-delay:${delay}s;--cloud-opacity:${opacity};--cloud-start:${start}px;--cloud-end:${end}px"></div>`;
+      const top = (4 + i * band + Math.random() * band * 0.9).toFixed(1), scale2 = (0.36 + Math.random() * 0.8).toFixed(2), duration2 = Math.max(4, Math.round((65 + Math.random() * 95) * speed)), delay = -Math.round(Math.random() * duration2), opacity = (0.45 + Math.random() * 0.42).toFixed(2), start = Math.round(1700 + Math.random() * 900), end = Math.round(-260 - Math.random() * 160), model = models[Math.floor(Math.random() * models.length)];
+      html += `<div class="v3-cloud ${cloudClass} ${model}" style="top:${top}%;--cloud-scale:${scale2};--cloud-duration:${duration2}s;--cloud-delay:${delay}s;--cloud-opacity:${opacity};--cloud-start:${start}px;--cloud-end:${end}px"></div>`;
     }
     return html;
   }
@@ -45787,8 +45787,8 @@ var HAWeatherChartsCard = class extends HTMLElement {
     const rows = this._live(key2)?.attributes?.timer;
     return Array.isArray(rows) ? rows.map((r) => [Date.parse(r.t), num3(r[field])]).filter(([t]) => Number.isFinite(t)) : [];
   }
-  _fc(field, scale = 1) {
-    return (this._forecast || []).map((f) => [Date.parse(f.datetime), num3(f[field]) == null ? null : num3(f[field]) * scale]);
+  _fc(field, scale2 = 1) {
+    return (this._forecast || []).map((f) => [Date.parse(f.datetime), num3(f[field]) == null ? null : num3(f[field]) * scale2]);
   }
   _subscribeForecast() {
     try {
@@ -46087,7 +46087,7 @@ var HAWeatherChartsCard = class extends HTMLElement {
     const inSpan = (p) => p[0] >= from && p[0] <= to;
     const shown = ch.series.filter((s) => !hidden[s.name]);
     const vals = (axis) => shown.filter((s) => (s.axis || "left") === axis).flatMap((s) => s.type === "band" ? s.band.filter(inSpan).flatMap(([, a, b]) => [a, b]) : s.type === "range" ? s.range.filter(inSpan).flatMap(([, a, b]) => [a, b]) : (s.points || []).filter(inSpan).map(([, v]) => v)).filter((v) => v != null && Number.isFinite(v));
-    const scale = (axis, opt) => {
+    const scale2 = (axis, opt) => {
       const v = vals(axis);
       if (!v.length && opt.min == null) return null;
       let lo = opt.min ?? Math.min(...v);
@@ -46105,8 +46105,8 @@ var HAWeatherChartsCard = class extends HTMLElement {
       hi2 = opt.max ?? tk[tk.length - 1];
       return { lo, hi: hi2, tk: tk.filter((t) => t >= lo - 1e-9 && t <= hi2 + 1e-9), Y: (v2) => y1 - (v2 - lo) / (hi2 - lo) * (y1 - y0) };
     };
-    const L = scale("left", { min: ch.min, max: ch.max });
-    const R = ch.right ? scale("right", ch.right) : null;
+    const L = scale2("left", { min: ch.min, max: ch.max });
+    const R = ch.right ? scale2("right", ch.right) : null;
     const now = Date.now();
     let svg = "";
     if (L) for (const t of L.tk) {
@@ -47450,7 +47450,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   }
   _patchHeader(models) {
     const indoor = models.filter((m) => !m.room.outdoor && m.temp != null).map((m) => m.temp);
-    const avg = indoor.length ? indoor.reduce((a, b) => a + b, 0) / indoor.length : null;
+    const avg2 = indoor.length ? indoor.reduce((a, b) => a + b, 0) / indoor.length : null;
     const outdoor = models.find((m) => m.room.outdoor && m.temp != null)?.temp ?? null;
     const counts = {
       occupied: models.filter((m) => m.present).length,
@@ -47458,7 +47458,7 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
       open: models.reduce((n, m) => n + m.open.length, 0),
       running: models.filter((m) => m.running).length
     };
-    this._setText(this._pills.temp.querySelector("b"), `${this._fmt(avg)}\xB0`, true);
+    this._setText(this._pills.temp.querySelector("b"), `${this._fmt(avg2)}\xB0`, true);
     this._setText(this._pills.temp.querySelector("em"), outdoor == null ? "" : ` \xB7 ude ${this._fmt(outdoor, 0)}\xB0`);
     for (const key2 of ["occupied", "lit", "open", "running"]) {
       const pill = this._pills[key2];
@@ -47622,18 +47622,18 @@ var HaHomeRoomOverviewCard2 = class extends HTMLElement {
   // Kurven ligger bag flisens indhold; hoveren vises kun, når markøren er i kurvens bånd og ikke på en knap.
   _sparkPoint(box, fraction, event) {
     const t = this._tiles?.find((tile4) => tile4.el === box);
-    const scale = t?.sparkScale;
+    const scale2 = t?.sparkScale;
     const points = t && this._history.get(t.room.temperature);
-    if (!scale || !points || points.length < 2 || t.spark.style.display === "none" || !event) return null;
+    if (!scale2 || !points || points.length < 2 || t.spark.style.display === "none" || !event) return null;
     if (event.target?.closest?.(".btn,.chip.tap")) return null;
     const tile3 = box.getBoundingClientRect(), band = t.spark.getBoundingClientRect();
     if (!band.height || event.clientY < band.top || event.clientY > band.bottom) return null;
     box.style.setProperty("--spark-top", `${band.top - tile3.top}px`);
     box.style.setProperty("--spark-bottom", `${tile3.bottom - band.bottom}px`);
-    const nearest = nearestPoint(points, scale.start, scale.end, fraction);
-    const y = (37 - (nearest.v - scale.min) / (scale.max - scale.min) * 30) / 40;
+    const nearest = nearestPoint(points, scale2.start, scale2.end, fraction);
+    const y = (37 - (nearest.v - scale2.min) / (scale2.max - scale2.min) * 30) / 40;
     return {
-      x: clamp((nearest.t - scale.start) / (scale.end - scale.start), 0, 1),
+      x: clamp((nearest.t - scale2.start) / (scale2.end - scale2.start), 0, 1),
       y: (band.top - tile3.top + y * band.height) / tile3.height,
       color: "var(--accent)",
       text: `${hoverTime(nearest.t, this._hass)} \xB7 ${this._fmt(nearest.v)}\xB0`
@@ -49208,10 +49208,10 @@ var SmartHomeOverviewCard = class extends HTMLElement {
       const hour = new Date(p.ts).getHours();
       return `<button class="bar ${tone3} ${active2 ? "current" : ""}" style="--h:${height}%" data-more="${this.config.entities.priceNow}" title="${String(hour).padStart(2, "0")}:00 \xB7 ${this._fmt(p.price, 2)} ${this.config.currency}/kWh"><i></i>${i % Math.max(1, Math.ceil(data.length / 8)) === 0 ? `<small>${String(hour).padStart(2, "0")}</small>` : ""}</button>`;
     }).join("");
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const avg2 = values.reduce((a, b) => a + b, 0) / values.length;
     const first = new Date(data[0].ts);
     const dayControls = this._priceTab === "week" ? `<div class="day-controls"><button data-forecast-step="-1" aria-label="Forrige dag"><ha-icon icon="mdi:chevron-left"></ha-icon></button><button data-forecast-step="1" aria-label="N\xE6ste dag"><ha-icon icon="mdi:chevron-right"></ha-icon></button></div>` : "";
-    return `<div class="chart-head"><div class="chart-day"><div><span>${this._priceTab === "today" ? "I dag" : this._priceTab === "tomorrow" ? "I morgen" : first.toLocaleDateString("da-DK", { weekday: "long", day: "2-digit", month: "2-digit" })}</span><strong>${data.length} timer</strong></div>${dayControls}</div><div class="chart-stats"><span>Lav <b>${this._fmt(min, 2)}</b></span><span>Snit <b>${this._fmt(avg, 2)}</b></span><span>H\xF8j <b>${this._fmt(max, 2)}</b></span></div></div><div class="bars">${bars}</div>`;
+    return `<div class="chart-head"><div class="chart-day"><div><span>${this._priceTab === "today" ? "I dag" : this._priceTab === "tomorrow" ? "I morgen" : first.toLocaleDateString("da-DK", { weekday: "long", day: "2-digit", month: "2-digit" })}</span><strong>${data.length} timer</strong></div>${dayControls}</div><div class="chart-stats"><span>Lav <b>${this._fmt(min, 2)}</b></span><span>Snit <b>${this._fmt(avg2, 2)}</b></span><span>H\xF8j <b>${this._fmt(max, 2)}</b></span></div></div><div class="bars">${bars}</div>`;
   }
   _stepForecast(delta) {
     const e = this.config.entities;
@@ -53702,7 +53702,7 @@ var HADoorWindowCard = class extends HTMLElement {
     const windows = items.filter((i) => i.type === "window");
     const allStats = items.map((item2) => this._statsFor(item2));
     const openNow = allStats.filter((s) => s.isOpen).length;
-    const totalOpensToday = allStats.reduce((sum, s) => sum + s.openCount, 0);
+    const totalOpensToday = allStats.reduce((sum2, s) => sum2 + s.openCount, 0);
     const longestOpenMs = allStats.reduce((max, s) => s.isOpen && Number.isFinite(s.openSinceMs) ? Math.max(max, s.openSinceMs) : max, 0);
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--good:var(--dashboard-success, var(--success-color, #20e3a2));--warn:var(--dashboard-warning, var(--warning-color, #f59e0b));--danger:var(--dashboard-danger, var(--error-color, #ef4444));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--muted:var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))}
@@ -55743,7 +55743,7 @@ var HAControlCenterCard = class extends HTMLElement {
     if (!this.shadowRoot) return;
     const items = this._config.status_items || [];
     const evals = items.map((i) => this._statusEval(i));
-    const openCount = evals.reduce((sum, s) => sum + (s.ok ? 0 : 1), 0);
+    const openCount = evals.reduce((sum2, s) => sum2 + (s.ok ? 0 : 1), 0);
     const waste = this._wasteInfo();
     const backup = this._backupInfo();
     const ambientOn = this._s(this._config.ambient_light_entity) === "on";
@@ -56706,9 +56706,9 @@ var HASettingsCenterCard = class extends HTMLElement {
       n.classList.toggle("ok", !p);
       n.querySelector("[data-state]").textContent = !this._available(i.entity) ? "Ikke tilg\xE6ngelig" : p ? i.binary ? "Registreret" : `${this._state(i.entity)} kr\xE6ver fokus` : "Alt er normalt";
     });
-    const sum = this.shadowRoot.querySelector("[data-health-summary]");
+    const sum2 = this.shadowRoot.querySelector("[data-health-summary]");
     const detail = this.shadowRoot.querySelector("[data-health-detail]");
-    if (sum) sum.textContent = problems ? `${problems} kr\xE6ver fokus` : "Alt fungerer";
+    if (sum2) sum2.textContent = problems ? `${problems} kr\xE6ver fokus` : "Alt fungerer";
     if (detail) detail.textContent = `${statuses.length - problems} af ${statuses.length} omr\xE5der er OK`;
     const badge = this.shadowRoot.querySelector(".head-badge");
     if (badge) badge.classList.toggle("warn", problems > 0);
@@ -60040,7 +60040,7 @@ function todayMeterBase(rows) {
 }
 function buildTodaySeries(rows, liveTotal, midnight, now) {
   const hours = Array(24).fill(0);
-  let sum = 0;
+  let sum2 = 0;
   for (const row of rows || []) {
     const start = typeof row.start === "number" ? row.start : Date.parse(row.start);
     const change = Number(row.change);
@@ -60048,10 +60048,10 @@ function buildTodaySeries(rows, liveTotal, midnight, now) {
     const index = Math.floor((start - midnight) / 36e5);
     if (index < 0 || index > 23) continue;
     hours[index] += change;
-    sum += change;
+    sum2 += change;
   }
   const current2 = clamp2(Math.floor((now - midnight) / 36e5), 0, 23);
-  if (Number.isFinite(liveTotal) && liveTotal > sum) hours[current2] += liveTotal - sum;
+  if (Number.isFinite(liveTotal) && liveTotal > sum2) hours[current2] += liveTotal - sum2;
   return hours.map((value) => Math.round(value * 1e3) / 1e3);
 }
 function interpretActivity(stateObj, context = "generic") {
@@ -60381,7 +60381,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
   _blockMarkup(spec) {
     const anchorY = (ids) => {
       const ys = ids.filter((id) => this._configured(id)).map((id) => PLACE_Y[id] ?? ANCHORS[id][1]);
-      return ys.length ? ys.reduce((sum, y) => sum + y, 0) / ys.length : 0;
+      return ys.length ? ys.reduce((sum2, y) => sum2 + y, 0) / ys.length : 0;
     };
     const place = (y) => `data-y="${Math.round(y)}" style="--y:${(y / VIEW_H * 100).toFixed(2)}%"`;
     if (spec[0] === "pair") {
@@ -60938,12 +60938,12 @@ var HaCalefaFlowCard = class extends HTMLElement {
       return [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map((factor) => factor * step).find((candidate) => candidate >= value) || value;
     };
     const kwhMax = nice(Math.max(...lower.map((value, hour) => value + upper[hour]), 0.1) * 1.1);
-    const scale = (value) => value / kwhMax * 94;
+    const scale2 = (value) => value / kwhMax * 94;
     const hours = this._refs["today-chart"].querySelectorAll(".cf-hour");
     hours.forEach((group, hour) => {
       const [, heatBar, dhwBar] = group.children;
-      const heatHeight = hour > current2 ? 0 : scale(lower[hour]);
-      const dhwHeight = hour > current2 ? 0 : scale(upper[hour]);
+      const heatHeight = hour > current2 ? 0 : scale2(lower[hour]);
+      const dhwHeight = hour > current2 ? 0 : scale2(upper[hour]);
       const set = (bar, y2, height) => {
         const values = [y2.toFixed(2), height.toFixed(2)];
         if (bar.getAttribute("y") !== values[0]) bar.setAttribute("y", values[0]);
@@ -60971,7 +60971,7 @@ var HaCalefaFlowCard = class extends HTMLElement {
     }
     this._text(this._refs["today-ymax"], `${this._formatNumber(kwhMax, kwhMax < 10 ? 1 : 0)} kWh`);
     this._text(this._refs["today-cmax"], perKwh !== null ? `${this._formatNumber(costMax, costMax < 10 ? 1 : 0)} kr` : "");
-    const total = basis.reduce((sum, value) => sum + value, 0);
+    const total = basis.reduce((sum2, value) => sum2 + value, 0);
     const label = `Forbrug pr. time i dag, i alt ${this._formatNumber(total, 1)} kWh${perKwh !== null ? `, ${this._formatNumber(total * perKwh, 2)} kr` : ""}`;
     if (this._refs["today-chart"].getAttribute("aria-label") !== label) this._refs["today-chart"].setAttribute("aria-label", label);
   }
@@ -63899,7 +63899,7 @@ var human = (v) => {
 };
 var clamp3 = (v, lo, hi2) => Math.min(hi2, Math.max(lo, v));
 var inPath = (e, sel) => e.composedPath().find((n) => n instanceof Element && n.matches(sel));
-function analyseMap(img, rooms, scale) {
+function analyseMap(img, rooms, scale2) {
   const { width: FW, height: FH, data } = img;
   const px = new Uint32Array(data.buffer, data.byteOffset, FW * FH);
   let minX = FW, minY = FH, maxX = -1, maxY = -1;
@@ -63915,13 +63915,13 @@ function analyseMap(img, rooms, scale) {
     }
   }
   if (maxX < 0) return null;
-  const margin = scale * 3;
-  const x0 = Math.max(0, Math.floor((minX - margin) / scale) * scale);
-  const y0 = Math.max(0, Math.floor((minY - margin) / scale) * scale);
-  const x1 = Math.min(FW, Math.ceil((maxX + 1 + margin) / scale) * scale);
-  const y1 = Math.min(FH, Math.ceil((maxY + 1 + margin) / scale) * scale);
+  const margin = scale2 * 3;
+  const x0 = Math.max(0, Math.floor((minX - margin) / scale2) * scale2);
+  const y0 = Math.max(0, Math.floor((minY - margin) / scale2) * scale2);
+  const x1 = Math.min(FW, Math.ceil((maxX + 1 + margin) / scale2) * scale2);
+  const y1 = Math.min(FH, Math.ceil((maxY + 1 + margin) / scale2) * scale2);
   const W2 = x1 - x0, H3 = y1 - y0;
-  const CW = Math.ceil(W2 / scale), CH = Math.ceil(H3 / scale);
+  const CW = Math.ceil(W2 / scale2), CH = Math.ceil(H3 / scale2);
   const roomByColor = /* @__PURE__ */ new Map();
   rooms.forEach((room, i) => {
     if (!room.mappable) return;
@@ -63965,7 +63965,7 @@ function analyseMap(img, rooms, scale) {
   let lastPx = -1, last = null;
   for (let y = 0; y < H3; y++) {
     const srcRow = (y + y0) * FW + x0;
-    const cellRow = (y / scale | 0) * CW;
+    const cellRow = (y / scale2 | 0) * CW;
     for (let x = 0; x < W2; x++) {
       const p = px[srcRow + x];
       const i = y * W2 + x;
@@ -63984,7 +63984,7 @@ function analyseMap(img, rooms, scale) {
       }
       const [k, room, flag] = res;
       kind[i] = k;
-      const c2 = cellRow + (x / scale | 0);
+      const c2 = cellRow + (x / scale2 | 0);
       if (room && k !== K_WALL) label[c2] = room;
       else if (k === K_PATH || k === K_KEEP || k === K_OBST || flag === 3) fillable[c2] = 1;
       if (flag === 1) {
@@ -64016,8 +64016,8 @@ function analyseMap(img, rooms, scale) {
   }
   const visited = new Uint8Array(CW * CH);
   for (let y = 0; y < H3; y += 2) {
-    const row = y * W2, cellRow = (y / scale | 0) * CW;
-    for (let x = 0; x < W2; x += 2) if (kind[row + x] === K_PATH && orig[row + x] === PATH_PX) visited[cellRow + (x / scale | 0)] = 1;
+    const row = y * W2, cellRow = (y / scale2 | 0) * CW;
+    for (let x = 0; x < W2; x += 2) if (kind[row + x] === K_PATH && orig[row + x] === PATH_PX) visited[cellRow + (x / scale2 | 0)] = 1;
   }
   const dist = new Float32Array(CW * CH);
   const D = 1, D2 = 1.414;
@@ -64091,12 +64091,12 @@ function analyseMap(img, rooms, scale) {
     H: H3,
     CW,
     CH,
-    scale,
+    scale: scale2,
     kind,
     orig,
     label,
     edge,
-    rooms: stats.map((s) => s.cells ? { x: (s.bx + 0.5) * scale / W2, y: (s.by + 0.5) * scale / H3, cells: s.cells, depth: s.best } : null),
+    rooms: stats.map((s) => s.cells ? { x: (s.bx + 0.5) * scale2 / W2, y: (s.by + 0.5) * scale2 / H3, cells: s.cells, depth: s.best } : null),
     robot: robotN > 12 ? { x: robotX / robotN / W2, y: robotY / robotN / H3 } : null,
     dock: dockN > 12 ? { x: dockX / dockN / W2, y: dockY / dockN / H3 } : null
   };
@@ -64380,9 +64380,9 @@ var HARoborockRoomMapCard = class extends HTMLElement {
       table[k << 6 | e << 5 | r] = col;
     }
     const out = new Uint32Array(this._out.data.buffer);
-    const { W: W2, H: H3, CW, scale, kind, orig, label, edge } = map;
+    const { W: W2, H: H3, CW, scale: scale2, kind, orig, label, edge } = map;
     for (let y = 0; y < H3; y++) {
-      const cellRow = (y / scale | 0) * CW, row = y * W2;
+      const cellRow = (y / scale2 | 0) * CW, row = y * W2;
       for (let x = 0; x < W2; x++) {
         const i = row + x, k = kind[i];
         if (k === K_OUT) {
@@ -64393,7 +64393,7 @@ var HARoborockRoomMapCard = class extends HTMLElement {
           out[i] = orig[i];
           continue;
         }
-        const c2 = cellRow + (x / scale | 0);
+        const c2 = cellRow + (x / scale2 | 0);
         out[i] = table[k << 6 | edge[c2] << 5 | label[c2] & 31];
       }
     }
@@ -66642,9 +66642,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       return;
     }
     const { start, end } = m.todayDomain;
-    const scale = niceScale(a.min, a.max);
+    const scale2 = niceScale(a.min, a.max);
     const xPct = (t) => (t - start) / (end - start) * 100;
-    const yPct = (v) => (1 - (v - scale.lo) / (scale.hi - scale.lo)) * 100;
+    const yPct = (v) => (1 - (v - scale2.lo) / (scale2.hi - scale2.lo)) * 100;
     const W2 = 1e3;
     const H3 = 300;
     const X2 = (t) => xPct(t) / 100 * W2;
@@ -66660,7 +66660,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       line += d;
       area += `${d}L${pts[pts.length - 1][0].toFixed(2)},${zeroY.toFixed(2)}L${pts[0][0].toFixed(2)},${zeroY.toFixed(2)}Z`;
     }
-    const grid = scale.ticks.map((v) => `<line class="${v === 0 ? "zero-line" : "grid-line"}" x1="0" x2="${W2}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}"/>`).join("");
+    const grid = scale2.ticks.map((v) => `<line class="${v === 0 ? "zero-line" : "grid-line"}" x1="0" x2="${W2}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}"/>`).join("");
     const avgY = Number.isFinite(a.avg) ? Y(a.avg).toFixed(2) : void 0;
     const cur = m.current;
     const curPrice = Number.isFinite(nowPrice) ? nowPrice : cur?.price;
@@ -66696,7 +66696,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         callouts.push(`<div class="callout avg ${side === "left" ? "at-left" : ""}" style="--tone:var(--energy-text);left:${side === "left" ? 0 : 100}%;top:${y}%"><b style="color:var(--energy-muted)">Gns.</b>${fmtPrice(a.avg)} kr/kWh</div>`);
       }
     }
-    const yLabels = scale.ticks.map((v) => `<span style="top:${yPct(v).toFixed(3)}%">${fmtNumber(v, axisDecimals(scale.step))}</span>`).join("");
+    const yLabels = scale2.ticks.map((v) => `<span style="top:${yPct(v).toFixed(3)}%">${fmtNumber(v, axisDecimals(scale2.step))}</span>`).join("");
     const xLabels = m.today.filter((e) => e.label.endsWith(":00") && Number(e.label.slice(0, 2)) % 2 === 0).map((e) => {
       const h = Number(e.label.slice(0, 2));
       return `<span class="${h % 6 ? "minor" : ""}" style="left:${xPct(mid(e)).toFixed(3)}%">${e.label.slice(0, 2)}</span>`;
@@ -66730,7 +66730,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
         tone: band?.tone || "blue",
         html: `<span>kl. ${e.label}\u2013${this._clock.time(e.end)}</span><b>${fmtPrice(e.price)} kr/kWh</b><em>${band?.level || ""}</em> \xB7 billigere end ${fmtPct(100 - p)} % af dagens timer`,
         x: geom.xPct((e.start + e.end) / 2),
-        y: (1 - (e.price - scale.lo) / (scale.hi - scale.lo)) * 100
+        y: (1 - (e.price - scale2.lo) / (scale2.hi - scale2.lo)) * 100
       };
     });
     this._shown.delete("nowLabel");
@@ -66851,9 +66851,9 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       return;
     }
     const { start, end } = m.tomorrowDomain;
-    const scale = niceScale(a.min, a.max);
+    const scale2 = niceScale(a.min, a.max);
     const xPct = (t) => (t - start) / (end - start) * 100;
-    const yPct = (v) => (1 - (v - scale.lo) / (scale.hi - scale.lo)) * 100;
+    const yPct = (v) => (1 - (v - scale2.lo) / (scale2.hi - scale2.lo)) * 100;
     const zero = yPct(0);
     const bars = m.tomorrow.map((e) => {
       const band = bandFor(percentileOf(a.sorted, e.price));
@@ -66862,8 +66862,8 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
       const height = Math.max(Math.abs(zero - y), 0.8);
       return `<div class="bar-col tone-${band.tone}" style="left:${xPct(e.start).toFixed(3)}%;width:${(xPct(e.end) - xPct(e.start)).toFixed(3)}%"><i class="${e.price < 0 ? "neg" : ""}" style="top:${top.toFixed(3)}%;height:${height.toFixed(3)}%"></i></div>`;
     }).join("");
-    const yTicks = scale.lo < 0 ? [scale.lo, 0, scale.hi] : [scale.lo, (scale.lo + scale.hi) / 2, scale.hi];
-    const yLabels = yTicks.map((v) => `<span style="top:${yPct(v).toFixed(3)}%">${fmtNumber(v, axisDecimals(scale.step / 2))}</span>`).join("");
+    const yTicks = scale2.lo < 0 ? [scale2.lo, 0, scale2.hi] : [scale2.lo, (scale2.lo + scale2.hi) / 2, scale2.hi];
+    const yLabels = yTicks.map((v) => `<span style="top:${yPct(v).toFixed(3)}%">${fmtNumber(v, axisDecimals(scale2.step / 2))}</span>`).join("");
     const xLabels = m.tomorrow.filter((e) => e.label.endsWith(":00") && Number(e.label.slice(0, 2)) % 2 === 0).map((e) => {
       const h = Number(e.label.slice(0, 2));
       return `<span class="${h % 6 ? "minor" : ""}" style="left:${xPct((e.start + e.end) / 2).toFixed(3)}%">${e.label.slice(0, 2)}</span>`;
@@ -66874,7 +66874,7 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     <div class="y-unit">kr/kWh</div>
     <div class="y-axis">${yLabels}</div>
     <div class="plot">
-      ${scale.lo < 0 ? `<svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none"><line class="zero-line" x1="0" x2="100" y1="${zero}" y2="${zero}"/></svg>` : ""}
+      ${scale2.lo < 0 ? `<svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none"><line class="zero-line" x1="0" x2="100" y1="${zero}" y2="${zero}"/></svg>` : ""}
       ${bars}
       <div class="hover-layer" role="img" aria-label="Morgendagens str\xF8mpriser time for time"></div>
       <div class="hover-line" hidden></div>
@@ -67152,15 +67152,15 @@ var HAElectricityDashboardCard = class _HAElectricityDashboardCard extends HTMLE
     const now = Date.now();
     const yesterdayKey = shiftDateKey(this._clock.dateKey(now), -1);
     const sameTimeYesterday = now - DAY_MS;
-    let sum = 0;
+    let sum2 = 0;
     let hours = 0;
     for (const r of rows) {
       if (this._clock.dateKey(r.start) !== yesterdayKey) continue;
       hours += 1;
-      if (r.start + HOUR_MS <= sameTimeYesterday) sum += r.change;
-      else if (r.start < sameTimeYesterday) sum += r.change * ((sameTimeYesterday - r.start) / HOUR_MS);
+      if (r.start + HOUR_MS <= sameTimeYesterday) sum2 += r.change;
+      else if (r.start < sameTimeYesterday) sum2 += r.change * ((sameTimeYesterday - r.start) / HOUR_MS);
     }
-    const dev = hours ? deviationPct(today, sum) : void 0;
+    const dev = hours ? deviationPct(today, sum2) : void 0;
     this._show("houseDayCompare", Number.isFinite(dev));
     if (!Number.isFinite(dev)) return;
     const pill = this._refs.houseDayComparePill;
@@ -67246,6 +67246,927 @@ var DEFAULT_CONFIG2 = {
   // Billader: effekt over denne værdi (W) regnes som "oplader".
   ev_charging_threshold_w: 0
 };
+
+// src/cards/ha-energy-center-card/utils/format.js
+var MINUTE_MS2 = 60 * 1e3;
+var HOUR_MS2 = 60 * MINUTE_MS2;
+var DAY_MS2 = 24 * HOUR_MS2;
+var INVALID_STATES2 = /* @__PURE__ */ new Set(["unknown", "unavailable", "none", "null", "undefined", ""]);
+var isValidState2 = (state2) => state2 != null && !INVALID_STATES2.has(String(state2).trim().toLowerCase());
+function toNumber3(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : void 0;
+  if (!isValidState2(value)) return void 0;
+  const n = Number(String(value).trim().replace(",", "."));
+  return Number.isFinite(n) ? n : void 0;
+}
+var UNIT_TABLES = {
+  power: { w: 1, kw: 1e3, mw: 1e6 },
+  // → W
+  energy: { wh: 1e-3, kwh: 1, mwh: 1e3 },
+  // → kWh
+  volume: { "m\xB3": 1, m3: 1, l: 1e-3, liter: 1e-3 },
+  // → m³
+  flow: { "l/min": 1, "l/h": 1 / 60, "m\xB3/h": 1e3 / 60, "m3/h": 1e3 / 60 }
+  // → L/min
+};
+function normalize(stateObj, kind) {
+  if (!stateObj) return { value: void 0, known: true };
+  const n = toNumber3(stateObj.state);
+  const unit = String(stateObj.attributes?.unit_of_measurement ?? "").trim().toLowerCase();
+  const table = UNIT_TABLES[kind];
+  if (!table) return { value: n, known: true };
+  const factor = unit ? table[unit] : 1;
+  if (factor === void 0) return { value: void 0, known: false, unit };
+  return { value: n === void 0 ? void 0 : n * factor, known: true };
+}
+var numberFormats2 = /* @__PURE__ */ new Map();
+function fmt5(value, digits = 1) {
+  if (!Number.isFinite(value)) return "\u2014";
+  let f = numberFormats2.get(digits);
+  if (!f) {
+    f = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    numberFormats2.set(digits, f);
+  }
+  const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
+  return f.format(rounded === 0 ? 0 : rounded);
+}
+function fmtPower2(watts) {
+  if (!Number.isFinite(watts)) return { v: "\u2014", u: "W" };
+  const abs = Math.abs(watts);
+  if (abs >= 1e3) return { v: fmt5(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
+  return { v: fmt5(watts, abs < 10 ? 1 : 0), u: "W" };
+}
+function fmtEnergy2(kwh2) {
+  if (!Number.isFinite(kwh2)) return { v: "\u2014", u: "kWh" };
+  const abs = Math.abs(kwh2);
+  if (abs >= 1e4) return { v: fmt5(kwh2 / 1e3, 1), u: "MWh" };
+  if (abs < 1 && abs > 0) return { v: fmt5(kwh2 * 1e3, 0), u: "Wh" };
+  return { v: fmt5(kwh2, abs >= 100 ? 0 : 1), u: "kWh" };
+}
+function fmtVolume(m3) {
+  if (!Number.isFinite(m3)) return { v: "\u2014", u: "L" };
+  if (Math.abs(m3) < 10) return { v: fmt5(m3 * 1e3, 0), u: "L" };
+  return { v: fmt5(m3, 1), u: "m\xB3" };
+}
+var fmtKr = (v) => Number.isFinite(v) ? `${fmt5(v, 2)} kr` : "\u2014";
+function escapeHtml3(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+var icon3 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${escapeHtml3(name)}"></ha-icon>`;
+var pad23 = (n) => String(n).padStart(2, "0");
+function startOfDay2(ms = Date.now()) {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+function addDays2(ms, days) {
+  const d = new Date(ms);
+  d.setDate(d.getDate() + days);
+  return d.getTime();
+}
+function startOfMonth(ms = Date.now()) {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(1);
+  return d.getTime();
+}
+function addMonths(ms, months) {
+  const d = new Date(ms);
+  d.setMonth(d.getMonth() + months);
+  return d.getTime();
+}
+var hourKey = (ms = Date.now()) => Math.floor(ms / HOUR_MS2);
+var timeFmt = new Intl.DateTimeFormat("da-DK", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+var dayFmt = new Intl.DateTimeFormat("da-DK", { weekday: "short", day: "numeric", month: "short" });
+var dateFmt = new Intl.DateTimeFormat("da-DK", { day: "numeric", month: "short" });
+var monthFmt = new Intl.DateTimeFormat("da-DK", { month: "long", year: "numeric" });
+var monthShortFmt = new Intl.DateTimeFormat("da-DK", { month: "short" });
+var fmtDay = (ms) => dayFmt.format(ms);
+var fmtMonth = (ms) => {
+  const s = monthFmt.format(ms);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+var fmtMonthShort = (ms) => monthShortFmt.format(ms).replace(".", "");
+var statTime2 = (value) => typeof value === "number" ? value : Date.parse(value);
+
+// src/cards/ha-energy-center-card/components/power-detail.js
+var PAL = {
+  dark: ["#338ced", "#e76624", "#00a888", "#d28e05", "#e24d8b", "#0aac23", "#9887ef"],
+  light: ["#257de0", "#f47230", "#00b894", "#f2a600", "#ee7fac", "#008a17", "#6a4ce2"]
+};
+var EV_COL = { dark: "#eb6263", light: "#ec4647" };
+var UNM_COL = "#7d8794";
+var WARN = "#fbb315";
+var GOOD = "#0aac23";
+var PRICE_COL = "#5a7fa8";
+var PAD2 = { l: 46, r: 12, t: 12, b: 22 };
+var RANGE_LABELS = { "24h": "24 t", "7d": "7 dage", "30d": "30 dage" };
+var UNM = "Um\xE5lt";
+var EV = "Billader";
+function buildSeries(groups, evEntity, { maxSeries = 7, otherName = "\xD8vrigt" } = {}) {
+  const evIdx = groups.findIndex((g) => g.ev === true || evEntity && g.entities.some((m) => m.entity === evEntity));
+  const ev2 = evIdx >= 0 ? groups[evIdx].entities.map((m) => m.entity) : evEntity ? [evEntity] : [];
+  const map = /* @__PURE__ */ new Map();
+  groups.forEach((g, i) => {
+    if (i === evIdx) return;
+    const name = g.chart_group || g.name;
+    if (!map.has(name)) map.set(name, []);
+    map.get(name).push(...g.entities.map((m) => m.entity));
+  });
+  let series = [...map].map(([name, entities]) => ({ name, entities }));
+  if (series.length > maxSeries) {
+    const other = series.find((s) => s.name === otherName) || { name: otherName, entities: [] };
+    const rest2 = series.filter((s) => s !== other);
+    const keep = rest2.slice(0, maxSeries - 1);
+    rest2.slice(maxSeries - 1).forEach((s) => other.entities.push(...s.entities));
+    series = [...keep, other];
+  }
+  const oi = series.findIndex((s) => s.name === otherName);
+  if (oi >= 0 && oi < series.length - 1) series.push(...series.splice(oi, 1));
+  return { series, ev: ev2 };
+}
+function hourArray(rows, t0, n, field = "mean") {
+  const out = new Array(n).fill(NaN);
+  for (const r of rows || []) {
+    const t = typeof r.start === "number" ? r.start : Date.parse(r.start);
+    const i = Math.round((t - t0) / HOUR_MS2);
+    const v = r[field];
+    if (i >= 0 && i < n && Number.isFinite(v)) out[i] = v;
+  }
+  return out;
+}
+function hourPrices(energy, cost) {
+  return energy.map((e, i) => Number.isFinite(e) && e > 0.02 && Number.isFinite(cost[i]) ? cost[i] / e : NaN);
+}
+function nightBase(grid, t0, days) {
+  const out = [];
+  for (let d = 0; d < days; d++) {
+    const dayStart = addDays2(startOfDay2(t0), d);
+    const vals = [];
+    for (let h = 0; h < 6; h++) {
+      const i = Math.round((dayStart + h * HOUR_MS2 - t0) / HOUR_MS2);
+      if (i >= 0 && i < grid.length && Number.isFinite(grid[i])) vals.push(grid[i]);
+    }
+    out.push({ day: dayStart, w: vals.length >= 2 ? Math.min(...vals) : NaN });
+  }
+  return out;
+}
+function shiftTip(profile, prices, hourStart, { minW = 30 } = {}) {
+  let end = -1;
+  for (let i = profile.length - 1; i >= 0; i--) if (profile[i] > minW) {
+    end = i;
+    break;
+  }
+  if (end < 0) return null;
+  let start = end;
+  while (start > 0 && profile[start - 1] > minW) start--;
+  const run = profile.slice(start, end + 1).map((w) => w / 1e3);
+  const costAt = (s) => {
+    let kr2 = 0;
+    for (let k = 0; k < run.length; k++) {
+      const p = prices[s + k];
+      if (!Number.isFinite(p)) return NaN;
+      kr2 += run[k] * p;
+    }
+    return kr2;
+  };
+  const actual = costAt(start);
+  if (!Number.isFinite(actual)) return null;
+  let best = start;
+  let bestKr = actual;
+  for (let s = Math.max(0, prices.length - 24); s + run.length <= prices.length; s++) {
+    const kr2 = costAt(s);
+    if (Number.isFinite(kr2) && kr2 < bestKr - 1e-9) {
+      best = s;
+      bestKr = kr2;
+    }
+  }
+  return { hour: new Date(hourStart(start)).getHours(), kr: actual, bestHour: new Date(hourStart(best)).getHours(), bestKr };
+}
+function scale(max, ticks2 = 4) {
+  if (!(max > 0)) return { max: 1, step: 0.25 };
+  const raw = max / ticks2;
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map((s) => s * p).find((s) => s >= raw);
+  return { max: Math.ceil(max / step - 1e-9) * step, step };
+}
+var W_FMT = (v) => v >= 1e3 ? `${fmt5(v / 1e3, 1)} kW` : `${fmt5(v, 0)} W`;
+var KR = (v, d = 2) => `${fmt5(v, d)} kr`;
+var avg = (a) => {
+  const v = a.filter(Number.isFinite);
+  return v.length ? v.reduce((s, x) => s + x, 0) / v.length : NaN;
+};
+var sum = (a) => a.reduce((s, x) => s + (Number.isFinite(x) ? x : 0), 0);
+var hatch = (id) => `<pattern id="${id}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#3a3f47"/><rect width="2.2" height="5" fill="${UNM_COL}"/></pattern>`;
+var HATCH_CSS = `repeating-linear-gradient(45deg,${UNM_COL} 0 2px,#3a3f47 2px 4px)`;
+var PowerDetail = class {
+  constructor(card) {
+    this.card = card;
+    this.range = "24h";
+    this.withEv = false;
+    this.data = null;
+    this.day30 = null;
+    this.token = 0;
+    this.hov = {};
+  }
+  get cfg() {
+    return this.card.config.power_detail || {};
+  }
+  enabled() {
+    const c2 = this.card;
+    return this.cfg.enabled !== false && c2.has("grid_power") && c2.config.groups.length > 0;
+  }
+  html() {
+    const kpi = (ref, ic2, label, sub2) => `
+      <div class="pd-kpi" data-ref="pdK${ref}">
+        <span class="pd-bdg">${icon3(ic2)}</span>
+        <div class="pd-kv"><small>${label}</small><b class="num" data-ref="pdK${ref}V">\u2014</b></div>
+        <div class="pd-ksp"><span data-ref="pdK${ref}S"></span><small data-ref="pdK${ref}N">${sub2}</small></div>
+      </div>`;
+    const seg = (key2, items, on) => `<div class="seg" data-pd-seg="${key2}">${items.map(([v, l]) => `<button type="button" data-v="${v}" class="${v === on ? "on" : ""}">${l}</button>`).join("")}</div>`;
+    const head = (ic2, title, subRef, sub2 = "") => `<div class="card-head">${icon3(ic2)}<div><h3>${title}</h3><small data-ref="${subRef}">${sub2}</small></div></div>`;
+    return `
+  <div class="pd-kpis a-full" data-ref="pdKpis">
+    ${kpi("Now", "mdi:flash", "Lige nu", "seneste 24 t")}
+    ${kpi("Today", "mdi:cash-multiple", "I dag", "")}
+    ${kpi("Price", "mdi:currency-usd", "Elpris nu", "")}
+    ${kpi("Base", "mdi:weather-night", "Grundlast i nat", "30 dage")}
+  </div>
+  <section class="card pd-panel a-full" data-ref="pdMain">
+    <div class="sect-head">
+      ${head("mdi:chart-bar-stacked", "D\xF8gnet time for time", "pdMainSub", "Forbrug pr. gruppe, og hvad str\xF8mmen kostede")}
+      <div class="pd-ctr">${seg("range", Object.entries(RANGE_LABELS), this.range)}${seg("ev", [["1", "Med billader"], ["0", "Uden billader"]], this.withEv ? "1" : "0")}</div>
+    </div>
+    <div class="pd-legend" data-ref="pdLegend"></div>
+    <div class="pd-box" data-hov="main" data-ref="pdStack"></div>
+    <div class="pd-sub"><b>Elpris</b><small data-ref="pdPriceSub">kr/kWh</small></div>
+    <div class="pd-box" data-hov="price" data-ref="pdPrice"></div>
+    <div class="pd-tip" data-ref="pdTip" hidden>${icon3("mdi:lightbulb-on-outline")}<span data-ref="pdTipT"></span></div>
+    <div class="pd-empty" data-ref="pdEmpty" hidden>Henter historik \u2026</div>
+  </section>
+  <div class="pd-g3 a-full" data-ref="pdG3">
+    <section class="card pd-panel" data-ref="pdCostCard">${head("mdi:cash-clock", "Pris pr. time", "pdCostSub")}<div class="pd-box" data-hov="cost" data-ref="pdCost"></div></section>
+    <section class="card pd-panel" data-ref="pdBaseCard">${head("mdi:weather-night", "Grundlast", "pdBaseSub")}<div class="pd-box" data-hov="base" data-ref="pdBase"></div></section>
+    <section class="card pd-panel" data-ref="pdUnmCard">${head("mdi:help-circle-outline", "Um\xE5lt", "pdUnmSub", "Hovedm\xE5ler minus alle m\xE5lere")}<div class="pd-box" data-hov="unm" data-ref="pdUnm"></div></section>
+  </div>
+  <section class="card pd-panel a-full" data-ref="pdTopCard">
+    ${head("mdi:trophy-outline", "Top 10 str\xF8mforbrugere i dag", "pdTopSub", "kWh og kr siden midnat, med forl\xF8bet time for time")}
+    <div class="pd-top" data-ref="pdTop"></div>
+  </section>`;
+  }
+  mount(root, refs) {
+    this.root = root;
+    this.refs = refs;
+    this.el = refs.pdMain;
+    if (!this.el) return;
+    const host = this.el.parentElement;
+    host.querySelectorAll("[data-pd-seg]").forEach(
+      (s) => s.addEventListener("click", (ev2) => {
+        const b = ev2.target.closest("button");
+        if (!b) return;
+        s.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+        if (s.dataset.pdSeg === "range") {
+          this.range = b.dataset.v;
+          if (this.range === "30d" && !this.day30) this._loadDays();
+        } else this.withEv = b.dataset.v === "1";
+        this.render();
+      })
+    );
+    this._bindHover(host);
+    if (typeof ResizeObserver === "function") {
+      let w = 0;
+      this._ro = new ResizeObserver(() => {
+        const nw = this.el.clientWidth;
+        if (nw && Math.abs(nw - w) > 4) {
+          w = nw;
+          cancelAnimationFrame(this._raf);
+          this._raf = requestAnimationFrame(() => this.render());
+        }
+      });
+      this._ro.observe(this.el);
+    }
+  }
+  observe() {
+    if (this.el && !this.loaded && this.enabled()) this.card.observeLazy(this.el, () => this.load());
+  }
+  refresh() {
+    if (!this.loaded) return;
+    this.day30 = null;
+    this.load();
+    if (this.range === "30d") this._loadDays();
+  }
+  /* ---------- data ---------- */
+  _ids() {
+    const c2 = this.card;
+    const { series, ev: ev2 } = buildSeries(c2.config.groups, c2.id("ev_power"), this.cfg);
+    this.series = series;
+    this.evIds = ev2;
+    const all = /* @__PURE__ */ new Set([c2.id("grid_power"), ...ev2]);
+    series.forEach((s) => s.entities.forEach((e) => all.add(e)));
+    return [...all].filter(Boolean);
+  }
+  async _ws(msg) {
+    const hass = this.card._hass;
+    if (!hass?.callWS) return null;
+    try {
+      return await hass.callWS(msg);
+    } catch (err) {
+      this.card.warnOnce?.("pd", "Str\xF8m-detaljer: historik kunne ikke hentes", err?.message || err);
+      return null;
+    }
+  }
+  async load() {
+    if (!this.enabled()) return;
+    this.loaded = true;
+    const token = ++this.token;
+    const c2 = this.card;
+    const ids = this._ids();
+    const now = Date.now();
+    const t0 = addDays2(startOfDay2(now), -7);
+    const b0 = addDays2(startOfDay2(now), -29);
+    const iso2 = (t) => new Date(t).toISOString();
+    const energyIds = [c2.id("grid_energy"), c2.id("grid_cost")].filter((id, i) => id && c2.has(i ? "grid_cost" : "grid_energy"));
+    const [power2, base, money] = await Promise.all([
+      this._ws({ type: "recorder/statistics_during_period", start_time: iso2(t0), end_time: iso2(now), statistic_ids: ids, period: "hour", types: ["mean"] }),
+      this._ws({ type: "recorder/statistics_during_period", start_time: iso2(b0), end_time: iso2(now), statistic_ids: [c2.id("grid_power")], period: "hour", types: ["mean"] }),
+      energyIds.length ? this._ws({ type: "recorder/statistics_during_period", start_time: iso2(b0), end_time: iso2(now), statistic_ids: energyIds, period: "hour", types: ["change"], units: { energy: "kWh" } }) : null
+    ]);
+    if (token !== this.token) return;
+    const n = Math.max(1, Math.ceil((now - t0) / HOUR_MS2));
+    const nb = Math.max(1, Math.ceil((now - b0) / HOUR_MS2));
+    const arr2 = (id) => hourArray(power2?.[id], t0, n);
+    const ent = new Map(ids.map((id) => [id, arr2(id)]));
+    const energy = hourArray(money?.[c2.id("grid_energy")], b0, nb, "change");
+    const cost = hourArray(money?.[c2.id("grid_cost")], b0, nb, "change");
+    const priceAll = hourPrices(energy, cost);
+    this._fillFromAttr(priceAll, b0);
+    const off = Math.round((t0 - b0) / HOUR_MS2);
+    const baseGrid = hourArray(base?.[c2.id("grid_power")], b0, nb);
+    const totE = sum(energy);
+    const avgPrice = totE > 0 ? sum(cost) / totE : avg(priceAll);
+    const grid = ent.get(c2.id("grid_power"));
+    let lastIdx = n - 1;
+    while (lastIdx > 0 && !Number.isFinite(grid[lastIdx])) lastIdx--;
+    this.data = {
+      t0,
+      n,
+      lastIdx,
+      ent,
+      grid,
+      price: priceAll.slice(off, off + n),
+      energy: energy.slice(off, off + n),
+      cost: cost.slice(off, off + n),
+      base: nightBase(baseGrid, b0, 30),
+      avgPrice,
+      hasMoney: energyIds.length === 2
+    };
+    this.render();
+  }
+  /** Huller i timeprisen (ingen kr-tæller) fyldes fra prissensorens prisliste, hvis den har en. */
+  _fillFromAttr(prices, t0) {
+    const list = this._priceList();
+    for (const [t, p] of list) {
+      const i = Math.round((t - t0) / HOUR_MS2);
+      if (i >= 0 && i < prices.length && !Number.isFinite(prices[i])) prices[i] = p;
+    }
+  }
+  /** Prissensorens dagspriser som [[start, kr/kWh]], samlet pr. time. Kendte formater fra de danske prisintegrationer. */
+  _priceList() {
+    const a = this.card.stateObj("grid_price")?.attributes || {};
+    const raw = [a.prices, a.raw_today, a.raw_tomorrow, a.forecast, a.today_prices].filter(Array.isArray).flat();
+    const byHour = /* @__PURE__ */ new Map();
+    for (const x of raw) {
+      if (!x || typeof x !== "object") continue;
+      const t = Date.parse(x.start ?? x.hour ?? x.time ?? x.datetime);
+      const p = Number(x.price ?? x.value ?? x.total);
+      if (!Number.isFinite(t) || !Number.isFinite(p)) continue;
+      const h = Math.floor(t / HOUR_MS2) * HOUR_MS2;
+      const e = byHour.get(h) || [0, 0];
+      byHour.set(h, [e[0] + p, e[1] + 1]);
+    }
+    return [...byHour].sort((a2, b) => a2[0] - b[0]).map(([h, [s, k]]) => [h, s / k]);
+  }
+  async _loadDays() {
+    const c2 = this.card;
+    const ids = this._ids();
+    const now = Date.now();
+    const d0 = addDays2(startOfDay2(now), -29);
+    const iso2 = (t) => new Date(t).toISOString();
+    const token = this.token;
+    const [res, money] = await Promise.all([
+      this._ws({ type: "recorder/statistics_during_period", start_time: iso2(d0), end_time: iso2(now), statistic_ids: ids, period: "day", types: ["mean"] }),
+      c2.has("grid_energy") && c2.has("grid_cost") ? this._ws({ type: "recorder/statistics_during_period", start_time: iso2(d0), end_time: iso2(now), statistic_ids: [c2.id("grid_energy"), c2.id("grid_cost")], period: "day", types: ["change"], units: { energy: "kWh" } }) : null
+    ]);
+    if (token !== this.token || !res) return;
+    const days = [];
+    for (let t = d0; t <= now; t = addDays2(t, 1)) days.push(t);
+    const at = (rows, field) => {
+      const m = new Map((rows || []).map((r) => [startOfDay2(typeof r.start === "number" ? r.start : Date.parse(r.start)), r[field]]));
+      return days.map((d) => Number.isFinite(m.get(d)) ? m.get(d) : NaN);
+    };
+    this.day30 = { days, ent: new Map(ids.map((id) => [id, at(res[id], "mean")])), energy: at(money?.[c2.id("grid_energy")], "change"), cost: at(money?.[c2.id("grid_cost")], "change") };
+    if (this.range === "30d") this.render();
+  }
+  /* ---------- udregning pr. visning ---------- */
+  /** Buckets for valgt periode: 24 t = 24 timer, 7 dage = 3-timers blokke, 30 dage = døgn. */
+  _view() {
+    const d = this.data;
+    const c2 = this.card;
+    const gridId = c2.id("grid_power");
+    const sumIds = (ids, get2) => (k) => {
+      let s = 0;
+      let any = false;
+      for (const id of ids) {
+        const v = get2(id, k);
+        if (Number.isFinite(v)) {
+          s += Math.max(v, 0);
+          any = true;
+        }
+      }
+      return any ? s : 0;
+    };
+    if (this.range === "30d") {
+      const m = this.day30;
+      if (!m) return null;
+      const get2 = (id, b) => m.ent.get(id)?.[b.k];
+      const B2 = m.days.map((t, k) => ({ start: t, hours: k === m.days.length - 1 ? Math.max(1, (Date.now() - t) / HOUR_MS2) : 24, k }));
+      return this._rows(B2, get2, sumIds, gridId, (b) => [m.energy[b.k], m.cost[b.k]], (t) => `${new Date(t).getDate()}/${new Date(t).getMonth() + 1}`, 7, (t) => new Date(t).toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" }));
+    }
+    const per = this.range === "7d" ? 3 : 1;
+    const end = d.lastIdx + 1;
+    const startIdx = this.range === "7d" ? Math.max(0, end - 7 * 24) : Math.max(0, end - 24);
+    const B = [];
+    let i0 = startIdx;
+    while (per > 1 && new Date(d.t0 + i0 * HOUR_MS2).getHours() % per) i0++;
+    for (let i = i0; i < end; i += per) {
+      const idx = [];
+      for (let k = Math.max(i, 0); k < Math.min(i + per, end); k++) idx.push(k);
+      if (idx.length) B.push({ start: d.t0 + idx[0] * HOUR_MS2, idx, hours: idx.length });
+    }
+    const get = (id, b) => avg(b.idx.map((k) => d.ent.get(id)?.[k]));
+    const money = (b) => [sum(b.idx.map((k) => d.energy[k])), sum(b.idx.map((k) => d.cost[k])), avg(b.idx.map((k) => d.price[k]))];
+    const lbl2 = (t) => pad23(new Date(t).getHours());
+    const tip = (t, b) => {
+      const s = new Date(t);
+      const day2 = startOfDay2(t) === startOfDay2() ? "I dag" : startOfDay2(t) === addDays2(startOfDay2(), -1) ? "I g\xE5r" : s.toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+      return `${day2} kl. ${pad23(s.getHours())}\u2013${pad23((s.getHours() + b.hours) % 24)}`;
+    };
+    const every = this.range === "7d" ? 8 : 3;
+    return this._rows(B, get, sumIds, gridId, money, this.range === "7d" ? (t) => new Date(t).getHours() === 0 ? new Date(t).toLocaleDateString("da-DK", { weekday: "short" }).replace(".", "") : "" : lbl2, every, tip);
+  }
+  _rows(B, get, sumIds, gridId, money, label, every, tip) {
+    const evOn = this.withEv && this.evIds.length > 0;
+    const keys = [...this.series.map((s) => s.name), UNM, ...evOn ? [EV] : []];
+    const rows = B.map((b) => {
+      const g = {};
+      let measured = 0;
+      for (const s of this.series) {
+        g[s.name] = sumIds(s.entities, get)(b);
+        measured += g[s.name];
+      }
+      const ev2 = sumIds(this.evIds, get)(b);
+      const grid = get(gridId, b);
+      g[UNM] = Number.isFinite(grid) ? Math.max(grid - measured - ev2, 0) : 0;
+      if (evOn) g[EV] = ev2;
+      const [kwh2, kr2, p] = money(b);
+      const price = Number.isFinite(p) ? p : kwh2 > 0 ? kr2 / kwh2 : NaN;
+      return { b, g, grid, kwh: kwh2 || (Number.isFinite(grid) ? grid * b.hours / 1e3 : NaN), kr: kr2, price };
+    });
+    const prices = rows.map((r) => r.price).filter(Number.isFinite).sort((a, b) => a - b);
+    const q75 = prices.length ? prices[Math.floor(prices.length * 0.75)] : Infinity;
+    rows.forEach((r) => r.dear = Number.isFinite(r.price) && r.price >= q75);
+    return { rows, keys, label, every, tip };
+  }
+  _colors() {
+    const mode = this.card._hass?.themes?.darkMode === false ? "light" : "dark";
+    const col = {};
+    this.series.forEach((s, i) => col[s.name] = PAL[mode][i % PAL[mode].length]);
+    col[UNM] = UNM_COL;
+    col[EV] = EV_COL[mode];
+    return col;
+  }
+  /* ---------- tegning ---------- */
+  render() {
+    if (!this.el || !this.data || !this.el.clientWidth) return;
+    const r = this.refs;
+    const v = this._view();
+    r.pdEmpty.hidden = Boolean(v);
+    if (!v) return;
+    const col = this._colors();
+    this.col = col;
+    this.v = v;
+    const mobile = this.el.clientWidth < 560;
+    r.pdLegend.innerHTML = v.keys.map((k) => `<span><i style="background:${k === UNM ? HATCH_CSS : col[k]}"></i>${escapeHtml3(k)}</span>`).join("") + `<span class="pd-dear"><i></i>${this.range === "30d" ? "Dyr dag" : "Dyr time"}</span>`;
+    r.pdPriceSub.textContent = `kr/kWh \xB7 gule s\xF8jler er dyre ${this.range === "30d" ? "dage" : this.range === "7d" ? "perioder" : "timer"}`;
+    r.pdMainSub.textContent = `Forbrug pr. gruppe, og hvad str\xF8mmen kostede \xB7 ${this.range === "24h" ? "seneste 24 timer" : this.range === "7d" ? "seneste 7 dage, pr. 3 timer" : "seneste 30 dage, pr. d\xF8gn"}`;
+    r.pdStack.innerHTML = this._stack(r.pdStack.clientWidth, mobile ? 220 : 290, v, col);
+    r.pdPrice.innerHTML = this._price(r.pdPrice.clientWidth, mobile ? 90 : 104, v);
+    this._renderTip();
+    this._renderCards(mobile);
+    this._renderKpiSparks();
+  }
+  _x(w, n) {
+    const bw = (w - PAD2.l - PAD2.r) / n;
+    return { bw, x0: (i) => PAD2.l + i * bw, cx: (i) => PAD2.l + (i + 0.5) * bw };
+  }
+  _axis(w, h, max, step, f) {
+    let s = "";
+    for (let v = 0; v <= max + 1e-9; v += step) {
+      const y = h - PAD2.b - (h - PAD2.t - PAD2.b) * v / max;
+      s += `<line x1="${PAD2.l}" x2="${w - PAD2.r}" y1="${y}" y2="${y}" class="${v ? "pd-grid" : "pd-base"}"/><text x="${PAD2.l - 7}" y="${y + 4}" text-anchor="end" class="pd-ax">${f(v)}</text>`;
+    }
+    return s;
+  }
+  _xlabels(w, h, v) {
+    const X2 = this._x(w, v.rows.length);
+    const minGap = 34;
+    let last = -Infinity;
+    let s = "";
+    v.rows.forEach((r, i) => {
+      const t = r.b.start;
+      const lab = v.label(t);
+      const hr = new Date(t).getHours();
+      const show2 = this.range === "30d" ? (v.rows.length - 1 - i) % v.every === 0 : this.range === "7d" ? Boolean(lab) : hr % v.every === 0;
+      if (!show2 || !lab || X2.cx(i) - last < minGap) return;
+      last = X2.cx(i);
+      s += `<text x="${X2.cx(i)}" y="${h - 5}" text-anchor="middle" class="pd-ax">${lab}</text>`;
+    });
+    return s;
+  }
+  _bands(w, h, v, top = PAD2.t) {
+    const X2 = this._x(w, v.rows.length);
+    return v.rows.map((r, i) => r.dear ? `<rect x="${X2.x0(i)}" y="${top}" width="${X2.bw}" height="${h - PAD2.b - top}" class="pd-band"/>` : "").join("");
+  }
+  _stack(w, h, v, col) {
+    const n = v.rows.length;
+    const X2 = this._x(w, n);
+    const tot = v.rows.map((r) => v.keys.reduce((s2, k) => s2 + (r.g[k] || 0), 0));
+    const { max, step } = scale(Math.max(1, ...tot) * 1.04);
+    const Y = (x) => h - PAD2.b - (h - PAD2.t - PAD2.b) * x / max;
+    let s = `<svg width="${w}" height="${h}" role="img" aria-label="Forbrug pr. gruppe"><defs>${hatch("pdh")}</defs>${this._bands(w, h, v)}${this._axis(w, h, max, step, W_FMT)}`;
+    const bw = Math.max(1, X2.bw * (n > 60 ? 0.8 : 0.68));
+    v.rows.forEach((r, i) => {
+      let cum = 0;
+      v.keys.forEach((k, j) => {
+        const val = r.g[k] || 0;
+        if (val <= 0) return;
+        const y0 = Y(cum);
+        const y1 = Y(cum + val);
+        cum += val;
+        const hh5 = y0 - y1 - (j ? 1 : 0);
+        if (hh5 < 0.6) return;
+        s += `<rect x="${X2.cx(i) - bw / 2}" y="${y1}" width="${bw}" height="${hh5}" rx="${Math.min(2, bw / 3)}" fill="${k === UNM ? "url(#pdh)" : col[k]}"/>`;
+      });
+    });
+    this.hov.main = { n, w, render: (i) => this._mainTip(v, i, col), y: (i) => Y(tot[i]) / h };
+    return `${s}${this._xlabels(w, h, v)}</svg>`;
+  }
+  _mainTip(v, i, col) {
+    const r = v.rows[i];
+    const lines = [...v.keys].reverse().filter((k) => (r.g[k] || 0) >= 1);
+    const sw = (k) => `<i style="background:${k === UNM ? HATCH_CSS : col[k]}"></i>`;
+    return `<h6>${escapeHtml3(v.tip(r.b.start, r.b))}</h6>${lines.map((k) => `<div class="r"><span>${sw(k)}${escapeHtml3(k)}</span><b>${W_FMT(r.g[k])}</b></div>`).join("")}
+      <div class="r tot"><span>I alt${Number.isFinite(r.kwh) ? ` \xB7 ${fmt5(r.kwh, r.kwh >= 10 ? 0 : 2)} kWh` : ""}</span><span>${Number.isFinite(r.kr) && r.kr ? KR(r.kr) : ""}</span></div>
+      ${Number.isFinite(r.price) ? `<div class="r"><span>Pris${r.dear ? " \xB7 dyr" : ""}</span><span>${fmt5(r.price, 2)} kr/kWh</span></div>` : ""}`;
+  }
+  _price(w, h, v) {
+    const n = v.rows.length;
+    const X2 = this._x(w, n);
+    const ps = v.rows.map((r) => r.price);
+    const valid2 = ps.filter(Number.isFinite);
+    if (!valid2.length) return `<div class="pd-none">Ingen prisdata</div>`;
+    const { max, step } = scale(Math.max(...valid2) * 1.1, 3);
+    const Y = (x) => h - PAD2.b - (h - PAD2.t - PAD2.b) * x / max;
+    let s = `<svg width="${w}" height="${h}" role="img" aria-label="Elpris">${this._bands(w, h, v, 2)}${this._axis(w, h, max, step, (x) => `${fmt5(x, x % 1 ? 1 : 0)} kr`)}`;
+    const bw = Math.max(1, X2.bw * (n > 60 ? 0.8 : 0.68));
+    const lo = Math.min(...valid2);
+    const hi2 = Math.max(...valid2);
+    let loI = -1;
+    let hiI = -1;
+    v.rows.forEach((r, i) => {
+      if (!Number.isFinite(r.price)) return;
+      s += `<rect x="${X2.cx(i) - bw / 2}" y="${Y(r.price)}" width="${bw}" height="${Math.max(0, Y(0) - Y(r.price))}" rx="${Math.min(2, bw / 3)}" fill="${r.dear ? WARN : PRICE_COL}" opacity="${r.dear ? 0.95 : 0.8}"/>`;
+      if (r.price === lo && loI < 0) loI = i;
+      if (r.price === hi2 && hiI < 0) hiI = i;
+    });
+    const mark = (i, c2, txt, below) => {
+      const x = Math.min(Math.max(X2.cx(i), PAD2.l + 30), w - PAD2.r - 30);
+      return `<circle cx="${X2.cx(i)}" cy="${Y(ps[i])}" r="4" fill="${c2}" class="pd-ring"/><text x="${x}" y="${below ? Y(ps[i]) + 15 : Y(ps[i]) - 8}" text-anchor="middle" class="pd-lab">${txt} ${fmt5(ps[i], 2)}</text>`;
+    };
+    if (hiI >= 0) s += mark(hiI, WARN, "Dyrest", false);
+    if (loI >= 0 && loI !== hiI) s += mark(loI, GOOD, "Billigst", Y(lo) < h - PAD2.b - 20);
+    this.hov.price = { n, w, render: (i) => Number.isFinite(ps[i]) ? `<h6>${escapeHtml3(v.tip(v.rows[i].b.start, v.rows[i].b))}</h6><div class="r"><span>Elpris${v.rows[i].dear ? " \xB7 dyr" : ""}</span><b>${fmt5(ps[i], 2)} kr/kWh</b></div>` : "", y: (i) => Number.isFinite(ps[i]) ? Y(ps[i]) / h : null };
+    return `${s}${this._xlabels(w, h, v)}</svg>`;
+  }
+  _renderTip() {
+    const d = this.data;
+    const r = this.refs;
+    const v = this._view24();
+    const parts = [];
+    const list = this.cfg.shiftable || [];
+    let best = null;
+    const end = d.lastIdx + 1;
+    const from = Math.max(0, end - 48);
+    const prices = d.price.slice(from, end);
+    for (const item2 of list) {
+      const id = typeof item2 === "string" ? item2 : item2.entity;
+      const prof = (d.ent.get(id) || this._extra(id))?.slice(from, end);
+      if (!prof) continue;
+      const t = shiftTip(prof, prices, (k) => d.t0 + (from + k) * HOUR_MS2);
+      if (t && t.kr - t.bestKr >= 0.2 && (!best || t.kr - t.bestKr > best.kr - best.bestKr)) best = { ...t, name: typeof item2 === "object" && item2.name || this.card._hass?.states?.[id]?.attributes?.friendly_name || id };
+    }
+    if (best) parts.push(`${escapeHtml3(best.name)} kl. ${pad23(best.hour)} kostede <b>${KR(best.kr)}</b> \u2013 kl. ${pad23(best.bestHour)} havde den kostet <b>${KR(best.bestKr)}</b>.`);
+    if (v) {
+      const rows = v.rows.filter((x) => Number.isFinite(x.price));
+      if (rows.length) {
+        const hi2 = rows.reduce((a, b) => b.price > a.price ? b : a);
+        const lo = rows.reduce((a, b) => b.price < a.price ? b : a);
+        parts.push(`Dyreste time det seneste d\xF8gn var kl. ${pad23(new Date(hi2.b.start).getHours())} (${fmt5(hi2.price, 2)} kr), billigste kl. ${pad23(new Date(lo.b.start).getHours())} (${fmt5(lo.price, 2)} kr).`);
+      }
+    }
+    r.pdTip.hidden = !parts.length;
+    r.pdTipT.innerHTML = parts.join(" ");
+  }
+  /** Udstyr i "shiftable", der ikke er i nogen gruppe, hentes ikke; så er der intet tip for det. */
+  _extra() {
+    return null;
+  }
+  _view24() {
+    if (this.range === "24h") return this.v;
+    const keep = this.range;
+    this.range = "24h";
+    const v = this._view();
+    this.range = keep;
+    return v;
+  }
+  _renderCards(mobile) {
+    const d = this.data;
+    const r = this.refs;
+    const v = this._view24();
+    const ch = mobile ? 170 : 200;
+    const show2 = (ref, on) => r[ref].hidden = !on;
+    show2("pdCostCard", d.hasMoney);
+    const todayKr = this.card.today("grid_cost", "monetary");
+    r.pdCostSub.textContent = `Forbrug \xD7 timepris \xB7 seneste 24 timer${Number.isFinite(todayKr) ? ` \xB7 i dag ${KR(todayKr)}` : ""}`;
+    if (d.hasMoney && v) {
+      const w = r.pdCost.clientWidth;
+      const kr2 = v.rows.map((x) => x.kr);
+      const { max, step } = scale(Math.max(0.1, ...kr2.filter(Number.isFinite)) * 1.12, 4);
+      const X2 = this._x(w, kr2.length);
+      const Y = (x) => ch - PAD2.b - (ch - PAD2.t - PAD2.b) * x / max;
+      let s = `<svg width="${w}" height="${ch}" role="img" aria-label="Pris pr. time">${this._axis(w, ch, max, step, (x) => `${fmt5(x, x % 1 ? 1 : 0)} kr`)}`;
+      let mi2 = 0;
+      kr2.forEach((x, i) => {
+        if (!Number.isFinite(x)) return;
+        if (x > kr2[mi2] || !Number.isFinite(kr2[mi2])) mi2 = i;
+        s += `<rect x="${X2.x0(i) + X2.bw * 0.14}" y="${Y(x)}" width="${X2.bw * 0.72}" height="${Math.max(0, Y(0) - Y(x))}" rx="2" fill="${v.rows[i].dear ? WARN : this.col[this.series[0]?.name] || "#338ced"}"/>`;
+      });
+      if (Number.isFinite(kr2[mi2])) s += `<text x="${Math.min(Math.max(X2.cx(mi2), PAD2.l + 24), w - PAD2.r - 24)}" y="${Y(kr2[mi2]) - 6}" text-anchor="middle" class="pd-lab">${KR(kr2[mi2])}</text>`;
+      r.pdCost.innerHTML = `${s}${this._xlabels(w, ch, { ...v, every: 6 })}</svg><div class="pd-legend sm"><span><i style="background:${this.col[this.series[0]?.name] || "#338ced"}"></i>Almindelig time</span><span><i style="background:${WARN}"></i>Dyr time</span></div>`;
+      this.hov.cost = { n: kr2.length, w, render: (i) => Number.isFinite(kr2[i]) ? `<h6>${escapeHtml3(v.tip(v.rows[i].b.start, v.rows[i].b))}</h6><div class="r"><span>Kostede</span><b>${KR(kr2[i])}</b></div><div class="r"><span>Forbrug</span><span>${fmt5(v.rows[i].kwh, 2)} kWh</span></div>${Number.isFinite(v.rows[i].price) ? `<div class="r"><span>Pris</span><span>${fmt5(v.rows[i].price, 2)} kr/kWh</span></div>` : ""}` : "", y: (i) => Number.isFinite(kr2[i]) ? Y(kr2[i]) / ch : null };
+    }
+    const base = d.base;
+    const bv2 = base.map((b) => b.w);
+    const lastB = [...base].reverse().find((b) => Number.isFinite(b.w));
+    const bAvg = avg(bv2);
+    if (lastB) {
+      const yearKwh = lastB.w * 8.76;
+      r.pdBaseSub.textContent = `${fmt5(lastB.w, 0)} W i nat \u2248 ${fmt5(Math.round(yearKwh / 100) * 100, 0)} kWh${Number.isFinite(d.avgPrice) ? ` og ${fmt5(Math.round(yearKwh * d.avgPrice / 100) * 100, 0)} kr` : ""} om \xE5ret`;
+    } else r.pdBaseSub.textContent = "Ingen nattedata endnu";
+    {
+      const w = r.pdBase.clientWidth;
+      const n = base.length;
+      const { max, step } = scale(Math.max(1, ...bv2.filter(Number.isFinite)) * 1.12, 3);
+      const X2 = this._x(w, n);
+      const Y = (x) => ch - PAD2.b - (ch - PAD2.t - PAD2.b) * x / max;
+      let s = `<svg width="${w}" height="${ch}" role="img" aria-label="Grundlast">${this._axis(w, ch, max, step, W_FMT)}`;
+      const bc = this.col[this.series[0]?.name] || "#338ced";
+      base.forEach((b, i) => {
+        if (!Number.isFinite(b.w)) return;
+        const last = b === lastB;
+        s += `<rect x="${X2.x0(i) + X2.bw * 0.18}" y="${Y(b.w)}" width="${X2.bw * 0.64}" height="${Math.max(0, Y(0) - Y(b.w))}" rx="2" fill="${bc}" opacity="${last ? 1 : 0.5}"/>`;
+        if (i % 7 === (n - 1) % 7 || last) s += `<text x="${X2.cx(i)}" y="${ch - 5}" text-anchor="middle" class="pd-ax">${last ? "i nat" : `${new Date(b.day).getDate()}/${new Date(b.day).getMonth() + 1}`}</text>`;
+      });
+      if (Number.isFinite(bAvg)) s += `<line x1="${PAD2.l}" x2="${w - PAD2.r}" y1="${Y(bAvg)}" y2="${Y(bAvg)}" class="pd-avg"/><text x="${PAD2.l + 4}" y="${Y(bAvg) - 6}" class="pd-lab dim">snit ${fmt5(bAvg, 0)} W</text>`;
+      r.pdBase.innerHTML = `${s}</svg>`;
+      this.hov.base = { n, w, render: (i) => Number.isFinite(bv2[i]) ? `<h6>Natten til ${new Date(base[i].day).toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" })}</h6><div class="r"><span>Laveste time</span><b>${fmt5(bv2[i], 0)} W</b></div><div class="r"><span>Svarer til</span><span>${fmt5(Math.round(bv2[i] * 8.76), 0)} kWh/\xE5r</span></div>` : "", y: (i) => Number.isFinite(bv2[i]) ? Y(bv2[i]) / ch : null };
+    }
+    if (v) {
+      const w = r.pdUnm.clientWidth;
+      const um = v.rows.map((x) => Number.isFinite(x.grid) ? x.g[UNM] : NaN);
+      const n = um.length;
+      const uAvg = avg(um);
+      r.pdUnmSub.textContent = `Hovedm\xE5ler minus alle m\xE5lere${Number.isFinite(uAvg) ? ` \xB7 snit ${fmt5(uAvg, 0)} W` : ""}`;
+      const { max, step } = scale(Math.max(1, ...um.filter(Number.isFinite)) * 1.2, 3);
+      const X2 = this._x(w, n);
+      const Y = (x) => ch - PAD2.b - (ch - PAD2.t - PAD2.b) * x / max;
+      const pts = [];
+      um.forEach((x, i) => Number.isFinite(x) && pts.push([i === 0 ? PAD2.l : i === n - 1 ? w - PAD2.r : X2.cx(i), Y(x)]));
+      let s = `<svg width="${w}" height="${ch}" role="img" aria-label="Um\xE5lt forbrug"><defs><linearGradient id="pdug" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aab4c2" stop-opacity=".35"/><stop offset="1" stop-color="#aab4c2" stop-opacity="0"/></linearGradient></defs>${this._axis(w, ch, max, step, W_FMT)}`;
+      if (pts.length > 1) {
+        const line = pts.map((p) => p.join(",")).join("L");
+        s += `<path d="M${line}L${pts[pts.length - 1][0]},${Y(0)}L${pts[0][0]},${Y(0)}Z" fill="url(#pdug)"/><path d="M${line}" class="pd-line"/>`;
+        const mi2 = um.reduce((a, x, i) => Number.isFinite(x) && (a < 0 || x > um[a]) ? i : a, -1);
+        if (Number.isFinite(uAvg)) s += `<line x1="${PAD2.l}" x2="${w - PAD2.r}" y1="${Y(uAvg)}" y2="${Y(uAvg)}" class="pd-avg"/>`;
+        if (mi2 >= 0) s += `<circle cx="${X2.cx(mi2)}" cy="${Y(um[mi2])}" r="4" class="pd-dot"/><text x="${Math.min(Math.max(X2.cx(mi2), PAD2.l + 40), w - PAD2.r - 40)}" y="${Y(um[mi2]) - 8}" text-anchor="middle" class="pd-lab">${W_FMT(um[mi2])} kl. ${pad23(new Date(v.rows[mi2].b.start).getHours())}</text>`;
+      }
+      r.pdUnm.innerHTML = `${s}${this._xlabels(w, ch, { ...v, every: 6 })}</svg>`;
+      this.hov.unm = { n, w, render: (i) => Number.isFinite(um[i]) ? `<h6>${escapeHtml3(v.tip(v.rows[i].b.start, v.rows[i].b))}</h6><div class="r"><span>Um\xE5lt</span><b>${W_FMT(um[i])}</b></div><div class="r"><span>Hovedm\xE5ler</span><span>${W_FMT(v.rows[i].grid)}</span></div>` : "", y: (i) => Number.isFinite(um[i]) ? Y(um[i]) / ch : null };
+    }
+    this._renderTop();
+  }
+  _renderTop() {
+    const d = this.data;
+    const c2 = this.card;
+    const sod = startOfDay2();
+    const i0 = Math.max(0, Math.round((sod - d.t0) / HOUR_MS2));
+    const end = d.lastIdx + 1;
+    const names2 = /* @__PURE__ */ new Map();
+    const col = /* @__PURE__ */ new Map();
+    c2.config.groups.forEach((g) => g.entities.forEach((m) => names2.set(m.entity, m.name)));
+    this.series.forEach((s) => s.entities.forEach((e) => col.set(e, this.col[s.name])));
+    this.evIds.forEach((e) => col.set(e, this.col[EV]));
+    const items = [];
+    for (const [id, a] of d.ent) {
+      if (id === c2.id("grid_power")) continue;
+      const hours = a.slice(i0, end).map((x) => Number.isFinite(x) ? Math.max(x, 0) : 0);
+      const kwh2 = sum(hours) / 1e3;
+      if (!(kwh2 > 5e-3)) continue;
+      const kr2 = hours.reduce((s, x, k) => s + x / 1e3 * (Number.isFinite(d.price[i0 + k]) ? d.price[i0 + k] : 0), 0);
+      items.push({ id, name: names2.get(id) || c2._hass?.states?.[id]?.attributes?.friendly_name || id, kwh: kwh2, kr: kr2, hours, color: col.get(id) || UNM_COL });
+    }
+    items.sort((a, b) => b.kwh - a.kwh);
+    const top = items.slice(0, 10);
+    const r = this.refs;
+    r.pdTopSub.textContent = end - i0 > 0 ? `kWh og kr siden midnat (hele timer), med forl\xF8bet time for time` : "Ingen hele timer i dag endnu";
+    r.pdTop.innerHTML = top.map((t, i) => `<button type="button" class="pd-row clickable" data-entity="${escapeHtml3(t.id)}"><span class="rk">${i + 1}</span><span class="nm"><i style="background:${t.color}"></i>${escapeHtml3(t.name)}</span><span class="sp">${this._spark(t.hours, t.color, 120, 24)}</span><span class="v num">${fmt5(t.kwh, 2)} kWh</span><span class="k num">${d.hasMoney || Number.isFinite(d.price[i0]) ? KR(t.kr) : ""}</span></button>`).join("");
+    r.pdTop.style.setProperty("--rows", String(Math.ceil(top.length / 2)));
+  }
+  _spark(a, c2, w, h) {
+    if (a.length < 2) return "";
+    const mx = Math.max(...a);
+    const mn = Math.min(...a);
+    const rg = Math.max(mx - mn, mx * 0.15, 1);
+    const pts = a.map((v, i) => `${(i / (a.length - 1) * w).toFixed(1)},${(h - 3 - (h - 6) * (v - mn) / rg).toFixed(1)}`);
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="M0,${h - 1}L${pts.join("L")}L${w},${h - 1}Z" fill="${c2}" opacity=".13"/><path d="M${pts.join("L")}" fill="none" stroke="${c2}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  }
+  _renderKpiSparks() {
+    const d = this.data;
+    const r = this.refs;
+    if (!d) return;
+    const end = d.lastIdx + 1;
+    const g24 = d.grid.slice(Math.max(0, end - 24), end).filter(Number.isFinite);
+    const sod = startOfDay2();
+    const i0 = Math.max(0, Math.round((sod - d.t0) / HOUR_MS2));
+    let cum = 0;
+    const cumKr = d.cost.slice(i0, end).map((x) => cum += Number.isFinite(x) ? x : 0);
+    const list = this._priceList().filter(([t]) => t >= sod && t < addDays2(sod, 1)).map(([, p]) => p);
+    const prices = list.length >= 6 ? list : d.price.slice(Math.max(0, end - 24), end).filter(Number.isFinite);
+    const base = d.base.map((b) => b.w).filter(Number.isFinite);
+    const set = (k, a, c2, note) => {
+      r[`pdK${k}S`].innerHTML = this._spark(a, c2, 104, 28);
+      if (note !== void 0) r[`pdK${k}N`].textContent = note;
+    };
+    set("Now", g24, "#5fb4ff");
+    set("Today", cumKr, WARN);
+    set("Price", prices, "#5fb4ff", list.length >= 6 ? "d\xF8gnets priser" : "seneste 24 t");
+    set("Base", base, GOOD);
+    const lastB = [...d.base].reverse().find((b) => Number.isFinite(b.w));
+    this.baseNow = lastB?.w;
+    this.updateKpis();
+  }
+  /** Live-tal i nøgletallene (kaldes ved hver statusændring). */
+  updateKpis() {
+    const c2 = this.card;
+    const r = this.refs;
+    if (!r?.pdKNowV) return;
+    const w = c2.watts("grid_power");
+    const set = (ref, html) => {
+      if (r[ref].__v !== html) {
+        r[ref].__v = html;
+        r[ref].innerHTML = html;
+      }
+    };
+    set("pdKNowV", Number.isFinite(w) ? w >= 1e4 ? `${fmt5(w / 1e3, 1)}<u>kW</u>` : `${fmt5(w, 0)}<u>W</u>` : "\u2014");
+    const kr2 = c2.today("grid_cost", "monetary");
+    const kwh2 = c2.today("grid_energy", "energy");
+    set("pdKTodayV", Number.isFinite(kr2) ? `${fmt5(kr2, 2)}<u>kr</u>` : Number.isFinite(kwh2) ? `${fmt5(kwh2, 1)}<u>kWh</u>` : "\u2014");
+    r.pdKTodayN.textContent = Number.isFinite(kr2) && Number.isFinite(kwh2) ? `${fmt5(kwh2, 1)} kWh` : "";
+    const p = c2.num("grid_price");
+    set("pdKPriceV", Number.isFinite(p) ? `${fmt5(p, 2)}<u>kr/kWh</u>` : "\u2014");
+    set("pdKBaseV", Number.isFinite(this.baseNow) ? `${fmt5(this.baseNow, 0)}<u>W</u>` : "\u2014");
+    r.pdKPrice.hidden = !c2.has("grid_price");
+    r.pdKToday.hidden = !c2.has("grid_cost") && !c2.has("grid_energy");
+  }
+  /* ---------- hover / tryk ---------- */
+  _bindHover(host) {
+    const tip = document.createElement("div");
+    tip.className = "pd-hover";
+    tip.hidden = true;
+    const line = document.createElement("i");
+    line.className = "pd-cross";
+    line.hidden = true;
+    let hideT;
+    const hide2 = () => {
+      tip.hidden = true;
+      line.hidden = true;
+    };
+    const move = (ev2) => {
+      const box = ev2.target.closest?.("[data-hov]");
+      const h = box && this.hov[box.dataset.hov];
+      if (!h) return hide2();
+      const rect = box.getBoundingClientRect();
+      const x = ev2.clientX - rect.left;
+      const plotW = h.w - PAD2.l - PAD2.r;
+      const i = Math.floor((x - PAD2.l) / plotW * h.n);
+      if (i < 0 || i >= h.n) return hide2();
+      const html = h.render(i);
+      if (!html) return hide2();
+      if (tip.parentElement !== box) box.append(tip, line);
+      tip.innerHTML = html;
+      tip.hidden = false;
+      line.hidden = false;
+      const cx = PAD2.l + (i + 0.5) * plotW / h.n;
+      line.style.left = `${cx}px`;
+      const tw = tip.offsetWidth;
+      const left = cx + 14 + tw > rect.width ? cx - 14 - tw : cx + 14;
+      tip.style.left = `${Math.max(0, left)}px`;
+      tip.style.top = "6px";
+      if (ev2.pointerType === "touch") {
+        clearTimeout(hideT);
+        hideT = setTimeout(hide2, 3500);
+      }
+    };
+    host.addEventListener("pointermove", (ev2) => ev2.pointerType !== "touch" && move(ev2));
+    host.addEventListener("pointerdown", (ev2) => ev2.pointerType === "touch" && move(ev2));
+    host.addEventListener("pointerleave", hide2);
+    host.addEventListener("click", (ev2) => {
+      const row = ev2.target.closest?.(".pd-row[data-entity]");
+      if (row) this.card.moreInfo(row.dataset.entity);
+    });
+  }
+};
+var POWER_DETAIL_STYLE = `
+.pd-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gap)}
+.pd-kpi{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border-radius:15px;background:var(--ect-surface);box-shadow:var(--ect-shadow);border-left:calc(var(--dashboard-left-accent-width, 1) * 3px) solid color-mix(in srgb,var(--c-el) 78%,transparent);min-width:0}
+.pd-kpi[hidden]{display:none}
+.pd-bdg{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;color:var(--ec-accent);background:color-mix(in srgb,var(--ec-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--ec-accent) 26%,transparent)}
+.pd-kv{min-width:0}.pd-kv small{display:block;font-size:12px;color:var(--ec-muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-kv b{display:block;font-size:23px;font-weight:700;line-height:1.15;color:var(--ec-text);white-space:nowrap}.pd-kv b u{text-decoration:none;font-size:13px;color:var(--ec-muted);font-weight:600;margin-left:3px}
+.pd-ksp{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:0}.pd-ksp small{font-size:10.5px;color:var(--ec-muted);white-space:nowrap}
+.pd-panel{padding:16px;border-radius:15px;background:var(--ect-surface);box-shadow:var(--ect-shadow)}
+.pd-panel[hidden]{display:none}
+.pd-panel .sect-head{margin-bottom:8px}
+.pd-panel .card-head .ic{color:var(--ec-accent)}
+.pd-ctr{display:flex;gap:8px;flex-wrap:wrap}.pd-ctr .seg{--tone:var(--ec-accent)}
+.pd-legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ec-text);opacity:.9;margin:0 0 6px}
+.pd-legend span{display:inline-flex;align-items:center;gap:6px}.pd-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.pd-legend .pd-dear i{width:14px;background:color-mix(in srgb,${WARN} 22%,transparent);border:1px solid color-mix(in srgb,${WARN} 50%,transparent)}
+.pd-legend.sm{margin:6px 0 0;font-size:11.5px}
+.pd-box{position:relative;min-height:40px;touch-action:pan-y}
+.pd-box svg{display:block;overflow:visible}
+.pd-sub{display:flex;gap:8px;align-items:baseline;margin:10px 0 2px;font-size:13.5px}.pd-sub small{color:var(--ec-muted);font-size:12px}
+.pd-ax{font-size:11px;fill:var(--ec-muted)}
+.pd-grid{stroke:color-mix(in srgb,var(--ec-text) 7%,transparent)}.pd-base{stroke:color-mix(in srgb,var(--ec-text) 18%,transparent)}
+.pd-band{fill:color-mix(in srgb,${WARN} 8%,transparent)}
+.pd-lab{font-size:11px;font-weight:700;fill:var(--ec-text)}.pd-lab.dim{font-weight:500;opacity:.85}
+.pd-ring{stroke:var(--ec-popup);stroke-width:2}
+.pd-dot{fill:var(--ec-text);stroke:var(--ec-popup);stroke-width:2}
+.pd-avg{stroke:var(--ec-text);stroke-dasharray:4 4;opacity:.45}
+.pd-line{fill:none;stroke:#c3ccd8;stroke-width:2;stroke-linejoin:round}
+.pd-tip{display:flex;gap:10px;align-items:center;margin-top:10px;padding:9px 12px;border-radius:12px;font-size:12.5px;color:var(--ec-text);background:color-mix(in srgb,var(--ec-accent) 7%,transparent);border:1px solid color-mix(in srgb,var(--ec-accent) 22%,transparent)}
+.pd-tip[hidden]{display:none}.pd-tip .ic{color:var(--ec-accent);flex:none}
+.pd-empty,.pd-none{font-size:12.5px;color:var(--ec-muted);padding:10px 0}
+.pd-g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.pd-g3 .card-head{margin-bottom:8px}
+.pd-top{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(var(--rows,5),auto);grid-auto-flow:column;column-gap:34px;margin-top:6px}
+.pd-row{display:grid;grid-template-columns:20px minmax(0,1fr) 120px 74px 62px;gap:10px;align-items:center;padding:6px 2px;font-size:13px;border-bottom:1px solid color-mix(in srgb,var(--ec-text) 6%,transparent);border-radius:0;text-align:left}
+.pd-row:hover{background:var(--ec-surface-2)}
+.pd-row .rk{color:var(--ec-muted);font-size:12px;text-align:right}.pd-row .nm{display:flex;gap:8px;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd-row .nm i{width:8px;height:8px;border-radius:50%;flex:none}.pd-row .v{text-align:right;font-weight:650}.pd-row .k{text-align:right;color:var(--ec-muted)}
+.pd-row .sp svg{display:block;width:120px}
+.pd-hover{position:absolute;z-index:6;pointer-events:none;min-width:180px;padding:9px 11px;border-radius:12px;font-size:12px;background:color-mix(in srgb,var(--ec-popup) 96%,transparent);border:1px solid var(--ec-border-strong);box-shadow:0 12px 30px rgba(0,0,0,.45);color:var(--ec-text)}
+.pd-hover[hidden],.pd-cross[hidden]{display:none}
+.pd-hover h6{margin:0 0 5px;font-size:12.5px;font-weight:700}
+.pd-hover .r{display:flex;justify-content:space-between;gap:14px;line-height:1.6;font-variant-numeric:tabular-nums}
+.pd-hover .r span{display:flex;gap:6px;align-items:center;color:var(--ec-muted)}.pd-hover .r i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.pd-hover .tot{border-top:1px solid var(--ec-border);margin-top:4px;padding-top:4px;font-weight:650}.pd-hover .tot span{color:var(--ec-text)}
+.pd-cross{position:absolute;top:${PAD2.t}px;bottom:${PAD2.b}px;width:1px;margin-left:-.5px;background:color-mix(in srgb,var(--ec-text) 50%,transparent);pointer-events:none;z-index:5}
+@container (max-width:1100px){
+  .pd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pd-g3{grid-template-columns:1fr 1fr}.pd-g3 > :last-child{grid-column:1/-1}
+}
+@container (max-width:860px){
+  .pd-top{grid-template-columns:1fr;grid-auto-flow:row;grid-template-rows:none}
+}
+@container (max-width:600px){
+  .pd-g3{grid-template-columns:1fr}
+  .pd-kpi{grid-template-columns:34px minmax(0,1fr);padding:10px}.pd-ksp{display:none}.pd-bdg{width:34px;height:34px;border-radius:10px}
+  .pd-kv b{font-size:19px}
+  .pd-panel{padding:12px}
+  .pd-row{grid-template-columns:16px minmax(0,1fr) 48px 62px 50px;gap:6px;font-size:12px}.pd-row .sp svg{width:48px}
+}
+`;
 
 // src/cards/ha-energy-center-card/styles.js
 var STYLE10 = `
@@ -67696,109 +68617,8 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
 @container (max-width:360px){
   .kpis[data-n]{grid-template-columns:minmax(0,1fr)}
 }
+${POWER_DETAIL_STYLE}
 `;
-
-// src/cards/ha-energy-center-card/utils/format.js
-var MINUTE_MS2 = 60 * 1e3;
-var HOUR_MS2 = 60 * MINUTE_MS2;
-var DAY_MS2 = 24 * HOUR_MS2;
-var INVALID_STATES2 = /* @__PURE__ */ new Set(["unknown", "unavailable", "none", "null", "undefined", ""]);
-var isValidState2 = (state2) => state2 != null && !INVALID_STATES2.has(String(state2).trim().toLowerCase());
-function toNumber3(value) {
-  if (typeof value === "number") return Number.isFinite(value) ? value : void 0;
-  if (!isValidState2(value)) return void 0;
-  const n = Number(String(value).trim().replace(",", "."));
-  return Number.isFinite(n) ? n : void 0;
-}
-var UNIT_TABLES = {
-  power: { w: 1, kw: 1e3, mw: 1e6 },
-  // → W
-  energy: { wh: 1e-3, kwh: 1, mwh: 1e3 },
-  // → kWh
-  volume: { "m\xB3": 1, m3: 1, l: 1e-3, liter: 1e-3 },
-  // → m³
-  flow: { "l/min": 1, "l/h": 1 / 60, "m\xB3/h": 1e3 / 60, "m3/h": 1e3 / 60 }
-  // → L/min
-};
-function normalize(stateObj, kind) {
-  if (!stateObj) return { value: void 0, known: true };
-  const n = toNumber3(stateObj.state);
-  const unit = String(stateObj.attributes?.unit_of_measurement ?? "").trim().toLowerCase();
-  const table = UNIT_TABLES[kind];
-  if (!table) return { value: n, known: true };
-  const factor = unit ? table[unit] : 1;
-  if (factor === void 0) return { value: void 0, known: false, unit };
-  return { value: n === void 0 ? void 0 : n * factor, known: true };
-}
-var numberFormats2 = /* @__PURE__ */ new Map();
-function fmt5(value, digits = 1) {
-  if (!Number.isFinite(value)) return "\u2014";
-  let f = numberFormats2.get(digits);
-  if (!f) {
-    f = new Intl.NumberFormat("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    numberFormats2.set(digits, f);
-  }
-  const rounded = Math.round(value * 10 ** digits) / 10 ** digits;
-  return f.format(rounded === 0 ? 0 : rounded);
-}
-function fmtPower2(watts) {
-  if (!Number.isFinite(watts)) return { v: "\u2014", u: "W" };
-  const abs = Math.abs(watts);
-  if (abs >= 1e3) return { v: fmt5(watts / 1e3, abs >= 1e4 ? 1 : 2), u: "kW" };
-  return { v: fmt5(watts, abs < 10 ? 1 : 0), u: "W" };
-}
-function fmtEnergy2(kwh2) {
-  if (!Number.isFinite(kwh2)) return { v: "\u2014", u: "kWh" };
-  const abs = Math.abs(kwh2);
-  if (abs >= 1e4) return { v: fmt5(kwh2 / 1e3, 1), u: "MWh" };
-  if (abs < 1 && abs > 0) return { v: fmt5(kwh2 * 1e3, 0), u: "Wh" };
-  return { v: fmt5(kwh2, abs >= 100 ? 0 : 1), u: "kWh" };
-}
-function fmtVolume(m3) {
-  if (!Number.isFinite(m3)) return { v: "\u2014", u: "L" };
-  if (Math.abs(m3) < 10) return { v: fmt5(m3 * 1e3, 0), u: "L" };
-  return { v: fmt5(m3, 1), u: "m\xB3" };
-}
-var fmtKr = (v) => Number.isFinite(v) ? `${fmt5(v, 2)} kr` : "\u2014";
-function escapeHtml3(value) {
-  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-var icon3 = (name, cls = "") => `<ha-icon class="ic ${cls}" icon="${escapeHtml3(name)}"></ha-icon>`;
-var pad23 = (n) => String(n).padStart(2, "0");
-function startOfDay2(ms = Date.now()) {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-function addDays2(ms, days) {
-  const d = new Date(ms);
-  d.setDate(d.getDate() + days);
-  return d.getTime();
-}
-function startOfMonth(ms = Date.now()) {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(1);
-  return d.getTime();
-}
-function addMonths(ms, months) {
-  const d = new Date(ms);
-  d.setMonth(d.getMonth() + months);
-  return d.getTime();
-}
-var hourKey = (ms = Date.now()) => Math.floor(ms / HOUR_MS2);
-var timeFmt = new Intl.DateTimeFormat("da-DK", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-var dayFmt = new Intl.DateTimeFormat("da-DK", { weekday: "short", day: "numeric", month: "short" });
-var dateFmt = new Intl.DateTimeFormat("da-DK", { day: "numeric", month: "short" });
-var monthFmt = new Intl.DateTimeFormat("da-DK", { month: "long", year: "numeric" });
-var monthShortFmt = new Intl.DateTimeFormat("da-DK", { month: "short" });
-var fmtDay = (ms) => dayFmt.format(ms);
-var fmtMonth = (ms) => {
-  const s = monthFmt.format(ms);
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
-var fmtMonthShort = (ms) => monthShortFmt.format(ms).replace(".", "");
-var statTime2 = (value) => typeof value === "number" ? value : Date.parse(value);
 
 // src/cards/ha-energy-center-card/utils/stats.js
 var COMPILE_GRACE_MS = 3 * MINUTE_MS2;
@@ -67902,9 +68722,9 @@ function liveTail(rows, live) {
 }
 function sumSince(rows, from, live) {
   if (!rows?.length) return void 0;
-  let sum = 0;
-  for (const r of rows) if (r.start >= from && Number.isFinite(r.change)) sum += r.change;
-  return sum + liveTail(rows, live);
+  let sum2 = 0;
+  for (const r of rows) if (r.start >= from && Number.isFinite(r.change)) sum2 += r.change;
+  return sum2 + liveTail(rows, live);
 }
 
 // src/cards/ha-energy-center-card/components/chart.js
@@ -68231,8 +69051,8 @@ var HistoryPanel = class {
       } else if (d.rows.length) values[i] = (values[i] || 0) + liveTail(d.rows, live);
       if (cost && d.costRows.length) cost[i] = (cost[i] || 0) + liveTail(d.costRows, this.card.statLive(this.o.cost, "monetary"));
     }
-    const scale = this._scale();
-    return { values: values.map((v) => Number.isFinite(v) ? Math.max(v, 0) * scale : v), cost, now: i };
+    const scale2 = this._scale();
+    return { values: values.map((v) => Number.isFinite(v) ? Math.max(v, 0) * scale2 : v), cost, now: i };
   }
   _render() {
     const { values, cost, now } = this._withTail();
@@ -68548,15 +69368,15 @@ function hourlyPrices(stateObj, buckets) {
     if (price !== void 0 && Number.isFinite(start)) entries.push({ start, price });
   }
   return buckets.map((b) => {
-    let sum = 0;
+    let sum2 = 0;
     let n = 0;
     for (const e of entries) {
       if (e.start >= b.start && e.start < b.end) {
-        sum += e.price;
+        sum2 += e.price;
         n += 1;
       }
     }
-    return n ? sum / n : void 0;
+    return n ? sum2 / n : void 0;
   });
 }
 var OverviewSection = class extends Section {
@@ -68776,17 +69596,17 @@ var TODAY_KEYS2 = [
   ["grid_cost", "monetary"]
 ];
 function groupSum(card, group) {
-  let sum = 0;
+  let sum2 = 0;
   let valid2 = 0;
   let missing = 0;
   for (const m of group.entities) {
     const w = card.wattsOf(m.entity);
     if (Number.isFinite(w)) {
-      sum += Math.max(w, 0);
+      sum2 += Math.max(w, 0);
       valid2 += 1;
     } else missing += 1;
   }
-  return { sum: valid2 ? sum : void 0, missing, total: group.entities.length };
+  return { sum: valid2 ? sum2 : void 0, missing, total: group.entities.length };
 }
 function phaseBalance(currents, moderateA, highA) {
   const vals = currents.filter(Number.isFinite);
@@ -68805,6 +69625,7 @@ var PowerSection = class extends Section {
     this.panels = [
       new HistoryPanel(card, { key: "pw-hist", title: "Historik \u2013 elforbrug", icon: "mdi:chart-bar", tone: "el", stat: "grid_energy", cost: "grid_cost", kind: "energy", periods: ["day", "week", "month", "year"], period: "day" })
     ];
+    this.detail = new PowerDetail(card);
   }
   ids() {
     const c2 = this.card;
@@ -68851,6 +69672,7 @@ var PowerSection = class extends Section {
       </div>`;
     return `
 <div class="layout pw">
+  ${this.detail.html()}
   <section class="card hero-main tone-el a-half clickable" data-entity="${ent("grid_power")}" tabindex="0" role="button" data-ref="hero">
     <div class="hero-head"><div class="card-head">${icon3("mdi:flash")}<h3>Str\xF8m lige nu</h3></div><span class="live"><i></i>Live</span></div>
     <div class="mega num"><b data-ref="mainV">\u2014</b><small data-ref="mainU">W</small></div>
@@ -68896,13 +69718,17 @@ var PowerSection = class extends Section {
   mount(root) {
     super.mount(root);
     this.groupState = this.card.config.groups.map(() => ({}));
+    this.detail.mount(root, this.refs);
   }
   shown() {
     super.shown();
+    this.detail.observe();
+    this.detail.render();
     this.card.loadToday(TODAY_KEYS2, () => this._updateToday());
   }
   hourTick() {
     super.hourTick();
+    this.detail.refresh();
     this.card.loadToday(TODAY_KEYS2, () => this._updateToday());
   }
   /** Only what is set up: facts, meter tiles, groups, phases and history without entities are hidden (Claude AI). */
@@ -68920,6 +69746,8 @@ var PowerSection = class extends Section {
     this.show("groupsCard", c2.config.groups.length > 0);
     this.show("phasesCard", phasesOn);
     this.show(this.panels[0].el, has(this.panels[0].o.stat));
+    const pd2 = this.detail.enabled();
+    for (const ref of ["pdKpis", "pdMain", "pdG3", "pdTopCard"]) this.show(ref, pd2);
   }
   update() {
     const c2 = this.card;
@@ -68967,6 +69795,7 @@ var PowerSection = class extends Section {
     const c2 = this.card;
     this.value("mMain", fmtEnergy2(c2.today("grid_energy", "energy")));
     this.text("mMainCost", fmtKr(c2.today("grid_cost", "monetary")));
+    this.detail.updateKpis();
   }
   _updateGroups(grid) {
     const c2 = this.card;
@@ -70206,20 +71035,20 @@ var HaEnergyCenterCard = class extends HTMLElement {
       }
     }
     if (!changed) return;
-    const sum = groupSum(this, g);
+    const sum2 = groupSum(this, g);
     const vals = g.entities.map((m) => this.wattsOf(m.entity));
     const max = Math.max(1, ...vals.filter(Number.isFinite));
     vals.forEach((w, i) => {
       const row = this._dlgRows[i];
       const p3 = fmtPower2(w);
       row.v.textContent = Number.isFinite(w) ? `${p3.v} ${p3.u}` : "Ingen data";
-      row.s.textContent = Number.isFinite(w) && sum.sum > 0 ? `${fmt5(Math.max(w, 0) / sum.sum * 100, 0)} % af gruppen` : "\u2014";
+      row.s.textContent = Number.isFinite(w) && sum2.sum > 0 ? `${fmt5(Math.max(w, 0) / sum2.sum * 100, 0)} % af gruppen` : "\u2014";
       row.bar.style.setProperty("--p", Number.isFinite(w) ? (Math.max(w, 0) / max).toFixed(3) : "0");
       row.el.classList.toggle("off", !Number.isFinite(w));
       row.el.style.order = String(Number.isFinite(w) ? Math.round(-w * 10) : 1e9);
     });
-    const p = fmtPower2(sum.sum);
-    this._dlgSum.textContent = `${p.v} ${p.u} i alt \xB7 ${g.entities.length} enheder${sum.missing ? ` \xB7 ${sum.missing} uden data` : ""}`;
+    const p = fmtPower2(sum2.sum);
+    this._dlgSum.textContent = `${p.v} ${p.u} i alt \xB7 ${g.entities.length} enheder${sum2.missing ? ` \xB7 ${sum2.missing} uden data` : ""}`;
   }
   /* ---------- HA-integration ---------- */
   moreInfo(entityId2) {
@@ -73420,12 +74249,12 @@ function heatingSeries({ gasBills = [], heatBills = [], heat = {}, now = /* @__P
 }
 function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Date() } = {}) {
   const ks = Object.keys(months).sort();
-  const sum = (list, f) => list.reduce((s, k) => s + f(months[k]), 0);
+  const sum2 = (list, f) => list.reduce((s, k) => s + f(months[k]), 0);
   const heatKs = ks.filter((k) => months[k].heatKwh > 0 && months[k].heatFull && !months[k].partial);
   const gasKs = ks.filter((k) => months[k].gasKwh > 0);
   const perKwh = (list, f) => {
-    const kwh2 = sum(list, (c2) => c2.heatKwh || c2.gasKwh);
-    return kwh2 > 0 ? sum(list, f) / kwh2 : null;
+    const kwh2 = sum2(list, (c2) => c2.heatKwh || c2.gasKwh);
+    return kwh2 > 0 ? sum2(list, f) / kwh2 : null;
   };
   const pairs = heatKs.map((k) => {
     const [y, m] = k.split("-").map(Number);
@@ -73444,9 +74273,9 @@ function heatingCompare(months, { tariffs, m2 = 0, now = /* @__PURE__ */ new Dat
   let year = null;
   if (gy) {
     const yk = gasKs.filter((k) => k.startsWith(`${gy}-`));
-    const demand = sum(yk, (c2) => c2.gasKwh);
-    const gasBill = sum(yk, (c2) => c2.gasBill);
-    const gasEvida = sum(yk, (c2) => c2.gasEvida);
+    const demand = sum2(yk, (c2) => c2.gasKwh);
+    const gasBill = sum2(yk, (c2) => c2.gasBill);
+    const gasEvida = sum2(yk, (c2) => c2.gasEvida);
     const t = (iso2) => tariffAt(tariffs, iso2);
     const nowIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     year = {
@@ -73867,13 +74696,13 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
         const bwx = (bw - 2).toFixed(1);
         let base = 0;
         const open = month && d.partial;
-        for (const [k, op, hatch] of [["bill", open ? 0.55 : 1, open], ["measured", 0.8, true], ["estimate", 0.4, true]]) {
+        for (const [k, op, hatch2] of [["bill", open ? 0.55 : 1, open], ["measured", 0.8, true], ["estimate", 0.4, true]]) {
           const v = d[k] || 0;
           if (!(v > 0)) continue;
           const top = y(base + v);
           const bh2 = Math.max(1, v / max * ph2);
           s += `<rect class="bar" x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bwx}" height="${bh2.toFixed(1)}" rx="3" style="fill:${col};color:${col};opacity:${op}"/>`;
-          if (hatch) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bwx}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity="${k === "estimate" ? 0.5 : 0.35}"/>`;
+          if (hatch2) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bwx}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity="${k === "estimate" ? 0.5 : 0.35}"/>`;
           base += v;
         }
         if (!month || per === 1 && gw > 44) s += `<text class="vlabel" x="${(x + (bw - 2) / 2).toFixed(1)}" y="${(y(d.v) - 6).toFixed(1)}" text-anchor="middle">${fmt6(d.v)}</text>`;
@@ -73977,12 +74806,12 @@ var HaElforbrugKrCard = class _HaElforbrugKrCard extends HTMLElement {
     groups.forEach((g, i) => {
       const x = pad6.l + gw * i + (gw - bw) / 2;
       let base = 0;
-      for (const [f, col, op, hatch] of [["gasBill", "var(--c-gas)", 1, false], ["gasEvida", "var(--c-gas)", 0.35, true], ["heatMeasured", "var(--c-fv)", 0.85, true], ["heatEstimate", "var(--c-fv)", 0.4, true]]) {
+      for (const [f, col, op, hatch2] of [["gasBill", "var(--c-gas)", 1, false], ["gasEvida", "var(--c-gas)", 0.35, true], ["heatMeasured", "var(--c-fv)", 0.85, true], ["heatEstimate", "var(--c-fv)", 0.4, true]]) {
         const v = g[f];
         if (!(v > 0)) continue;
         const top = y(base + v), bh2 = Math.max(1, v / max * ph2);
         s += `<rect class="bar" x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" style="fill:${col};color:${col};opacity:${g.partial && month ? op * 0.6 : op}"/>`;
-        if (hatch) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity=".35"/>`;
+        if (hatch2) s += `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh2.toFixed(1)}" rx="3" fill="url(#hatch)" style="color:var(--ec-text)" opacity=".35"/>`;
         base += v;
       }
       if (g.aconto > 0) s += `<line x1="${(x - 2).toFixed(1)}" x2="${(x + bw + 2).toFixed(1)}" y1="${y(g.aconto).toFixed(1)}" y2="${y(g.aconto).toFixed(1)}" stroke="var(--ec-text)" stroke-width="2"/>`;
@@ -74351,8 +75180,8 @@ var HAGasSavingsCard = class extends HTMLElement {
     const gasAvg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : gasNow;
     const heatPrice = this._num(c2.heat_price);
     const rows = Object.keys(this._rows).sort().filter((k) => this._rows[k].kwh > 0).map((k) => monthCompare({ kwh: this._rows[k].kwh, month: k, days: this._rows[k].days, gasPrice: priceFor(k, months, gasNow || gasAvg), heatPrice, cfg: c2 }));
-    const sum = (f) => rows.reduce((s, r) => s + r[f], 0);
-    const saved = sum("saved"), gasTot = sum("gas"), heatTot = sum("heat");
+    const sum2 = (f) => rows.reduce((s, r) => s + r[f], 0);
+    const saved = sum2("saved"), gasTot = sum2("gas"), heatTot = sum2("heat");
     const cur = rows.find((r) => r.partial);
     const full = rows.filter((r) => !r.partial);
     const prof = Array.isArray(c2.heat_profile) && c2.heat_profile.length === 12 ? c2.heat_profile.map(Number) : null;
@@ -74407,8 +75236,8 @@ var HAGasSavingsCard = class extends HTMLElement {
     </div>
   </section>
   <div class="grid">
-    <section class="panel stat"><span>Gas ville have kostet</span><b class="g" data-count="${Math.round(gasTot)}" data-suf=" kr">${fmt7(gasTot)} kr</b><small>${fmt7(sum("m3"))} m\xB3 gas \xB7 alt med: afgifter, abonnement${c2.service_year ? " og service" : ""}</small></section>
-    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h" data-count="${Math.round(heatTot)}" data-suf=" kr">${fmt7(heatTot)} kr</b><small>${fmt7(sum("kwh"))} kWh \xB7 alt med, ogs\xE5 de faste udgifter</small></section>
+    <section class="panel stat"><span>Gas ville have kostet</span><b class="g" data-count="${Math.round(gasTot)}" data-suf=" kr">${fmt7(gasTot)} kr</b><small>${fmt7(sum2("m3"))} m\xB3 gas \xB7 alt med: afgifter, abonnement${c2.service_year ? " og service" : ""}</small></section>
+    <section class="panel stat"><span>Fjernvarme har kostet</span><b class="h" data-count="${Math.round(heatTot)}" data-suf=" kr">${fmt7(heatTot)} kr</b><small>${fmt7(sum2("kwh"))} kWh \xB7 alt med, ogs\xE5 de faste udgifter</small></section>
     <section class="panel stat"><span>Forskel</span><b class="${saved >= 0 ? "s" : "r"}">${saved >= 0 ? "+" : "\u2212"}${fmt7(Math.abs(saved))} kr</b><small>${gasTot > 0 ? `${fmt7(saved / gasTot * 100)} % ${saved >= 0 ? "billigere" : "dyrere"}` : ""}</small></section>
   </div>
   ${forecast.length ? `<section class="panel fc">
@@ -74514,8 +75343,8 @@ function cheapestWindow(hours, len = 3, from = /* @__PURE__ */ new Date(0)) {
     let ok = true;
     for (let j = 1; j < len; j += 1) if (hours[i + j].t - hours[i + j - 1].t !== 36e5) ok = false;
     if (!ok) continue;
-    const avg = hours.slice(i, i + len).reduce((s, x) => s + x.p, 0) / len;
-    if (!best || avg < best.avg) best = { start: hours[i].t, end: new Date(hours[i].t.getTime() + len * 36e5), avg, i };
+    const avg2 = hours.slice(i, i + len).reduce((s, x) => s + x.p, 0) / len;
+    if (!best || avg2 < best.avg) best = { start: hours[i].t, end: new Date(hours[i].t.getTime() + len * 36e5), avg: avg2, i };
   }
   return best;
 }
@@ -74525,7 +75354,7 @@ function startNowAvg(hours, len, from = /* @__PURE__ */ new Date()) {
   if (i < 0 || i + len > hours.length) return NaN;
   return hours.slice(i, i + len).reduce((s, x) => s + x.p, 0) / len;
 }
-var level = (p, avg) => p <= avg * 0.92 ? "cheap" : p >= avg * 1.12 ? "dear" : "normal";
+var level = (p, avg2) => p <= avg2 * 0.92 ? "cheap" : p >= avg2 * 1.12 ? "dear" : "normal";
 function monthRows(days) {
   const by = {};
   for (const [d, v] of Object.entries(days)) {
@@ -74537,10 +75366,10 @@ function monthRows(days) {
     o.days += 1;
   }
   return Object.values(by).filter((m) => m.kwh > 0).sort((a, b) => a.month.localeCompare(b.month)).map((m) => {
-    const avg = m.kr / m.kwh;
+    const avg2 = m.kr / m.kwh;
     const car = Math.min(m.car, m.kwh);
-    const carKr = car * avg;
-    return { ...m, car, avg, carKr, house: m.kwh - car, houseKr: m.kr - carKr };
+    const carKr = car * avg2;
+    return { ...m, car, avg: avg2, carKr, house: m.kwh - car, houseKr: m.kr - carKr };
   });
 }
 var HAElectricityOverviewCard = class extends HTMLElement {
@@ -74907,7 +75736,7 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     const tomAvg = tomorrow.length ? avgOf(tomorrow) : tAvg;
     const nowH = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).getTime();
     const inWin = (t) => win && t >= win.start && t < win.end;
-    const col = (x, i, avg) => `<div class="pc ${level(x.p, avg)}${x.t.getTime() === nowH ? " now" : ""}${inWin(x.t) ? " win" : ""}${x.t.getTime() < nowH ? " past" : ""}" style="--i:${i}" title="kl. ${hh3(x.t)}: ${fmt8(x.p, 2)} kr/kWh"><i style="height:${(x.p / max * 100).toFixed(1)}%"></i>${x.t.getHours() % 3 === 0 ? `<span>${hh3(x.t)}</span>` : "<span></span>"}</div>`;
+    const col = (x, i, avg2) => `<div class="pc ${level(x.p, avg2)}${x.t.getTime() === nowH ? " now" : ""}${inWin(x.t) ? " win" : ""}${x.t.getTime() < nowH ? " past" : ""}" style="--i:${i}" title="kl. ${hh3(x.t)}: ${fmt8(x.p, 2)} kr/kWh"><i style="height:${(x.p / max * 100).toFixed(1)}%"></i>${x.t.getHours() % 3 === 0 ? `<span>${hh3(x.t)}</span>` : "<span></span>"}</div>`;
     return `<div class="pbars">${today.map((x, i) => col(x, i, tAvg)).join("")}${tomorrow.length ? `<div class="pdiv"><span>i morgen</span></div>${tomorrow.map((x, i) => col(x, i + today.length, tomAvg)).join("")}` : ""}</div>`;
   }
   _monthsHtml(months, monthK) {
@@ -74937,7 +75766,7 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
     const comps = (c2.price_components || []).map((id) => ({ n: nameOf(id), v: this._num(id) })).filter((x) => Number.isFinite(x.v) && x.v > 0);
     const parts = [...Number.isFinite(spot) ? [{ n: "Selve str\xF8mmen", v: spot }] : [], ...comps];
     const pSum = parts.reduce((s, x) => s + x.v, 0) || 1;
-    const PAL = ["#ffc53d", "#4cc9ff", "#b388ff", "#4fe0a6", "#ff8a3d", "#ff667a", "#7dd3fc"];
+    const PAL2 = ["#ffc53d", "#4cc9ff", "#b388ff", "#4fe0a6", "#ff8a3d", "#ff667a", "#7dd3fc"];
     const hk = mNow ? mNow.houseKr : 0, ck = mNow ? mNow.carKr : 0, tot = hk + ck || 1;
     const RR = 54, CC = 2 * Math.PI * RR;
     const days = Array.from({ length: 30 }, (_, i) => {
@@ -74959,8 +75788,8 @@ ${this._wide() ? this._wideHtml({ today, now, months, mNow, pNow, spot }) : ""}
       ${[0, 3, 6, 9, 12, 15, 18, 21].map((i) => `<text class="lbl" x="${(X2(i) + bw / 2).toFixed(1)}" y="${H3 - 6}" text-anchor="middle">${String(i).padStart(2, "0")}</text>`).join("")}
     </svg></section>
   <section class="panel"><div class="head"><span class="hicon amber"><ha-icon icon="mdi:cash-multiple"></ha-icon></span><div><h3>Hvad koster 1 kWh nu?</h3><p>${fmt8(pNow, 2)} kr/kWh med moms \u2013 her er hvad du betaler for</p></div></div>
-    <div class="stack">${parts.map((x, i) => `<i style="width:${(x.v / pSum * 100).toFixed(1)}%;background:${PAL[i % PAL.length]};--i:${i}"></i>`).join("")}</div>
-    <div class="plist">${parts.map((x, i) => `<div><i style="background:${PAL[i % PAL.length]}"></i><span>${esc16(x.n)}</span><b>${fmt8(x.v, 2)} kr</b><em>${fmt8(x.v / pSum * 100)} %</em></div>`).join("")}</div>
+    <div class="stack">${parts.map((x, i) => `<i style="width:${(x.v / pSum * 100).toFixed(1)}%;background:${PAL2[i % PAL2.length]};--i:${i}"></i>`).join("")}</div>
+    <div class="plist">${parts.map((x, i) => `<div><i style="background:${PAL2[i % PAL2.length]}"></i><span>${esc16(x.n)}</span><b>${fmt8(x.v, 2)} kr</b><em>${fmt8(x.v / pSum * 100)} %</em></div>`).join("")}</div>
   </section>
   <section class="panel"><div class="head"><span class="hicon purple"><ha-icon icon="mdi:chart-donut"></ha-icon></span><div><h3>Fordeling i ${MONTHS6[now.getMonth()]}</h3><p>Huset og bilen i kr</p></div></div>
     <div class="donut"><svg viewBox="0 0 140 140"><circle class="bg" cx="70" cy="70" r="${RR}"/><circle class="dh" cx="70" cy="70" r="${RR}" stroke-dasharray="${(hk / tot * CC).toFixed(1)} ${CC.toFixed(1)}"/><circle class="dc" cx="70" cy="70" r="${RR}" stroke-dasharray="${(ck / tot * CC).toFixed(1)} ${CC.toFixed(1)}" stroke-dashoffset="${(-(hk / tot) * CC).toFixed(1)}"/></svg>
@@ -75496,8 +76325,8 @@ function cheapestWindow2(all, len = 3) {
   const fut = all.filter((p) => new Date(p.hour) >= nowH);
   let best = null;
   for (let i = 0; i + len <= fut.length; i++) {
-    const avg = fut.slice(i, i + len).reduce((a, b) => a + b.price, 0) / len;
-    if (!best || avg < best.avg) best = { avg, start: new Date(fut[i].hour) };
+    const avg2 = fut.slice(i, i + len).reduce((a, b) => a + b.price, 0) / len;
+    if (!best || avg2 < best.avg) best = { avg: avg2, start: new Date(fut[i].hour) };
   }
   return best;
 }
@@ -78317,14 +79146,14 @@ var ThEnergyFlowCard = class extends HTMLElement {
       const pv2 = Math.max(0, this.z("pv")), load = Math.max(0, this.z("load")), bat = this.z("bat"), grid = this.z("load") - this.z("inv");
       const batHome2 = Math.max(0, -bat), gridHome2 = Math.max(0, grid), sunHome2 = Math.max(0, Math.min(pv2, load - batHome2 - gridHome2));
       const chg = Math.max(0, bat), sunBat2 = Math.min(chg, Math.max(0, pv2 - sunHome2)), gridBat2 = Math.max(0, chg - sunBat2), sunGrid2 = Math.max(0, -grid);
-      const EV2 = this.ev(), homeEv = Math.min(EV2.w, load);
-      return { now: true, sun: pv2, home: load, imp: gridHome2 + gridBat2, exp: sunGrid2, ch: chg, dis: batHome2, bat, grid, EV: EV2, f: { sunHome: sunHome2, gridHome: gridHome2, batHome: batHome2, sunBat: sunBat2, gridBat: gridBat2, sunGrid: sunGrid2, homeEv } };
+      const EV3 = this.ev(), homeEv = Math.min(EV3.w, load);
+      return { now: true, sun: pv2, home: load, imp: gridHome2 + gridBat2, exp: sunGrid2, ch: chg, dis: batHome2, bat, grid, EV: EV3, f: { sunHome: sunHome2, gridHome: gridHome2, batHome: batHome2, sunBat: sunBat2, gridBat: gridBat2, sunGrid: sunGrid2, homeEv } };
     }
     const pvDay = this.z("pvDay"), imp = this.z("imp"), exp = this.z("exp"), ch = this.z("ch"), dis = this.z("dis");
     const sunGrid = Math.min(exp, pvDay), sunBat = Math.min(ch, Math.max(0, pvDay - sunGrid)), gridBat = Math.max(0, ch - sunBat);
     const sunHome = Math.max(0, pvDay - sunGrid - sunBat), batHome = dis, gridHome = Math.max(0, imp - gridBat);
-    const EV = this.ev();
-    return { now: false, sun: pvDay, home: sunHome + batHome + gridHome, imp, exp, ch, dis, EV, f: { sunHome, gridHome, batHome, sunBat, gridBat, sunGrid, homeEv: EV.day } };
+    const EV2 = this.ev();
+    return { now: false, sun: pvDay, home: sunHome + batHome + gridHome, imp, exp, ch, dis, EV: EV2, f: { sunHome, gridHome, batHome, sunBat, gridBat, sunGrid, homeEv: EV2.day } };
   }
   /* billader: effekt ud fra hvor hurtigt "total opladet" stiger + 5-min statistik; i dag fra timestatistik */
   ev() {
@@ -78384,16 +79213,16 @@ var ThEnergyFlowCard = class extends HTMLElement {
       const e = this.$(id), C3 = 2 * Math.PI * r;
       if (e) e.setAttribute("stroke-dasharray", `${(tfc(f, 0, 1) * C3).toFixed(1)} ${C3.toFixed(1)}`);
     };
-    const EV = D.EV, evOn = D.now ? EV.w > 60 : EV.day > 0.05;
-    if (D.now && evOn) put("ev", EV.w, "lader bilen");
-    else if (!D.now) put("ev", EV.day, evOn ? "opladet i dag" : "ingen opladning i dag");
+    const EV2 = D.EV, evOn = D.now ? EV2.w > 60 : EV2.day > 0.05;
+    if (D.now && evOn) put("ev", EV2.w, "lader bilen");
+    else if (!D.now) put("ev", EV2.day, evOn ? "opladet i dag" : "ingen opladning i dag");
     else {
       this.txt("v-ev", "Klar");
       this.txt("u-ev", "STANDBY");
-      this.txt("s-ev", Number.isFinite(EV.temp) ? `${tfn(EV.temp, 0)} \xB0C \xB7 ${Math.round(EV.tot || 0).toLocaleString("da-DK")} kWh i alt` : "");
+      this.txt("s-ev", Number.isFinite(EV2.temp) ? `${tfn(EV2.temp, 0)} \xB0C \xB7 ${Math.round(EV2.tot || 0).toLocaleString("da-DK")} kWh i alt` : "");
     }
     this.$("m-ev")?.classList.toggle("evon", D.now && evOn);
-    arc("ar-ev", 57, D.now ? EV.w / this.M.ev : Math.min(1, EV.day / 40));
+    arc("ar-ev", 57, D.now ? EV2.w / this.M.ev : Math.min(1, EV2.day / 40));
     const bI = this.$("bIco");
     if (bI) bI.style.transform = `scaleY(${tfc((soc || 0) / 100, 0.05, 1)})`;
     arc("ar-sun", 57, D.now ? D.sun / this.M.sun : D.sun > 0 ? (D.sun - F2.sunGrid) / D.sun : 0);
@@ -79274,24 +80103,24 @@ var ThEnergyCard = class extends HTMLElement {
       const r = await this._h.callWS({ type: "recorder/statistics_during_period", start_time: t0.toISOString(), statistic_ids: [this.E.imp, this.E.exp, this.E.pvDay].filter(Boolean), period: "hour", types: ["change"], units: { energy: "kWh" } });
       const hourly2 = (id) => (r[id] || []).map((x) => ({ t: typeof x.start === "number" ? x.start : Date.parse(x.start), v: Math.max(0, x.change || 0) }));
       const pr = (this.at("priceNow", "prices") || []).map((p) => ({ t: Date.parse(p.start), p: p.price })), sp = (this.at("spotNow", "prices") || []).map((p) => ({ t: Date.parse(p.start), p: p.price }));
-      const avg = (arr2, t) => {
+      const avg2 = (arr2, t) => {
         const xs = arr2.filter((x) => x.t >= t && x.t < t + 36e5).map((x) => x.p);
         return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
       };
       const imp = hourly2(this.E.imp), exp = hourly2(this.E.exp), pv2 = hourly2(this.E.pvDay), fb = this.n("priceNow");
       let cost = 0, impS = 0, sale = 0, expS = 0, saved = 0, pvS = 0;
       for (const h of imp) {
-        const p = avg(pr, h.t);
+        const p = avg2(pr, h.t);
         cost += h.v * (Number.isFinite(p) ? p : fb);
         impS += h.v;
       }
       for (const h of exp) {
-        const p = avg(sp, h.t);
+        const p = avg2(sp, h.t);
         sale += h.v * (Number.isFinite(p) ? p / 1.25 : 0);
         expS += h.v;
       }
       for (const h of pv2) {
-        const e = exp.find((x) => x.t === h.t)?.v || 0, p = avg(pr, h.t);
+        const e = exp.find((x) => x.t === h.t)?.v || 0, p = avg2(pr, h.t);
         saved += Math.max(0, h.v - e) * (Number.isFinite(p) ? p : fb);
         pvS += h.v;
       }
@@ -80003,7 +80832,7 @@ var fmt9 = (n, d = 0) => n == null || !Number.isFinite(n) ? "\u2013" : nf2(d).fo
 var pct6 = (a, b) => b > 0 && a != null ? (a - b) / b * 100 : null;
 var fmtPct3 = (p) => p == null ? "\u2013" : `${p > 0 ? "+" : p < 0 ? "\u2212" : ""}${nf2(0).format(Math.abs(p))} %`;
 var esc19 = (s) => String(s ?? "").replace(/[&<>"]/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c2]);
-function buildSeries(rows) {
+function buildSeries2(rows) {
   const years = {};
   let latest = null;
   for (const r of rows || []) {
@@ -80031,17 +80860,17 @@ function computeModel(series, now = /* @__PURE__ */ new Date(), forecastMonth = 
       complete.push({ y, m, v: val(y, m) });
     }
   }
-  const sum = (arr2) => arr2.reduce((s, x) => s + x.v, 0);
+  const sum2 = (arr2) => arr2.reduce((s, x) => s + x.v, 0);
   const last12 = complete.slice(-12);
   const prev12 = complete.slice(-24, -12);
   const ytdNow = complete.filter((x) => x.y === cy);
   const ytdPrev = ytdNow.map((x) => val(cy - 1, x.m)).filter((v) => v != null);
   const ytdFull = ytdNow.length > 0 && ytdPrev.length === ytdNow.length;
   const model = {
-    last12: last12.length === 12 ? sum(last12) : null,
-    prev12: prev12.length === 12 ? sum(prev12) : null,
-    avg12: last12.length === 12 ? sum(last12) / 12 : null,
-    ytd: ytdNow.length ? sum(ytdNow) : null,
+    last12: last12.length === 12 ? sum2(last12) : null,
+    prev12: prev12.length === 12 ? sum2(prev12) : null,
+    avg12: last12.length === 12 ? sum2(last12) / 12 : null,
+    ytd: ytdNow.length ? sum2(ytdNow) : null,
     ytdPrev: ytdFull ? ytdPrev.reduce((s, v) => s + v, 0) : null,
     ytdMonths: ytdNow.length,
     peak: last12.length ? last12.reduce((a, b) => b.v > a.v ? b : a) : null
@@ -80054,7 +80883,7 @@ function computeModel(series, now = /* @__PURE__ */ new Date(), forecastMonth = 
   const six = complete.slice(-6);
   const sixPrev = six.map((x) => val(x.y - 1, x.m));
   let ratio = null;
-  if (six.length === 6 && sixPrev.every((v) => v != null)) ratio = sum(six) / sixPrev.reduce((s, v) => s + v, 0);
+  if (six.length === 6 && sixPrev.every((v) => v != null)) ratio = sum2(six) / sixPrev.reduce((s, v) => s + v, 0);
   model.forecast = base != null && ratio != null ? { m: fm, y: fy, base, ratio, value: base * ratio } : null;
   return model;
 }
@@ -80236,7 +81065,7 @@ var HaElforbrugHistorikCard = class extends HTMLElement {
         period: "month",
         types: ["change"]
       });
-      this._series = buildSeries(res?.[this.config.entity]);
+      this._series = buildSeries2(res?.[this.config.entity]);
       this._loadedAt = Date.now();
       this._error = null;
     } catch (err) {
@@ -81184,10 +82013,10 @@ var ThHomeCard = class extends HTMLElement {
     this.set("pchip", `<i></i>${rel < 0.9 ? "Billig nu" : rel > 1.1 ? "Dyr nu" : "Normal pris"} \xB7 ${rel >= 1 ? "+" : "\u2212"}${Math.abs(Math.round((rel - 1) * 100))} % ift. snit`);
     this.set("pNow", `${hnum(cur, 2)}<small>kr/kWh</small>`);
     const parts = pc.components.map(({ name, entity, color }) => [hesc(name), this.n(entity), color]).filter((x) => Number.isFinite(x[1]) && x[1] > 0);
-    const sum = parts.reduce((a, b) => a + b[1], 0) || 1, ck = parts.map((x) => x[1].toFixed(3)).join();
+    const sum2 = parts.reduce((a, b) => a + b[1], 0) || 1, ck = parts.map((x) => x[1].toFixed(3)).join();
     if (ck !== this._compK) {
       this._compK = ck;
-      this.$("pbar").innerHTML = parts.map(([n, v, c2], i) => `<b title="${n} ${hnum(v, 2)} kr" style="width:${v / sum * 100}%;background:${c2};animation-delay:${i * 80}ms"></b>`).join("");
+      this.$("pbar").innerHTML = parts.map(([n, v, c2], i) => `<b title="${n} ${hnum(v, 2)} kr" style="width:${v / sum2 * 100}%;background:${c2};animation-delay:${i * 80}ms"></b>`).join("");
       this.$("plg").innerHTML = parts.map(([n, v, c2]) => `<span><i style="background:${c2}"></i>${n} ${hnum(v, 2)}</span>`).join("");
     }
     const act = [...A(pc.current, "prices") || [], ...A(pc.tomorrow, "prices") || []].map((p) => ({ t: new Date(p.start).getTime(), e: new Date(p.end).getTime(), p: p.price, f: false }));
@@ -82295,8 +83124,8 @@ function rainInsight(hourly2, unit) {
   if (hours.length < 6) return "Afventer de n\xE6ste timers prognose";
   const values = hours.map((h) => rain(h.precipitation, unit)), chances = hours.map((h) => N(h.precipitation_probability));
   if (values.some((v) => v === null) || chances.some((v) => v === null)) return "Se timeprognosen for nedb\xF8r";
-  const sum = values.reduce((a, b) => a + b, 0), chance = Math.max(...chances);
-  return sum < 0.2 && chance < 30 ? "Lav regnrisiko de n\xE6ste 6 timer" : sum < 0.2 ? "Der kan komme byger de n\xE6ste timer" : `${F(sum, 1)} mm regn i prognosen for de n\xE6ste 6 timer`;
+  const sum2 = values.reduce((a, b) => a + b, 0), chance = Math.max(...chances);
+  return sum2 < 0.2 && chance < 30 ? "Lav regnrisiko de n\xE6ste 6 timer" : sum2 < 0.2 ? "Der kan komme byger de n\xE6ste timer" : `${F(sum2, 1)} mm regn i prognosen for de n\xE6ste 6 timer`;
 }
 var CSS6 = `
  :host{display:block;min-width:0;container-type:inline-size;font-family:var(--primary-font-family,system-ui),sans-serif;--wx-ink:var(--primary-text-color,#182b36);--wx-muted:color-mix(in srgb,var(--primary-text-color,#182b36) 76%,transparent);--wx-line:color-mix(in srgb,var(--primary-text-color,#182b36) 15%,transparent);--wx-blue:var(--primary-color,#1485cd);--wx-sun:var(--warning-color,#efa92f);--wx-green:var(--success-color,#0ba57c);--wx-tint:color-mix(in srgb,var(--primary-text-color,#182b36) 4%,transparent);color:var(--wx-ink)}

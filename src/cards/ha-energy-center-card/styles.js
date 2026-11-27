@@ -6,6 +6,8 @@
  * Farver, flader, kanter, skygger og font kommer fra brugerens thtema-*-temaer.
  */
 
+import { POWER_DETAIL_STYLE } from "./components/power-detail.js";
+
 export const STYLE = `
 :host{
   /* Alt hentes fra de aktive thtema-*-temaer; hex-værdierne er kun fallback uden tema. */
@@ -454,4 +456,5 @@ dialog.detail::backdrop{background:rgba(4,8,16,.62)}
 @container (max-width:360px){
   .kpis[data-n]{grid-template-columns:minmax(0,1fr)}
 }
+${POWER_DETAIL_STYLE}
 `;
