@@ -363,7 +363,7 @@ class ThProtectPlayer extends HTMLElement {
     this.q('.poster').classList.remove('on'); this._spin(false); this._msg('');
     // Mellemkanalen i den lille afspiller og på telefoner, den høje ellers.
     const small = this._o.compact || matchMedia('(max-width: 900px)').matches;
-    const box = this.q('.live'), ent = small ? (this._cam.tile || this._cam.id) : this._cam.id;
+    const box = this.q('.live'), ent = small ? (this._cam.tile || this._cam.id) : (this._cam.hd || this._cam.id);
     if (box._ent !== ent) {
       box.innerHTML = ''; box._ent = ent; clearInterval(this._liveT);
       const s = this._h.states[ent];

@@ -4,6 +4,10 @@
  * exclude: [camera.x, …]   kameraer der ikke skal vises (alle kanaler af kameraet), og deres hændelser
  * live_tiles: true  – fliserne viser live video (WebRTC, kameraets laveste kanal) som i UniFi Protect; false = stillbilleder
  * max_live: hvor mange fliser der må køre live på én gang (standard 16); kun fliser, der er på skærmen
+ * fast_streams: { suffix: _fast, hd_suffix: _fast_hd }  – valgfri (Claude AI, 2026-11-27): ekstra kameraer pr. kamera
+ *         (camera.<navn><suffix>, fx en generisk kamera-entitet fra en forvarmet restream som Scrypted/go2rtc), der bruges til
+ *         fliserne, stillbillederne og live i den lille afspiller; <hd_suffix> til live i den store visning. Optagelser og
+ *         hændelser kommer stadig fra optageren. Findes et ekstra kamera ikke, bruges kameraets egne kanaler som før.
  * refresh: sekunder mellem stillbilleder (standard 3, eller 5 ved mere end 8 kameraer)
  * concurrency: hvor mange kameraer der hentes hændelser fra ad gangen (standard 5)
  * nvr: { storage_entity, capacity_entity, uptime_entity, cpu_entity, temp_entity, memory_entity, hdd_entities: [] }  – optagerens status
@@ -227,7 +231,15 @@ class ThCameraCard extends HTMLElement {
       if (/_medium/.test(id) || (/_low/.test(id) && !out[base].tile)) out[base].tile = id;
       if (/_low/.test(id) || (/_medium/.test(id) && !out[base].live)) out[base].live = id;
     }
-    return Object.values(out).map(c => ({ ...c, tile: c.tile || c.id, live: c.live || c.tile || c.id })).sort((a, b) => a.name.localeCompare(b.name, 'da'));
+    const fs = this.cfg.fast_streams, suf = fs && (fs === true ? '_fast' : fs.suffix), hsuf = fs && (fs === true ? '_fast_hd' : fs.hd_suffix);
+    return Object.values(out).map(c => {
+      const r = { ...c, tile: c.tile || c.id, live: c.live || c.tile || c.id };
+      // Forvarmet restream (fx Scrypted): starter straks og giver hurtige stillbilleder; optageren bruges stadig til optagelser.
+      const f = suf && st[c.base + suf] ? c.base + suf : null, fh = hsuf && st[c.base + hsuf] ? c.base + hsuf : null;
+      if (f) { r.tile = f; r.live = f; }
+      if (fh) r.hd = fh;
+      return r;
+    }).sort((a, b) => a.name.localeCompare(b.name, 'da'));
   }
   live(base) {
     const st = this._h.states, b = base.replace('camera.', ''), on = e => st[e]?.state === 'on';
@@ -323,7 +335,7 @@ class ThCameraCard extends HTMLElement {
     const max = this.cfg.max_live || 16, on = new Set(), queue = [];
     const startNow = (b) => { const lv = b.querySelector('.lv'); if (!lv || lv.firstChild || on.size >= max || !b.isConnected || this._sheet || this._view) return; const s = this._h.states[b.dataset.live]; if (!s) return;
       const v = document.createElement('ha-camera-stream'); v.hass = this._h; v.stateObj = s; v.muted = true; v.controls = false; v.allowExoPlayer = false; lv.appendChild(v); on.add(b); b.classList.add('lvon'); };
-    const pump = () => { this._lvT = null; const b = queue.shift(); if (b) startNow(b); if (queue.length) this._lvT = setTimeout(pump, 500); };
+    const pump = () => { this._lvT = null; const b = queue.shift(); if (b) startNow(b); if (queue.length) this._lvT = setTimeout(pump, this.cfg.fast_streams ? 150 : 500); };
     const start = (b) => { if (queue.includes(b) || b.querySelector('.lv')?.firstChild) return; queue.push(b); if (!this._lvT) this._lvT = setTimeout(pump, on.size ? 0 : 300); };
     const stop = (b) => { const i = queue.indexOf(b); if (i >= 0) queue.splice(i, 1); const lv = b.querySelector('.lv'); if (lv) lv.innerHTML = ''; on.delete(b); b.classList.remove('lvon'); };
     this._io = new IntersectionObserver((list) => list.forEach(x => x.isIntersecting ? start(x.target) : stop(x.target)), { rootMargin: '100px' });
@@ -337,14 +349,14 @@ class ThCameraCard extends HTMLElement {
     const every = (this.cfg.refresh || (this.cams().length > 8 ? 5 : 3)) * 1000; // sjældnere med mange kameraer
     if (force) this._r.querySelectorAll('.cam').forEach(b => { b._at = 0; });
     for (const b of this._r.querySelectorAll('.cam')) {
-      if ((this._stillN || 0) >= 3) break;
+      if ((this._stillN || 0) >= (this.cfg.fast_streams ? 6 : 3)) break; // forvarmede stillbilleder er små og hurtige
       if (b._busy || Date.now() - (b._at || 0) < every || (b.querySelector('.lv')?.firstChild && b.dataset.img)) continue;
       const s = this._h.states[b.dataset.tile || b.dataset.id]; if (!s?.attributes?.entity_picture) continue;
       b._busy = true; this._stillN = (this._stillN || 0) + 1;
       const img = b.querySelector('img'), n = new Image();
       const done = () => { if (!b._busy) return; b._busy = false; b._at = Date.now(); this._stillN--; clearTimeout(n._t); };
       n._t = setTimeout(done, 20000); // et billede, der aldrig svarer, må ikke låse flisen
-      n.onload = () => { img.src = n.src; b.dataset.img = 1; done(); }; n.onerror = done;
+      n.onload = () => { img.src = n.src; b.dataset.img = 1; done(); if (this.cfg.fast_streams) setTimeout(() => this._refresh(), 0); }; n.onerror = done;
       n.src = `${s.attributes.entity_picture}&width=640&t=${Date.now()}`;
     }
   }

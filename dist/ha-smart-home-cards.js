@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.314 */
+/* MRDonnii Smart Home Cards v0.5.315 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -51882,7 +51882,7 @@ var ThProtectPlayer = class extends HTMLElement {
     this._spin(false);
     this._msg("");
     const small = this._o.compact || matchMedia("(max-width: 900px)").matches;
-    const box = this.q(".live"), ent = small ? this._cam.tile || this._cam.id : this._cam.id;
+    const box = this.q(".live"), ent = small ? this._cam.tile || this._cam.id : this._cam.hd || this._cam.id;
     if (box._ent !== ent) {
       box.innerHTML = "";
       box._ent = ent;
@@ -52688,7 +52688,17 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       if (/_medium/.test(id) || /_low/.test(id) && !out[base].tile) out[base].tile = id;
       if (/_low/.test(id) || /_medium/.test(id) && !out[base].live) out[base].live = id;
     }
-    return Object.values(out).map((c2) => ({ ...c2, tile: c2.tile || c2.id, live: c2.live || c2.tile || c2.id })).sort((a, b) => a.name.localeCompare(b.name, "da"));
+    const fs = this.cfg.fast_streams, suf = fs && (fs === true ? "_fast" : fs.suffix), hsuf = fs && (fs === true ? "_fast_hd" : fs.hd_suffix);
+    return Object.values(out).map((c2) => {
+      const r = { ...c2, tile: c2.tile || c2.id, live: c2.live || c2.tile || c2.id };
+      const f = suf && st[c2.base + suf] ? c2.base + suf : null, fh = hsuf && st[c2.base + hsuf] ? c2.base + hsuf : null;
+      if (f) {
+        r.tile = f;
+        r.live = f;
+      }
+      if (fh) r.hd = fh;
+      return r;
+    }).sort((a, b) => a.name.localeCompare(b.name, "da"));
   }
   live(base) {
     const st = this._h.states, b = base.replace("camera.", ""), on = (e) => st[e]?.state === "on";
@@ -52904,7 +52914,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       this._lvT = null;
       const b = queue.shift();
       if (b) startNow(b);
-      if (queue.length) this._lvT = setTimeout(pump, 500);
+      if (queue.length) this._lvT = setTimeout(pump, this.cfg.fast_streams ? 150 : 500);
     };
     const start = (b) => {
       if (queue.includes(b) || b.querySelector(".lv")?.firstChild) return;
@@ -52942,7 +52952,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
       b._at = 0;
     });
     for (const b of this._r.querySelectorAll(".cam")) {
-      if ((this._stillN || 0) >= 3) break;
+      if ((this._stillN || 0) >= (this.cfg.fast_streams ? 6 : 3)) break;
       if (b._busy || Date.now() - (b._at || 0) < every || b.querySelector(".lv")?.firstChild && b.dataset.img) continue;
       const s = this._h.states[b.dataset.tile || b.dataset.id];
       if (!s?.attributes?.entity_picture) continue;
@@ -52961,6 +52971,7 @@ var ThCameraCard = class _ThCameraCard extends HTMLElement {
         img.src = n.src;
         b.dataset.img = 1;
         done();
+        if (this.cfg.fast_streams) setTimeout(() => this._refresh(), 0);
       };
       n.onerror = done;
       n.src = `${s.attributes.entity_picture}&width=640&t=${Date.now()}`;
