@@ -81,6 +81,13 @@ input, select { font: inherit; color: inherit; }
   position: relative; transition: background .15s; padding-right: 8px; }
 .narrow .qt { height: 54px; gap: 8px; }
 .qt:hover { background: rgba(255,255,255,.16); }
+.qt .qtp { position: absolute; right: 10px; top: 50%; bottom: auto; width: 40px; height: 40px; opacity: 0; transform: translateY(-50%) scale(.92); transition: opacity .2s, transform .2s; }
+.qt .qtp svg { width: 20px; height: 20px; }
+.qt:hover .qtp, .qt:focus-within .qtp { opacity: 1; transform: translateY(-50%); }
+.qt:hover .t, .qt:focus-within .t { padding-right: 46px; }
+.qt:hover .eq, .qt:focus-within .eq { opacity: 0; }
+.qt .qtp:hover { transform: translateY(-50%) scale(1.06); }
+.touch .qt .qtp { display: none; }
 .qt .art { width: 60px; height: 60px; border-radius: 0; flex: none; }
 .narrow .qt .art { width: 54px; height: 54px; }
 .qt .t { font-weight: 700; font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; min-width: 0; }

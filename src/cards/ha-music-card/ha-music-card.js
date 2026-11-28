@@ -13,7 +13,7 @@ import {
 } from "./views.js";
 import { sampleColor, tone } from "./color.js";
 
-const VERSION = "0.1.5";
+const VERSION = "0.1.6";
 const GROUPING = 524288;
 const PAGE = 50;
 const RECENT_KEY = "ha-music-card:recent-searches";
@@ -105,7 +105,8 @@ class HaMusicCard extends HTMLElement {
   // ---------- Shell ----------
   _build() {
     this._built = true;
-    this._touch = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+    // Kun rene touch-enheder: en touchskærm-PC med mus melder "hover: none" for sit primære input (Claude AI, 2026-11-28)
+    this._touch = typeof matchMedia === "function" && matchMedia("(any-hover: none)").matches;
     this.shadowRoot.innerHTML = `<style>${STYLES}</style><ha-card class="mc"><div class="shell wide${this._touch ? " touch" : ""}">
       <nav class="side"></nav>
       <main class="main"><header class="top"></header><div class="content"></div></main>

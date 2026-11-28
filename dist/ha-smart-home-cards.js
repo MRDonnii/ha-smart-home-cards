@@ -1,4 +1,4 @@
-/* MRDonnii Smart Home Cards v0.5.318 */
+/* MRDonnii Smart Home Cards v0.5.319 */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __esm = (fn, res) => function __init() {
@@ -71807,6 +71807,13 @@ input, select { font: inherit; color: inherit; }
   position: relative; transition: background .15s; padding-right: 8px; }
 .narrow .qt { height: 54px; gap: 8px; }
 .qt:hover { background: rgba(255,255,255,.16); }
+.qt .qtp { position: absolute; right: 10px; top: 50%; bottom: auto; width: 40px; height: 40px; opacity: 0; transform: translateY(-50%) scale(.92); transition: opacity .2s, transform .2s; }
+.qt .qtp svg { width: 20px; height: 20px; }
+.qt:hover .qtp, .qt:focus-within .qtp { opacity: 1; transform: translateY(-50%); }
+.qt:hover .t, .qt:focus-within .t { padding-right: 46px; }
+.qt:hover .eq, .qt:focus-within .eq { opacity: 0; }
+.qt .qtp:hover { transform: translateY(-50%) scale(1.06); }
+.touch .qt .qtp { display: none; }
 .qt .art { width: 60px; height: 60px; border-radius: 0; flex: none; }
 .narrow .qt .art { width: 54px; height: 54px; }
 .qt .t { font-weight: 700; font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; min-width: 0; }
@@ -72658,7 +72665,7 @@ function homeView(ctx, data) {
       html += `<div class="quick">${quick.map((item2) => {
         const key2 = ctx.reg(item2);
         const on = ctx.isCurrent(item2);
-        return `<div class="qt" role="button" tabindex="0" data-open="${key2}">${art(item2)}<div class="t">${esc13(item2.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
+        return `<div class="qt" role="button" tabindex="0" data-open="${key2}">${art(item2)}<div class="t">${esc13(item2.name)}</div>${on ? eq(ctx.playing) : ""}<button class="fab qtp" data-play="${key2}" aria-label="Afspil">${icon4("play")}</button></div>`;
       }).join("")}</div>`;
     }
     html += shelf(ctx, "Dine playlister", data.playlists, "library:playlist");
@@ -73099,7 +73106,7 @@ var HaMusicCard = class extends HTMLElement {
   // ---------- Shell ----------
   _build() {
     this._built = true;
-    this._touch = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+    this._touch = typeof matchMedia === "function" && matchMedia("(any-hover: none)").matches;
     this.shadowRoot.innerHTML = `<style>${STYLES2}</style><ha-card class="mc"><div class="shell wide${this._touch ? " touch" : ""}">
       <nav class="side"></nav>
       <main class="main"><header class="top"></header><div class="content"></div></main>

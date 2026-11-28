@@ -111,7 +111,8 @@ export function homeView(ctx, data) {
       html += `<div class="quick">${quick.map((item) => {
         const key = ctx.reg(item);
         const on = ctx.isCurrent(item);
-        return `<div class="qt" role="button" tabindex="0" data-open="${key}">${art(item)}<div class="t">${esc(item.name)}</div>${on ? eq(ctx.playing) : ""}</div>`;
+        // Afspil-knap ved hover som i Spotify (Claude AI, 2026-11-28)
+        return `<div class="qt" role="button" tabindex="0" data-open="${key}">${art(item)}<div class="t">${esc(item.name)}</div>${on ? eq(ctx.playing) : ""}<button class="fab qtp" data-play="${key}" aria-label="Afspil">${icon("play")}</button></div>`;
       }).join("")}</div>`;
     }
     html += shelf(ctx, "Dine playlister", data.playlists, "library:playlist");
